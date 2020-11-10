@@ -45,7 +45,7 @@
         %\input{images\....pdf_tex}
         \includegraphics[width=0.9\linewidth]{system_description.png}
         \caption{Assumed system structure for estimation}
-        \label{fig:filterbank}
+        \label{fig:system_description}
     \end{figure}
     
     \section{The Stankovic algorithm}
@@ -64,17 +64,18 @@
     \end{align}
     
     \section{Uncertainty of the Parameter Update}
+    The above update equation can be written like to fit the GUMS2 [jcgm\_gum] formalism:
     \begin{align}
         \vec{\theta}[n+1] &= f(a_i[n], b_i[n], y_i[n-d], \underbrace{\hat{x}_j[n], \dots}_{j \in \mathcal{N}_i}) \\
         U_{\vec{\theta}[n+1]} &= C * U * C^T
     \end{align}
     
-    With covariance of the inputs $U$ and sensitivities $C$. Note that $U$ contains information from $U_{\vec{\theta}[n]}$ and $\delta(t)$ is assumed to be deterministic (e.g. constant). 
+    With covariance of the inputs $U$ and sensitivities $C$. Note that $U$ contains information from $U_{\vec{\theta}[n]}$ and $\delta(t)$ is assumed to be deterministic (e.g. constant). Uncertainty of $\hat{x}_j$ is carried out by propagating an input through a linear affine model with uncertain parameters, as described in the next section below. 
     \begin{align}
         U &= 
         \begin{bmatrix}
-            u(a_i[n])^2 & u(a_i[n], b_i[n])) & 0 & 0 & \\
-            u(a_i[n], b_i[n]) & u(b_i[n]))^2 & 0 & 0 & \cdots \\
+            u(a_i[n])^2 & u(a_i[n], b_i[n]) & 0 & 0 & \\
+            u(a_i[n], b_i[n]) & u(b_i[n])^2 & 0 & 0 & \cdots \\
             0 & 0 & u(y_i[n-d])^2 & 0 & \\
             0 & 0 & 0 & u(\hat{x}_j[n])^2 & \\
             & \vdots & & & \ddots
@@ -97,13 +98,53 @@
         \frac{\partial b_i[n+1]}{\partial b_i[n]} &= 1 + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (- 1) \\
         \frac{\partial b_i[n+1]}{\partial y_i[n]} &= 0 + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (- a_i[n]) \\
         \frac{\partial b_i[n+1]}{\partial \hat{x}_j[n]} &= 0 + \delta(t) * \gamma_{ij}
-    \end{align}
-    
-    
-    
+    \end{align}    
     
     \section{Uncertainty of Output of linear affine Transfer-Function}
+    A linear affine model with parameters $(a,b)$ and input $x$ can easily be written to fit the GUM-formalism:
+    \begin{align}
+        y &= f(a,b,x) \label{eq:linear_affine_model}\\
+        &= a*x + b \\
+        {u_y}^2 &= C * U * C^T
+    \end{align}
+    
+    Where:
+    \begin{align}
+        U &=  
+        \begin{bmatrix}
+            u(a)^2 & u(a, b) & 0 \\
+            u(a, b) & u(b)^2 & 0 \\
+            0 & 0 & u(x)^2 
+        \end{bmatrix} \\
+        C &= \begin{bmatrix} x & 1 & a \end{bmatrix}
+    \end{align}
     
     \section{Uncertainty of the estimated inverse Model-Parameters}
+    The algorithm of Stankovic [stankovic\_2018] estimates the compensation model (see \cref{fig:system_description}). However, the actual sensor behavior is of interest as well. The inverse of a linear affine model is again linear affine, but the parameter uncertainties need some attention. Inverting \cref{eq:linear_affine_model} yields:
+    \begin{align}
+        x &= \frac{1}{a} * y - \frac{b}{a} \\
+        &= a_{inv} * y + b_{inv}
+    \end{align}
     
+    The parameters of the inverse model are a function of the initial model - which fits the GUM-formalism. 
+    \begin{align}
+        [a_{inv}, b_{inv}]^T &= f(a, b) \\
+        &= [\frac{1}{a}, -\frac{b}{a}]^T \\
+        U_{inv} &= C * U * C^T
+    \end{align}
+    
+    With:
+    \begin{align}
+        U &=  
+        \begin{bmatrix}
+            u(a)^2 & u(a, b) \\
+            u(a, b) & u(b)^2 
+        \end{bmatrix} \\
+        C &=
+        \begin{bmatrix}
+            -\frac{1}{a^2} & 0 \\
+            \frac{b}{a^2} & -\frac{1}{a}
+        \end{bmatrix}
+    \end{align}
+
 \end{document}
