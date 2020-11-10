@@ -1,2 +1,7 @@
 __pycache__
 .vscode
+docs/*.aux
+docs/*.log
+docs/*.out
+docs/*.pdf
+docs/*.gz
