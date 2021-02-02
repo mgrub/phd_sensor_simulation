@@ -52,7 +52,7 @@ class LinearAffineModel(ParametricModel):
         :type ua: float, optional
         :param ub: offset uncertainty, defaults to 0.0
         :type ub: float, optional
-        :param uab: correlated uncertainty between a and b, defaults to 0.0
+        :param uab: correlation between a and b, defaults to 0.0
         :type ub: float, optional
         """
 
@@ -71,6 +71,18 @@ class LinearAffineModel(ParametricModel):
 
         s = f"<LinearAffineModel: {a} * x + {b}>"
         return s
+
+    def get_params(self):
+        a = self.parameters[0]
+        b = self.parameters[1]
+        ua2 = self.parameters_uncertainty[0, 0]
+        ub2 = self.parameters_uncertainty[1, 1]
+        uab = self.parameters_uncertainty[0, 1]
+
+        parameters = {"a": a, "b": b}
+        parameters_uncertainty = {"ua": np.sqrt(ua2), "ub": np.sqrt(ub2), "uab": uab}
+
+        return {**parameters, **parameters_uncertainty}
 
     def equation(self, x, ux, p, up):
         # shortcuts

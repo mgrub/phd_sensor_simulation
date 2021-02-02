@@ -1,7 +1,8 @@
+import json
 import numpy as np
 import scipy.signal as scs
-from time_series_buffer import TimeSeriesBuffer as buf
-from time_series_metadata.scheme import MetaData as meta
+from time_series_buffer import TimeSeriesBuffer
+from models import LinearAffineModel
 
 
 class PhysicalPhenomenon:
@@ -54,3 +55,92 @@ class Sensor:
             indicated_value, indicated_uncertainty
         )
         return value, value_unc
+
+
+class SimulationHelper:
+    def generate_sensors(self, n_neighbors=1):
+        sensors = {}
+        for i in range(n_neighbors+1):
+            sensor_name = f"sensor_{i}"
+            provides_reference = i < n_neighbors
+
+            # select random model parameters
+            a = 1 + 0.5 * np.random.randn()
+            b = 5 + 0.5 * np.random.randn()
+            ua = 0.1 * (1 + np.random.random())
+            ub = 0.1 * (1 + np.random.random())
+
+            # use in model
+            transfer = LinearAffineModel(a=a, b=b, ua=ua, ub=ub)
+            params = transfer.get_params()
+
+            # get inverse model
+            if provides_reference:
+                p, up = transfer.inverse_model_parameters()
+            else:
+                p, up = ({"a": 1.0, "b": 0.0}, {"ua": 1.0, "ub": 1.0, "uab": 0.0})
+
+            params_inv = {**p, **up}
+
+            sensors[sensor_name] = {
+                "transfer_behavior_type": "LinearAffineModel",
+                "transfer_behavior_params": params,
+                "estimated_correction_model_type": "LinearAffineModel",
+                "estimated_correction_model_params": params_inv,
+                "provides_reference": provides_reference,
+            }
+
+        return json.dumps(sensors)
+
+    def init_sensors(self, path=None, jsonstring=None, maxlen=100):
+        """ load a bunch of sensors from json file/string """
+        if path is not None:
+            f = open(path, "r")
+            jsonstring = f.read()
+
+        sensors = json.loads(jsonstring)
+
+        reference_sensors = []
+        non_reference_sensors = []
+
+        for sensor_params in sensors.values():
+            # load transfer behavior
+            transfer_type = sensor_params["transfer_behavior_type"]
+            if transfer_type == "LinearAffineModel":
+                transfer = LinearAffineModel(
+                    **sensor_params["transfer_behavior_params"]
+                )
+            else:
+                raise NotImplementedError(
+                    f"Transfer Model type {transfer_type} not supported."
+                )
+
+            # load inverse behavior
+            inverse_type = sensor_params["estimated_correction_model_type"]
+            if inverse_type == "LinearAffineModel":
+                inverse = LinearAffineModel(
+                    **sensor_params["estimated_correction_model_params"]
+                )
+            else:
+                raise NotImplementedError(
+                    f"Transfer Model type {inverse_type} not supported."
+                )
+
+            # init sensor
+            sensor = Sensor(
+                transfer_model=transfer, estimated_compensation_model=inverse
+            )
+            buffer_indication = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
+            buffer_estimation = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
+
+            tmp = {
+                "sensor": sensor,
+                "buffer_indication": buffer_indication,
+                "buffer_estimation": buffer_estimation,
+            }
+            if sensor_params["provides_reference"]:
+                reference_sensors.append(tmp)
+            else:
+                non_reference_sensors.append(tmp)
+
+        return reference_sensors, non_reference_sensors

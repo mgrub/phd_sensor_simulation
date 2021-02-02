@@ -1,17 +1,77 @@
 import numpy as np
 
+from models import LinearAffineModel
+
 
 class StankovicMethod:
-    def update_non_reference_sensors(self, a):
-        pass
+    def simulate_sensor_reading(self, timestamp, measurand_value, sensors):
+        for s in sensors:
+            y, uy = s["sensor"].indicated_value(measurand_value)
+            y = y + uy * np.random.randn()
+            s["buffer_indication"].add(data=[[timestamp, y, uy]])
 
-    def update_single_sensor(self, a):
-        pass
+            x_hat, ux_hat = s["sensor"].estimated_value(y, uy)
+            s["buffer_estimation"].add(data=[[timestamp, x_hat, ux_hat]])
 
+    def update_single_sensor(
+        self, sensor, neighbors, delay=5, delta=0.001, calc_unc=False
+    ):
+        # define some shorthand notation
+        neighbor_value_estimates = np.squeeze(
+            [n["buffer_estimation"].show(1)[2] for n in neighbors]
+        )
+        neighbor_uncertainty_estimates = np.squeeze(
+            [n["buffer_estimation"].show(1)[3] for n in neighbors]
+        )
+        timestamp = sensor["buffer_estimation"].show(1)[0]
+        x_hat = sensor["buffer_estimation"].show(1)[2]
+        y, uy = sensor["buffer_indication"].show(1)[2:]
 
-class StankovicWithUncertainty(StankovicMethod):
-    def update_single_sensor(self, a):
-        pass
+        if len(sensor["buffer_indication"]) > delay:
+            y_delayed = sensor["buffer_indication"].show(delay)[2][0]
+            # J = np.sum(np.square(neighbor_value_estimates - x_hat) / neighbor_uncertainty_estimates)
+            if calc_unc:
+                weights = neighbor_uncertainty_estimates / np.linalg.norm(
+                    neighbor_uncertainty_estimates
+                )
+            else:
+                weights = np.ones_like(neighbor_value_estimates)
+
+            grad_J = np.sum(
+                (neighbor_value_estimates - x_hat)
+                * np.array([[y_delayed, 1]]).T
+                / weights,
+                axis=1,
+            )
+            model = sensor["sensor"].estimated_compensation_model
+            param = model.parameters
+            new_param = param + delta * grad_J
+
+            # adjust parameter estimation uncertainties
+            if calc_unc:
+                C = self.build_derivative(
+                    param, neighbor_value_estimates, weights, y, delta
+                )
+                U = self.build_full_input_uncertainty_matrix(
+                    model.parameters_uncertainty, neighbor_uncertainty_estimates, uy
+                )
+                new_param_unc = C @ U @ C.T
+            else:
+                new_param_unc = None
+
+            model.set_parameters(
+                parameters=new_param, parameters_uncertainty=new_param_unc
+            )
+
+            # calculate estimated inverse model
+            p_inv, up_inv = model.inverse_model_parameters()
+            sensor["sensor"].estimated_transfer_model = LinearAffineModel(
+                **p_inv, **up_inv
+            )
+
+            return [timestamp, p_inv, up_inv]
+        else:
+            return None
 
     def build_derivative(self, param, neighbor_value_estimates, weights, y, delta):
         nn = len(neighbor_value_estimates)
