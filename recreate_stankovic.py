@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time_series_buffer import TimeSeriesBuffer
 
-from base import LinearAffineModel, PhysicalPhenomenon, Sensor
+from models import LinearAffineModel
+from base import PhysicalPhenomenon, Sensor
 
 # init "existing" already calibrated sensors
 n_neighbors = 5
@@ -97,7 +98,7 @@ for t in time:
     # simulate sensor readings
     for n in neighbors + [new_neighbor]:
         y, uy = n["sensor"].indicated_value(real_value)
-        # y = y + uy * np.random.randn()
+        y = y + uy * np.random.randn()
         n["buffer_indication"].add(data=[[t, y, uy]])
 
         x_hat, ux_hat = n["sensor"].estimated_value(y, uy)
