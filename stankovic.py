@@ -64,10 +64,8 @@ class StankovicMethod:
             )
 
             # calculate estimated inverse model
-            p_inv, up_inv = model.inverse_model_parameters()
-            sensor["sensor"].estimated_transfer_model = LinearAffineModel(
-                **p_inv, **up_inv
-            )
+            p_inv, up_inv = model.inverse_model_parameters(separate_unc=True)
+            sensor["sensor"].estimated_transfer_model = LinearAffineModel(**p_inv, **up_inv)
 
             return [timestamp, p_inv, up_inv]
         else:

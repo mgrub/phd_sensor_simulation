@@ -21,8 +21,11 @@ class ParametricModel:
         )
         return output, output_uncertainty
 
-    def inverse_model_parameters(self):
-        return None
+    def inverse_model_parameters(self, separate_unc=False):
+        if separate_unc:
+            return None, None
+        else:
+            return None
 
     def set_parameters(self, parameters=None, parameters_uncertainty=None):
         if parameters is not None:
@@ -72,7 +75,7 @@ class LinearAffineModel(ParametricModel):
         s = f"<LinearAffineModel: {a} * x + {b}>"
         return s
 
-    def get_params(self):
+    def get_params(self, separate_unc=False):
         a = self.parameters[0]
         b = self.parameters[1]
         ua2 = self.parameters_uncertainty[0, 0]
@@ -82,8 +85,11 @@ class LinearAffineModel(ParametricModel):
         parameters = {"a": a, "b": b}
         parameters_uncertainty = {"ua": np.sqrt(ua2), "ub": np.sqrt(ub2), "uab": uab}
 
-        return {**parameters, **parameters_uncertainty}
-
+        if separate_unc:
+            return parameters, parameters_uncertainty
+        else:
+            return {**parameters, **parameters_uncertainty}
+        
     def equation(self, x, ux, p, up):
         # shortcuts
         a = p[0]
@@ -105,7 +111,7 @@ class LinearAffineModel(ParametricModel):
 
         return val, unc, state
 
-    def inverse_model_parameters(self):
+    def inverse_model_parameters(self, separate_unc=False):
         # shortcuts
         a = self.parameters[0]
         b = self.parameters[1]
@@ -128,7 +134,10 @@ class LinearAffineModel(ParametricModel):
         parameters_inv = {"a": a_inv, "b": b_inv}
         parameters_uncertainty_inv = {"ua": ua_inv, "ub": ub_inv, "uab": uab_inv}
 
-        return parameters_inv, parameters_uncertainty_inv
+        if separate_unc:
+            return parameters_inv, parameters_uncertainty_inv
+        else:
+            return {**parameters_inv, **parameters_uncertainty_inv}
 
 
 class LinearTimeInvariantModel(ParametricModel):
