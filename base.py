@@ -1,8 +1,28 @@
 import json
+import random
 import numpy as np
 import scipy.signal as scs
 from time_series_buffer import TimeSeriesBuffer
 from models import LinearAffineModel
+
+
+class DeterministicPhysicalPhenomenon:
+    def __init__(self, tmin=0, tmax=10):
+
+        n_jumps = random.choice([0,2,5])
+
+
+    def omega(self, time, f_min=1, f_max=10, period=60):
+
+        a = (np.log(f_max) - np.log(f_min)) / 2
+        b = a + np.log(f_min)
+
+        omega = 2*np.pi * np.exp(a * (np.sin(2*np.pi*time/period)) + b)
+
+        return omega
+
+    def value(self, time):
+        return np.sin(self.omega(time) * time)
 
 
 class PhysicalPhenomenon:
@@ -76,15 +96,19 @@ class SimulationHelper:
 
             # get inverse model
             if provides_reference:
-                p, up = transfer.inverse_model_parameters()
+                # take into account that estimated transfer model is not the same as actual transfer model
+                transfer_estimate = LinearAffineModel(a=a+ua*np.random.randn(), b=b+ub*np.random.randn(), ua=ua, ub=ub)
+                params_est = transfer_estimate.get_params()
+                params_inv = transfer_estimate.inverse_model_parameters()
             else:
-                p, up = ({"a": 1.0, "b": 0.0}, {"ua": 1.0, "ub": 1.0, "uab": 0.0})
-
-            params_inv = {**p, **up}
+                params_est = {"a": 1.0, "b": 0.0, "ua": 1.0, "ub": 1.0, "uab": 0.0}
+                params_inv = {"a": 1.0, "b": 0.0, "ua": 1.0, "ub": 1.0, "uab": 0.0}
 
             sensors[sensor_name] = {
                 "transfer_behavior_type": "LinearAffineModel",
                 "transfer_behavior_params": params,
+                "estimated_transfer_behavior_type": "LinearAffineModel",
+                "estimated_transfer_behavior_params": params_est,
                 "estimated_correction_model_type": "LinearAffineModel",
                 "estimated_correction_model_params": params_inv,
                 "provides_reference": provides_reference,
@@ -92,7 +116,7 @@ class SimulationHelper:
 
         return json.dumps(sensors)
 
-    def init_sensors(self, path=None, jsonstring=None, maxlen=100):
+    def init_sensors(self, path=None, jsonstring=None, maxlen=None):
         """ load a bunch of sensors from json file/string """
         if path is not None:
             f = open(path, "r")
@@ -130,14 +154,19 @@ class SimulationHelper:
             sensor = Sensor(
                 transfer_model=transfer, estimated_compensation_model=inverse
             )
-            buffer_indication = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
-            buffer_estimation = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
+            if maxlen:
+                buffer_indication = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
+                buffer_estimation = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
+            else:
+                buffer_indication = None
+                buffer_estimation = None
 
             tmp = {
                 "sensor": sensor,
                 "buffer_indication": buffer_indication,
                 "buffer_estimation": buffer_estimation,
             }
+
             if sensor_params["provides_reference"]:
                 reference_sensors.append(tmp)
             else:
