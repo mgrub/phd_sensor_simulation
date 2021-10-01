@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.optimize as sco
 
 from models import LinearAffineModel
 
@@ -25,6 +26,19 @@ transfer_dut = LinearAffineModel(a=1.7, b=0.7, ua=0.4, ub=0.4, uab=0.02)   # thi
 y_dut, uy_dut = transfer_dut.apply(x_true, np.zeros_like(x_true))
 y_dut += uy_dut * np.random.randn(len(y_dut))  # add corresponding noise
 
+# evaluation function for optimization
+def evaluate(theta, x_ref, y_ref):
+    # init model
+    model = LinearAffineModel(a=theta[0], b=theta[1])
+
+    # apply model
+    y_dut, uy_dut = model.apply(x_ref, np.zeros_like(x_ref))
+
+    # calculate metric
+    residual = np.linalg.norm(y_dut - y_ref)
+
+    return residual
+
 
 # prepare some plotting
 fig, ax = plt.subplots(2, 1)
@@ -38,6 +52,7 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
     
     # available measurement information
     tt = t[current_indices]
+    xx_ref = x_ref[current_indices]
     yy_ref = y_ref[current_indices]
     uyy_ref = uy_ref[current_indices]
     yy_dut = y_dut[current_indices]
@@ -45,9 +60,9 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
     # plt
     ax[0].scatter(tt, yy_dut)
 
-    # TODO: estimate params from current data
-    
-
+    # estimate params from current data
+    res = sco.minimize(evaluate, x0=[1.0, 0.0], args=(xx_ref, yy_ref))
+    print(res.x)
 
     # TODO: estimate params distribution
 
