@@ -99,14 +99,25 @@ class LinearAffineModel(ParametricModel):
         uab = up[0, 1]
 
         # sensitivities
-        C = np.array([x, 1, a])
+        #C = np.array([x, 1, a])  # if x is 1D
+        C = np.zeros((len(x), 1, 3))
+        C[:,0,0] = x
+        C[:,0,1] = 1
+        C[:,0,2] = a
 
         # uncertainty matrix
-        U = np.array([[ua2, uab, 0], [uab, ub2, 0], [0, 0, np.square(ux)]])
+        # U = np.array([[ua2, uab, 0], [uab, ub2, 0], [0, 0, np.square(ux)]])  # if x is 1D
+        U = np.zeros((len(x),3,3))
+        U[:,0,0] = ua2
+        U[:,1,1] = ub2
+        U[:,0,1] = uab
+        U[:,1,0] = uab
+        U[:,2,2] = np.square(ux)
 
         # output equation
         val = a * x + b
-        unc = np.sqrt(C @ U @ C.T)
+        #unc = np.sqrt(C @ U @ C.T)  # if x is 1D
+        unc = np.sqrt(np.squeeze(C@U@np.transpose(C,axes=(0,2,1))))
         state = None
 
         return val, unc, state
