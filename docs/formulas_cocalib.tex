@@ -1,0 +1,87 @@
+\documentclass[10pt]{article}
+
+% packages
+\usepackage[a4paper, margin=1cm, twocolumn, landscape]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{import}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\usepackage{hyperref}
+\usepackage[noabbrev]{cleveref}
+\usepackage{autobreak}
+
+% paragraph spacing
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+
+% define vector and matrix representations
+%\renewcommand{\vec}[1]{\textbf{#1}}
+\renewcommand{\vec}[1]{\underline{#1}}
+%\renewcommand{\vec}[1]{\uppercase{#1}}
+\newcommand{\mat}[1]{#1}
+
+% set graphics path
+\graphicspath{{images/}}
+
+% Authors and Affiliations
+\title{Co-Calibration with Bayesian Inference to Update Linear Affine Model}
+\author{Maximilian Gruber}    % maximilian.gruber@ptb.de
+\date{October 2021}
+    
+\begin{document}
+    \maketitle
+    \section{Model}
+    We consider sensors with linear affine input-output behavior. 
+    \begin{align}
+        x(t) &= a*x(t) + b
+    \end{align}
+    
+    \section{Datapoints}
+    From a reference sensor, a time-discrete estimate of the measurand $x(t)$ is available with uncertainty $u_x(t)$. 
+    Also the indicated value $y(t)$ of the device under test (DUT) (the sensor to be calibrated) is available. 
+    A datapoint $\chi_i = [t_i, y(t_i), x(t_i), u_x(t_i)]$. 
+    The proposed method operates on a set of $n$ datapoints $X = \{\chi_k, \chi_{k+1}, \dots,  \chi_{k+n-1}\}$ at a time.
+
+    \section{Parameter}
+        
+    The model is defined by the parameter $\theta = [a, b]$. 
+    
+    \section{Hyperparameters}
+    The initial knowledge about the parameter is given by the hyperparameter $\alpha = \{\theta_0, \Sigma_0\}$ with initial parameter estimate $\theta_0 = [a_0, b_0]$ and corresponding initial covariance $\Sigma_0 = \begin{bmatrix}u_a^2 & u_{ab} \\ u_{ab} & u_b^2\end{bmatrix} $.
+    These represent a multivariate normal distribution according to $p(\theta | \alpha) \sim \mathcal{N}(\theta_0, \Sigma_0)$
+    
+    \section{Parameter Estimation / Update}
+    Estimation is/will be achieved via Bayesian Inference
+    \begin{align}
+        \underbrace{p(\theta | X, \alpha)}_{\text{posterior}} \propto \underbrace{p(X | \theta)}_{\text{likelihood}} \underbrace{p(\theta | \alpha)}_{\text{prior}}
+    \end{align}
+    
+    \section{Approximate Likelihood}
+    Option 1: MCMC (Metropolis Hastings?) and $\chi^2$-test to estimate likelidhood*prior
+    
+    Option 2: Estimate+Approximate likelihood as multivariate normal + analytically update prior
+    
+    ---------
+    
+    What did not work:
+    MLE -> estimates (as said) only the maximum likelihood position, and MC of that gives only the sensitivity of that maximum -> yields too low uncertainties
+    
+    \section{method outline}
+    \begin{enumerate}
+        \item obtain new data $X$
+        \item estimate likelihood of $X$ given prior belief
+        \item obtain posterior
+        \item update $\alpha$ from posterior (approximate posterior as gaussian)
+        \item check if $\Sigma$ fulfills requirements on calibration accuracy
+        \item terminate co-calibration or repeat with further data
+    \end{enumerate}
+    
+\end{document}
