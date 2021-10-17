@@ -24,7 +24,7 @@
 
 % define vector and matrix representations
 %\renewcommand{\vec}[1]{\textbf{#1}}
-\renewcommand{\vec}[1]{\underline{#1}}
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
 %\renewcommand{\vec}[1]{\uppercase{#1}}
 \newcommand{\mat}[1]{#1}
 
@@ -38,30 +38,38 @@
     
 \begin{document}
     \maketitle
+    
     \section{Model}
-    We consider sensors with linear affine input-output behavior. 
+    We consider sensors with linear affine measurement function (behavior from reference $x$ to indication $y$). (defined by VIM + GUM)
+    It is of interest to identify the parameters to assign an uncertainty to the indications.
     \begin{align}
-        x(t) &= a*x(t) + b
+        y(t) &= a*x(t) + b
     \end{align}
     
     \section{Datapoints}
     From a reference sensor, a time-discrete estimate of the measurand $x(t)$ is available with uncertainty $u_x(t)$. 
     Also the indicated value $y(t)$ of the device under test (DUT) (the sensor to be calibrated) is available. 
-    A datapoint $\chi_i = [t_i, y(t_i), x(t_i), u_x(t_i)]$. 
-    The proposed method operates on a set of $n$ datapoints $X = \{\chi_k, \chi_{k+1}, \dots,  \chi_{k+n-1}\}$ at a time.
-
-    \section{Parameter}
-        
-    The model is defined by the parameter $\theta = [a, b]$. 
+    Available datapoints take the form of $\vec{\chi}_i$ and the proposed method operates on a set $X$ containing $n$ datapoints $\vec{\chi}_i$ at a time.
+    \begin{align}
+        \vec{\chi}_i &= [t_i, y(t_i), x(t_i), u_x(t_i)]^T \\
+        X &= \{\vec{\chi}_k, \vec{\chi}_{k+1}, \dots,  \vec{\chi}_{k+n-1}\} 
+    \end{align}
     
-    \section{Hyperparameters}
-    The initial knowledge about the parameter is given by the hyperparameter $\alpha = \{\theta_0, \Sigma_0\}$ with initial parameter estimate $\theta_0 = [a_0, b_0]$ and corresponding initial covariance $\Sigma_0 = \begin{bmatrix}u_a^2 & u_{ab} \\ u_{ab} & u_b^2\end{bmatrix} $.
-    These represent a multivariate normal distribution according to $p(\theta | \alpha) \sim \mathcal{N}(\theta_0, \Sigma_0)$
+    \section{Parameters and Hyperparameters}
+    The model is defined by the parameter $\vec{\theta} = [a, b]^T$. 
+
+    The initial knowledge about the parameter is given by the hyperparameter $\alpha = \{\vec{\theta}_0, \mat{\Sigma}_0\}$ with initial parameter estimates $\vec{\theta}$ and corresponding initial covariance $\mat{\Sigma}_0$.
+    These represent a multivariate normal distribution according to $p(\vec{\theta} | \alpha)$.
+    \begin{align}
+        \vec{\theta}_0 &= [a_0, b_0]^T \\
+        \mat{\Sigma}_0 &= \begin{bmatrix}u_a^2 & u_{ab} \\ u_{ab} & u_b^2\end{bmatrix} \\
+        p(\vec{\theta} | \alpha) &\sim \mathcal{N}(\vec{\theta}_0, \mat{\Sigma}_0)
+    \end{align}
     
     \section{Parameter Estimation / Update}
-    Estimation is/will be achieved via Bayesian Inference
+    Estimation will be achieved via Bayesian Inference
     \begin{align}
-        \underbrace{p(\theta | X, \alpha)}_{\text{posterior}} \propto \underbrace{p(X | \theta)}_{\text{likelihood}} \underbrace{p(\theta | \alpha)}_{\text{prior}}
+        \underbrace{p(\vec{\theta} | X, \alpha)}_{\text{posterior}} \propto \underbrace{p(X | \vec{\theta})}_{\text{likelihood}} \underbrace{p(\vec{\theta} | \alpha)}_{\text{prior}}
     \end{align}
     
     \section{Approximate Likelihood}
@@ -69,18 +77,15 @@
     
     Option 2: Estimate+Approximate likelihood as multivariate normal + analytically update prior
     
-    ---------
+    Option 3 (did not work): MLE to estimate only the maximum likelihood position, and MC of that gives only the sensitivity of that maximum -> yields too low uncertainties
     
-    What did not work:
-    MLE -> estimates (as said) only the maximum likelihood position, and MC of that gives only the sensitivity of that maximum -> yields too low uncertainties
-    
-    \section{method outline}
+    \section{Method Outline}
     \begin{enumerate}
         \item obtain new data $X$
         \item estimate likelihood of $X$ given prior belief
         \item obtain posterior
         \item update $\alpha$ from posterior (approximate posterior as gaussian)
-        \item check if $\Sigma$ fulfills requirements on calibration accuracy
+        \item check if $\mat{\Sigma}$ fulfills requirements on calibration accuracy
         \item terminate co-calibration or repeat with further data
     \end{enumerate}
     
