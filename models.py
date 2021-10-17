@@ -126,16 +126,13 @@ class LinearAffineModel(ParametricModel):
         # shortcuts
         a = self.parameters[0]
         b = self.parameters[1]
-        ua2 = self.parameters_uncertainty[0, 0]
-        ub2 = self.parameters_uncertainty[1, 1]
-        uab = self.parameters_uncertainty[0, 1]
 
         # inverse (unc according GUM)
         a_inv = 1 / a
         b_inv = -b / a
 
         C = np.array([[-1 / np.square(a), 0], [b / np.square(a), -1 / a]])
-        U = np.array([[ua2, uab], [uab, ub2]])
+        U = self.parameters_uncertainty
         U_inv = C @ U @ C.T
 
         # pack result

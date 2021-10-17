@@ -5,12 +5,12 @@ import scipy.optimize as sco
 from models import LinearAffineModel
 
 
-t = np.linspace(0, 10, 100)
+t = np.linspace(0, 10, 101)
 x_true = np.sin(t) + 1
 
 
 # reference measurement simulation
-transfer_ref = LinearAffineModel(a=2.0, b=0.4, ua=0.05, ub=0.05, uab=0.005)
+transfer_ref = LinearAffineModel(a=2.0, b=2.4, ua=0.1, ub=0.1, uab=0.005)
 transfer_ref_inverse = LinearAffineModel(**transfer_ref.inverse_model_parameters())
 
 ## simulate data acquisition for reference
@@ -25,7 +25,7 @@ x_ref, ux_ref = transfer_ref_inverse.apply(y_ref, uy_ref)
 transfer_dut = LinearAffineModel(a=1.7, b=0.7, ua=0.2, ub=0.2, uab=0.01)   # this is unknown later
 y_dut, uy_dut = transfer_dut.apply(x_true, np.zeros_like(x_true))
 y_dut += uy_dut * np.random.randn(len(y_dut))  # add corresponding noise
-transfer_dut_calib = LinearAffineModel(ua=10000, ub=10000, uab=0)
+transfer_dut_calib = LinearAffineModel(b=2, ua=100, ub=100, uab=0)
 
 # evaluation function for optimization
 def evaluate(theta, y_dut, x_ref):
@@ -104,7 +104,7 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
 
 
 ax[0].plot(t, x_true, label="quantity")
-ax[0].errorbar(t, y_ref, uy_ref, label="ref measured")
+#ax[0].errorbar(t, y_ref, uy_ref, label="ref measured")
 ax[0].errorbar(t, x_ref, ux_ref, label="ref compensated")
 
 ax[0].plot(t, y_dut, label="dut measured")
