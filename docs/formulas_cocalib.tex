@@ -1,7 +1,7 @@
 \documentclass[10pt]{article}
 
 % packages
-\usepackage[a4paper, margin=1cm, twocolumn, landscape]{geometry}
+\usepackage[a4paper]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 
@@ -39,38 +39,120 @@
 \begin{document}
     \maketitle
     
-    \section{Model}
-    We consider sensors with linear affine measurement function (behavior from reference $x$ to indication $y$). (defined by VIM + GUM)
-    It is of interest to identify the parameters to assign an uncertainty to the indications.
+    It is of interest to calibrate a sensor in a way that complies with the VIM \cite{bipm_2012}. 
+    This involves to:
+    
+    \begin{quote}[VIM 2.39]
+        establish[\dots] a relation between the quantity values with measurement uncertainties provided by measurement standards and corresponding indications with associated measurement uncertainties
+    \end{quote}
+    
+    \begin{quote}[VIM 2.39]
+        use[\dots] this information to establish a relation for obtaining a measurement result from an indication
+    \end{quote}
+    
+    It is therefore necessary to mathematically describe the sensor transfer behavior, measurement data and regression task to estimate the former from the latter.
+    The effect of simplifications of the proposed assumptions need to be investigated.
+    
+    
+    \section{Sensor Model}
+    We consider sensors with an ideal linear affine measurement function from reference $x$ to indication $y$.
+    This adopts the nomenclature and notation of \cite{bipm_2008,bipm_2012}.
     \begin{align}
-        y(t) &= a*x(t) + b
+        y(t) &= a*x(t) + b \nonumber \\
+           &= f(x(t), \vec{\theta}) \\
+        \vec{\theta} &= \begin{bmatrix} a \\ b \end{bmatrix}
     \end{align}
     
-    \section{Datapoints}
-    From a reference sensor, a time-discrete estimate of the measurand $x(t)$ is available with uncertainty $u_x(t)$. 
-    Also the indicated value $y(t)$ of the device under test (DUT) (the sensor to be calibrated) is available. 
-    Available datapoints take the form of $\vec{\chi}_i$ and the proposed method operates on a set $X$ containing $n$ datapoints $\vec{\chi}_i$ at a time.
+    
+    \section{Data Model}
+    The assumed data model is detailed in \cite{dellaportas_1995}.
+    The reference device does not provide the actual (true) value of the measurand $X_{ai}$ but an observed value $X_{oi}$ that differs by an (unknown) error term $\tilde{\varepsilon}_i$.
+    Knowledge about the structure of $\tilde{\varepsilon}_i$ can be derived from the uncertainty $u_x(t)$ of the reference device.
+    The indication $Y_i$ of the DUT differs from the ideal model $f(X_{ai}, \vec{\theta})$ by an error $\varepsilon_i$.
+    The structure of $\varepsilon_i$ is unknown and its identification needs to be part of the calibration process.
+    The statistical model therefore looks like \cite{dellaportas_1995}:
     \begin{align}
-        \vec{\chi}_i &= [t_i, y(t_i), x(t_i), u_x(t_i)]^T \\
-        X &= \{\vec{\chi}_k, \vec{\chi}_{k+1}, \dots,  \vec{\chi}_{k+n-1}\} 
+        Y_i &= f(X_{ai}, \vec{\theta}) + \varepsilon_i \\
+        X_{oi} &= X_{ai} + \tilde{\varepsilon}_i
     \end{align}
     
-    \section{Parameters and Hyperparameters}
-    The model is defined by the parameter $\vec{\theta} = [a, b]^T$. 
-
-    The initial knowledge about the parameter is given by the hyperparameter $\alpha = \{\vec{\theta}_0, \mat{\Sigma}_0\}$ with initial parameter estimates $\vec{\theta}_0$ and corresponding initial covariance $\mat{\Sigma}_0$.
-    These represent a multivariate normal distribution according to $p(\vec{\theta} | \alpha)$.
+    Available datapoints take the form of $\vec{\delta}_i$ and the proposed method operates on a set $\Delta$ containing $n$ datapoints $\vec{\delta}_i$ at a time.
     \begin{align}
-        \vec{\theta}_0 &= [a_0, b_0]^T \\
-        \mat{\Sigma}_0 &= \begin{bmatrix}u_a^2 & u_{ab} \\ u_{ab} & u_b^2\end{bmatrix} \\
-        p(\vec{\theta} | \alpha) &\sim \mathcal{N}(\vec{\theta}_0, \mat{\Sigma}_0)
+        \vec{\delta}_i &= [t_i, y(t_i), x(t_i), u_x(t_i)]^T \nonumber \\
+                     &= [t_i, Y_i, X_{oi}, \sigma_{xi}^2)]^T \\
+        \Delta &= \{\vec{\delta}_k, \vec{\delta}_{k+1}, \dots,  \vec{\delta}_{k+n-1}\} 
     \end{align}
     
-    \section{Parameter Estimation / Update}
-    Estimation will be achieved via Bayesian Inference
+    
+    \section{Model Identification as by Dellaportas}
+    The joint distribution of the mentioned variables is
     \begin{align}
-        \underbrace{p(\vec{\theta} | X, \alpha)}_{\text{posterior}} \propto \underbrace{p(X | \vec{\theta})}_{\text{likelihood}} \underbrace{p(\vec{\theta} | \alpha)}_{\text{prior}}
+        p(\vec{\theta}, X_a, \sigma_y, \underbrace{Y, X_o, \sigma_x}_{\Delta})
     \end{align}
+    
+    The parameters $\vec{\theta}$, the actual reference values $X_{ai}$ and $\sigma_{y}$ are unknown.
+    The main interest lies in inferring knowledge about these unknowns from the measurement data $\Delta$ via Bayesian inference.
+    \begin{align}
+        \underbrace{p(\vec{\theta}, X_a | Y, X_o)}_{\text{posterior}} \propto \underbrace{p(Y | X_a, Y, X_0)}_{\text{likelihood}} \underbrace{p(\vec{\theta}, X_a | X_o)}_{\text{prior}}
+    \end{align}
+    
+    To follow \cite{dellaportas_1995}, this leads to the following conditionals of a Gibbs Sampler:
+    \begin{align}
+        p(X_a | \vec{\theta}, \sigma_y, \sigma_x, Y, X_o) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} {\color{red} p(X_a | \sigma_x, X_o)} \\
+        p(\theta_j | \theta_{(j)}, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\theta_j | \theta_{(j)}, X_a, \sigma_{y})}_{\text{assume } p(\theta_j)} \\
+        p(\sigma_y | \vec{\theta}, X_a, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, X_a)}_{\text{assume } p(\sigma_y)} 
+    \end{align}
+    
+    
+    \section{Assumptions on Distributions}
+    \begin{align}
+        \mat{U_x} &= \begin{bmatrix} u^2(t_k) && \\ &\ddots& \\ && u^2(t_{k+n-1}) \end{bmatrix} 
+    \end{align}
+    \begin{align}
+        \varepsilon_i &\propto \mathcal{N}(\vec{0}, \sigma_y^2 * I_n)\\
+        \tilde{\varepsilon}_i &\propto \mathcal{N}(\vec{0}, \mat{U_x}) \\
+    \end{align}
+    
+    
+    \section{Likelihoods for $Y$ and $X_a$}
+    \begin{align}
+        {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} &\propto \frac{1}{\sigma_y^n} \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - f(X_ai, \vec{\theta}) \right)^2 \right\} \\
+        {\color{red} p(X_a | \sigma_x, X_o)} &\propto \frac{1}{\sqrt{|\mat{U_x}|}} \exp\left\{ - \frac{1}{2} (X_a - X_o)^T \mat{U_x}^{-1} (X_a - X_o) \right\}
+    \end{align}    
+    
+    
+    \section{Posterior for $a$}
+    \begin{align}
+        p(a|b, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(a | b, X_a, \sigma_{y})}_{\mathcal{N}(\mu_a, \sigma_a^2)} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_a^2} ( a - \mu_a )^2 \right\} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i) - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a - \mu_a^2 ) \right\} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a ) \right\} \\
+        &\propto \exp\left\{ - 2 a \underbrace{\left[ \sum_{i=1}^N \frac{(b - Y_i) X_{ai}}{2\sigma_y^2} - \frac{\mu_a}{2\sigma_a^2} \right]}_{B} + a^2 \underbrace{\left[ - \sum_{i=1}^N \frac{X_{ai}^2}{2\sigma_y^2}  - \frac{1}{2\sigma_a^2} \right]}_{A} \right\} \\
+        &\propto \exp\left\{ A (a - \frac{B}{A})^2\right\}
+    \end{align}
+    Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, \frac{1}{A})$
+    
+    
+    \section{Posterior for $b$}
+    \begin{align}
+        p(b|a, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(b | a, X_a, \sigma_{y})}_{\mathcal{N}(\mu_b, \sigma_b^2)} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_b^2} ( a - \mu_b )^2 \right\} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i )- \frac{1}{2\sigma_b^2} ( a^2 - 2 a \mu_b - \mu_b^2 ) \right\} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (2 b (a X_{ai} - Y_i) + b^2 ) - \frac{1}{2\sigma_b^2} ( a^2 - 2 a \mu_b ) \right\} \\
+        &\propto \exp\left\{ - 2 b \underbrace{\left[ \sum_{i=1}^N \frac{a X_{ai} - Y_i}{2\sigma_y^2} - \frac{\mu_b}{2\sigma_b^2} \right]}_{B} + b^2 \underbrace{\left[ - \sum_{i=1}^N \frac{1}{2\sigma_y^2}  - \frac{1}{2\sigma_b^2} \right]}_{A} \right\} \\
+        &\propto \exp\left\{A (a - \frac{B}{A})^2\right\}
+    \end{align}
+    Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, \frac{1}{A})$
+    
+    
+    \section{Posterior for $\sigma_y$}
+    \begin{align}
+        p(\sigma_y | \vec{\theta}, X_a, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, X_a)}_{\mathcal{N}(\mu_{\sigma}, \sigma_{\sigma}^2)} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \underbrace{\sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2}_{\tilde{A}} \right\} * \exp\left\{ - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y - \mu_{\sigma} )^2 \right\} \\
+        &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \tilde{A} - \frac{1}{2\sigma_{\sigma}^2} ( a^2 - a \mu_{\sigma} + \mu_{\sigma}^2 ) \right\} \\
+        &\propto \exp\left\{ \sigma_y^2 \left( - \frac{1}{2\sigma_{\sigma}^2} \right) + \sigma_y \left( -  \frac{\mu_{\sigma}}{2\sigma_{\sigma}^2}\right) + \frac{1}{\sigma_y^2} \left( - \frac{\tilde{A}}{2} \right) \right\} 
+    \end{align}
+    
     
     \section{Approximate Likelihood}
     Option 1: MCMC (Metropolis Hastings?) and $\chi^2$-test to estimate likelidhood*prior
@@ -88,5 +170,7 @@
         \item check if $\mat{\Sigma}$ fulfills requirements on calibration accuracy
         \item terminate co-calibration or repeat with further data
     \end{enumerate}
+    
+    \bibliography{references}
     
 \end{document}
