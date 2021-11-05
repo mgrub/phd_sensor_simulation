@@ -93,7 +93,7 @@
     The parameters $\vec{\theta}$, the actual reference values $X_{ai}$ and $\sigma_{y}$ are unknown.
     The main interest lies in inferring knowledge about these unknowns from the measurement data $\Delta$ via Bayesian inference.
     \begin{align}
-        \underbrace{p(\vec{\theta}, X_a | Y, X_o)}_{\text{posterior}} \propto \underbrace{p(Y | X_a, Y, X_0)}_{\text{likelihood}} \underbrace{p(\vec{\theta}, X_a | X_o)}_{\text{prior}}
+        \underbrace{p(\vec{\theta}, X_a | Y, X_o)}_{\text{posterior}} \propto \underbrace{p(Y | X_a, Y, X_o)}_{\text{likelihood}} \underbrace{p(\vec{\theta}, X_a | X_o)}_{\text{prior}}
     \end{align}
     
     To follow \cite{dellaportas_1995}, this leads to the following conditionals of a Gibbs Sampler:
