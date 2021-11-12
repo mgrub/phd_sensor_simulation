@@ -26,7 +26,7 @@
 %\renewcommand{\vec}[1]{\textbf{#1}}
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
 %\renewcommand{\vec}[1]{\uppercase{#1}}
-\newcommand{\mat}[1]{#1}
+\newcommand{\mat}[1]{\boldsymbol{#1}}
 
 % set graphics path
 \graphicspath{{images/}}
@@ -116,16 +116,38 @@ This leads to the following conditionals of a Gibbs Sampler \cite{dellaportas_19
 
 \section{Likelihoods}
 \begin{align}
-    {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} &\propto \frac{1}{\sigma_y^n} \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - f(X_ai, \vec{\theta}) \right)^2 \right\} \\
+    {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} &\propto \frac{1}{\sigma_y^n} \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - f(X_{ai}, \vec{\theta}) \right)^2 \right\} \\
     {\color{red} p(X_a | \sigma_x, X_o)} &\propto \frac{1}{\sqrt{|\mat{U_x}|}} \exp\left\{ - \frac{1}{2} (X_a - X_o)^T \mat{U_x}^{-1} (X_a - X_o) \right\}
 \end{align}    
 
 \section{Posteriors}
 \subsection{Posterior for $X_a$}
 \begin{align}
-    p(X_a | \vec{\theta}, \sigma_y, \sigma_x, Y, X_o) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} {\color{red} p(X_a | \sigma_x, X_o)} 
-\end{align}
+    p(X_a | \vec{\theta}, \sigma_y, \sigma_x, Y, X_o) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} {\color{red} p(X_a | \sigma_x, X_o)} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2} (X_a - X_o)^T \mat{U_x}^{-1} (X_a - X_o) \right\} \\
+    
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i) \right\} \nonumber \\
+    &\quad * \exp\left\{ - \frac{1}{2} ( X_a^T \mat{U_x}^{-1} X_a - X_a^T \mat{U_x}^{-1} X_o -X_o^T \mat{U_x}^{-1} X_a + X_o^T \mat{U_x}^{-1} X_o ) \right\} \\
+    
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) \right\} \nonumber \\
+    &\quad * \exp\left\{ - \frac{1}{2} ( X_a^T \mat{U_x}^{-1} X_a - X_a^T \mat{U_x}^{-1} X_o -X_o^T \mat{U_x}^{-1} X_a) \right\} \\
+    
+    &\propto \exp\left\{ - \frac{1}{2} (X_a^T \mat{F_1} X_a + X_a^T \vec{F_2} + \vec{F_2}^T X_a) \right\} \nonumber \\
+    &\quad * \exp\left\{ - \frac{1}{2} ( X_a^T \mat{U_x}^{-1} X_a - X_a^T \mat{U_x}^{-1} X_o -X_o^T \mat{U_x}^{-1} X_a) \right\} \\
+    
+    &\propto \exp\left\{ - \frac{1}{2} (X_a^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}} X_a + X_a^T (\vec{F_2} - \mat{U_x}^{-1} X_o) + (\vec{F_2}^T - X_o^T \mat{U_x}^{-1}) X_a) \right\} \\
+    
+    &\propto \exp\left\{ - \frac{1}{2} (X_a^T \mat{V} X_a + X_a^T \underbrace{(\vec{F_2} - \mat{U_x}^{-1} X_o) \mat{V}^{-1}}_{\vec{M}} \mat{V} + \mat{V}^T \vec{M}^T X_a) \right\} \\
+    
+    &\propto \exp\left\{ - \frac{1}{2} (X_a - M)^T \mat{V} (X_a - M) \right\}
 
+\end{align}
+Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V}^{-1})$. 
+The following matrices are introduced to transform the sum into a matrix operation:
+\begin{align}
+    \mat{F_1} &= \frac{a^2}{\sigma_y^2} * \mat{I_N} \\
+    \vec{F_2} &= \frac{a}{\sigma_y^2} \begin{bmatrix} b-Y_1 & \dots & b-Y_N \end{bmatrix}^T
+\end{align}
 
 \subsection{Posterior for $a$}
 \begin{align}
