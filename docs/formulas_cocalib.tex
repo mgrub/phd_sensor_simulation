@@ -67,9 +67,9 @@
     \section{Data Model}
     The assumed data model is detailed in \cite{dellaportas_1995}.
     The reference device does not provide the actual (true) value of the measurand $X_{ai}$ but an observed value $X_{oi}$ that differs by an (unknown) error term $\tilde{\varepsilon}_i$.
-    Knowledge about the structure of $\tilde{\varepsilon}_i$ can be derived from the uncertainty $u_x(t)$ of the reference device.
+    Knowledge about the distribution of $\tilde{\varepsilon}_i$ can be derived from the uncertainty $u_x(t)$ of the reference device.
     The indication $Y_i$ of the DUT differs from the ideal model $f(X_{ai}, \vec{\theta})$ by an error $\varepsilon_i$.
-    The structure of $\varepsilon_i$ is unknown and its identification needs to be part of the calibration process.
+    The distribution of $\varepsilon_i$ is not fully known and needs to be identified as part of the calibration process.
     The statistical model therefore looks like \cite{dellaportas_1995}:
     \begin{align}
         Y_i &= f(X_{ai}, \vec{\theta}) + \varepsilon_i \\
@@ -79,7 +79,7 @@
     Available datapoints take the form of $\vec{\delta}_i$ and the proposed method operates on a set $\Delta$ containing $n$ datapoints $\vec{\delta}_i$ at a time.
     \begin{align}
         \vec{\delta}_i &= [t_i, y(t_i), x(t_i), u_x(t_i)]^T \nonumber \\
-                     &= [t_i, Y_i, X_{oi}, \sigma_{xi}^2)]^T \\
+                     &= [t_i, Y_i, X_{oi}, \sigma_{xi})]^T \\
         \Delta &= \{\vec{\delta}_k, \vec{\delta}_{k+1}, \dots,  \vec{\delta}_{k+n-1}\} 
     \end{align}
     
@@ -96,7 +96,7 @@
         \underbrace{p(\vec{\theta}, X_a | Y, X_o)}_{\text{posterior}} \propto \underbrace{p(Y | X_a, Y, X_o)}_{\text{likelihood}} \underbrace{p(\vec{\theta}, X_a | X_o)}_{\text{prior}}
     \end{align}
     
-    To follow \cite{dellaportas_1995}, this leads to the following conditionals of a Gibbs Sampler:
+    This leads to the following conditionals of a Gibbs Sampler \cite{dellaportas_1995}:
     \begin{align}
         p(X_a | \vec{\theta}, \sigma_y, \sigma_x, Y, X_o) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} {\color{red} p(X_a | \sigma_x, X_o)} \\
         p(\theta_j | \theta_{(j)}, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\theta_j | \theta_{(j)}, X_a, \sigma_{y})}_{\text{assume } p(\theta_j)} \\
@@ -114,14 +114,20 @@
     \end{align}
     
     
-    \section{Likelihoods for $Y$ and $X_a$}
+    \section{Likelihoods}
     \begin{align}
         {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} &\propto \frac{1}{\sigma_y^n} \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - f(X_ai, \vec{\theta}) \right)^2 \right\} \\
         {\color{red} p(X_a | \sigma_x, X_o)} &\propto \frac{1}{\sqrt{|\mat{U_x}|}} \exp\left\{ - \frac{1}{2} (X_a - X_o)^T \mat{U_x}^{-1} (X_a - X_o) \right\}
     \end{align}    
     
+    \section{Posteriors}
+    \subsection{Posterior for $X_a$}
+    \begin{align}
+        p(X_a | \vec{\theta}, \sigma_y, \sigma_x, Y, X_o) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} {\color{red} p(X_a | \sigma_x, X_o)} 
+    \end{align}
     
-    \section{Posterior for $a$}
+    
+    \subsection{Posterior for $a$}
     \begin{align}
         p(a|b, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(a | b, X_a, \sigma_{y})}_{\mathcal{N}(\mu_a, \sigma_a^2)} \\
         &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_a^2} ( a - \mu_a )^2 \right\} \\
@@ -133,7 +139,7 @@
     Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, \frac{1}{A})$
     
     
-    \section{Posterior for $b$}
+    \subsection{Posterior for $b$}
     \begin{align}
         p(b|a, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(b | a, X_a, \sigma_{y})}_{\mathcal{N}(\mu_b, \sigma_b^2)} \\
         &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_b^2} ( a - \mu_b )^2 \right\} \\
@@ -145,7 +151,7 @@
     Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, \frac{1}{A})$
     
     
-    \section{Posterior for $\sigma_y$}
+    \subsection{Posterior for $\sigma_y$}
     \begin{align}
         p(\sigma_y | \vec{\theta}, X_a, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, X_a)}_{\mathcal{N}(\mu_{\sigma}, \sigma_{\sigma}^2)} \\
         &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \underbrace{\sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2}_{\tilde{A}} \right\} * \exp\left\{ - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y - \mu_{\sigma} )^2 \right\} \\
@@ -153,13 +159,15 @@
         &\propto \exp\left\{ \sigma_y^2 \left( - \frac{1}{2\sigma_{\sigma}^2} \right) + \sigma_y \left( -  \frac{\mu_{\sigma}}{2\sigma_{\sigma}^2}\right) + \frac{1}{\sigma_y^2} \left( - \frac{\tilde{A}}{2} \right) \right\} 
     \end{align}
     
+        
+    \section{Simplifications}
     
-    \section{Approximate Likelihood}
-    Option 1: MCMC (Metropolis Hastings?) and $\chi^2$-test to estimate likelidhood*prior
+    \subsection{Deterministic Reference $X$}
     
-    Option 2: Estimate+Approximate likelihood as multivariate normal + analytically update prior
+    \subsection{Known Variance $\sigma_y$}
     
-    Option 3 (did not work): MLE to estimate only the maximum likelihood position, and MC of that gives only the sensitivity of that maximum -> yields too low uncertainties
+    \subsection{Both?}
+    
     
     \section{Method Outline}
     \begin{enumerate}
@@ -170,6 +178,16 @@
         \item check if $\mat{\Sigma}$ fulfills requirements on calibration accuracy
         \item terminate co-calibration or repeat with further data
     \end{enumerate}
+
+
+
+    \section{Approximate Likelihood}
+    
+    Option 1: MCMC (Metropolis Hastings?) and $\chi^2$-test to estimate likelidhood*prior
+    
+    Option 2: Estimate+Approximate likelihood as multivariate normal + analytically update prior
+    
+    Option 3 (did not work): MLE to estimate only the maximum likelihood position, and MC of that gives only the sensitivity of that maximum -> yields too low uncertainties
     
     \bibliographystyle{plain}
     \bibliography{references.bib}
