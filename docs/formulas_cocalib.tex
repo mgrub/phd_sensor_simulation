@@ -158,7 +158,7 @@ The following matrices are introduced to transform the sum into a matrix operati
     &\propto \exp\left\{ - 2 a \underbrace{\left[ \sum_{i=1}^N \frac{(b - Y_i) X_{ai}}{2\sigma_y^2} - \frac{\mu_a}{2\sigma_a^2} \right]}_{B} + a^2 \underbrace{\left[ - \sum_{i=1}^N \frac{X_{ai}^2}{2\sigma_y^2}  - \frac{1}{2\sigma_a^2} \right]}_{A} \right\} \\
     &\propto \exp\left\{ A (a - \frac{B}{A})^2\right\}
 \end{align}
-Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, \frac{1}{A})$
+Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 
 
 \subsection{Posterior for $b$}
@@ -170,7 +170,7 @@ Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, \frac{1}{A})$
     &\propto \exp\left\{ - 2 b \underbrace{\left[ \sum_{i=1}^N \frac{a X_{ai} - Y_i}{2\sigma_y^2} - \frac{\mu_b}{2\sigma_b^2} \right]}_{B} + b^2 \underbrace{\left[ - \sum_{i=1}^N \frac{1}{2\sigma_y^2}  - \frac{1}{2\sigma_b^2} \right]}_{A} \right\} \\
     &\propto \exp\left\{A (a - \frac{B}{A})^2\right\}
 \end{align}
-Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, \frac{1}{A})$
+Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 
 
 \subsection{Posterior for $\sigma_y$}
