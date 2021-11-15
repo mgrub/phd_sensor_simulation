@@ -96,13 +96,13 @@ Available datapoints take the form of $\vec{\delta}_i$ and the proposed method o
 \section{Model Identification as by Dellaportas}
 The joint distribution of the mentioned variables is
 \begin{align}
-    p(\vec{\theta}, X_a, \sigma_y, \underbrace{Y, X_o, \sigma_x}_{\Delta})
+    p(\vec{\theta}, \vec{X_a}, \sigma_y, \underbrace{\vec{Y}, \vec{X_o}, \sigma_x}_{\Delta})
 \end{align}
 
 The parameters $\vec{\theta}$, the actual reference values $X_{ai}$ and $\sigma_{y}$ are unknown.
 The main interest lies in inferring knowledge about these unknowns from the measurement data $\Delta$ via Bayesian inference.
 \begin{align}
-    \underbrace{p(\vec{\theta}, X_a | Y, X_o)}_{\text{posterior}} \propto \underbrace{p(Y | X_a, Y, X_o)}_{\text{likelihood}} \underbrace{p(\vec{\theta}, X_a | X_o)}_{\text{prior}}
+    \underbrace{p(\vec{\theta}, \vec{X_a} | \vec{Y}, \vec{X_o})}_{\text{posterior}} \propto \underbrace{p(\vec{Y} | \vec{X_a}, \vec{\theta}, \vec{X_o})}_{\text{likelihood}} \underbrace{p(\vec{\theta}, \vec{X_a} | \vec{X_o})}_{\text{prior}}
 \end{align}
 
 This leads to the following conditionals of a Gibbs Sampler \cite{dellaportas_1995}:
@@ -115,30 +115,31 @@ This leads to the following conditionals of a Gibbs Sampler \cite{dellaportas_19
 
 \section{Likelihoods}
 \begin{align}
-    {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} &\propto \frac{1}{\sigma_y^n} \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - f(X_{ai}, \vec{\theta}) \right)^2 \right\} \\
-    {\color{red} p(X_a | \sigma_x, X_o)} &\propto \frac{1}{\sqrt{|\mat{U_x}|}} \exp\left\{ - \frac{1}{2} (X_a - X_o)^T \mat{U_x}^{-1} (X_a - X_o) \right\}
+    {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} &\propto \frac{1}{\sigma_y^n} \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - f(X_{ai}, \vec{\theta}) \right)^2 \right\} \\
+    {\color{red} p(\vec{X_a} | \sigma_x, \vec{X_o})} &\propto \frac{1}{\sqrt{|\mat{U_x}|}} \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{X_o})^T \mat{U_x}^{-1} (\vec{X_a} - \vec{X_o}) \right\}
 \end{align}    
 
 \section{Posteriors}
-\subsection{Posterior for $X_a$}
+\subsection{Posterior for $\vec{X_a}$}
+Evaluate \cref{eq:posterior_X_a}.
 \begin{align}
-    p(X_a | \vec{\theta}, \sigma_y, \sigma_x, Y, X_o) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} {\color{red} p(X_a | \sigma_x, X_o)} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2} (X_a - X_o)^T \mat{U_x}^{-1} (X_a - X_o) \right\} \\
+    p(\vec{X_a} | \vec{\theta}, \sigma_y, \sigma_x, \vec{Y}, \vec{X_o}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} {\color{red} p(\vec{X_a} | \sigma_x, \vec{X_o})} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{X_o})^T \mat{U_x}^{-1} (\vec{X_a} - \vec{X_o}) \right\} \\
     
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i) \right\} \nonumber \\
-    &\quad * \exp\left\{ - \frac{1}{2} ( X_a^T \mat{U_x}^{-1} X_a - X_a^T \mat{U_x}^{-1} X_o -X_o^T \mat{U_x}^{-1} X_a + X_o^T \mat{U_x}^{-1} X_o ) \right\} \\
+    &\quad * \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a} + \vec{X_o}^T \mat{U_x}^{-1} \vec{X_o} ) \right\} \\
     
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) \right\} \nonumber \\
-    &\quad * \exp\left\{ - \frac{1}{2} ( X_a^T \mat{U_x}^{-1} X_a - X_a^T \mat{U_x}^{-1} X_o -X_o^T \mat{U_x}^{-1} X_a) \right\} \\
+    &\quad * \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (X_a^T \mat{F_1} X_a + X_a^T \vec{F_2} + \vec{F_2}^T X_a) \right\} \nonumber \\
-    &\quad * \exp\left\{ - \frac{1}{2} ( X_a^T \mat{U_x}^{-1} X_a - X_a^T \mat{U_x}^{-1} X_o -X_o^T \mat{U_x}^{-1} X_a) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \nonumber \\
+    &\quad * \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (X_a^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}} X_a + X_a^T (\vec{F_2} - \mat{U_x}^{-1} X_o) + (\vec{F_2}^T - X_o^T \mat{U_x}^{-1}) X_a) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}} \vec{X_a} + \vec{X_a}^T (\vec{F_2} - \mat{U_x}^{-1} \vec{X_o}) + (\vec{F_2}^T - \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (X_a^T \mat{V} X_a + X_a^T \underbrace{(\vec{F_2} - \mat{U_x}^{-1} X_o) \mat{V}^{-1}}_{\vec{M}} \mat{V} + \mat{V}^T \vec{M}^T X_a) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V} \vec{X_a} + \vec{X_a}^T \underbrace{(\vec{F_2} - \mat{U_x}^{-1} \vec{X_o}) \mat{V}^{-1}}_{\vec{M}} \mat{V} + \mat{V}^T \vec{M}^T \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (X_a - M)^T \mat{V} (X_a - M) \right\}
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - M)^T \mat{V} (\vec{X_a} - M) \right\}
 
 \end{align}
 Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V}^{-1})$. 
@@ -151,7 +152,7 @@ The following matrices are introduced to transform the sum into a matrix operati
 \subsection{Posterior for $a$}
 Evaluate \cref{eq:posterior_params} for $\theta_i= a$.
 \begin{align}
-    p(a|b, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(a | b, X_a, \sigma_{y})}_{\mathcal{N}(\mu_a, \sigma_a^2)} \\
+    p(a|b, \vec{X_a}, \sigma_y, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(a | b, \vec{X_a}, \sigma_{y})}_{\mathcal{N}(\mu_a, \sigma_a^2)} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_a^2} ( a - \mu_a )^2 \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i) - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a - \mu_a^2 ) \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a ) \right\} \\
@@ -164,7 +165,7 @@ Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 \subsection{Posterior for $b$}
 Evaluate \cref{eq:posterior_params} for $\theta_i= b$.
 \begin{align}
-    p(b|a, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(b | a, X_a, \sigma_{y})}_{\mathcal{N}(\mu_b, \sigma_b^2)} \\
+    p(b|a, \vec{X_a}, \sigma_y, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(b | a, \vec{X_a}, \sigma_{y})}_{\mathcal{N}(\mu_b, \sigma_b^2)} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_b^2} ( a - \mu_b )^2 \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i )- \frac{1}{2\sigma_b^2} ( a^2 - 2 a \mu_b - \mu_b^2 ) \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (2 b (a X_{ai} - Y_i) + b^2 ) - \frac{1}{2\sigma_b^2} ( a^2 - 2 a \mu_b ) \right\} \\
@@ -177,7 +178,7 @@ Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 \subsection{Posterior for $\sigma_y$}
 Evaluate \cref{eq:posterior_sigma_y}.
 \begin{align}
-    p(\sigma_y | \vec{\theta}, X_a, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, X_a)}_{\mathcal{N}(\mu_{\sigma}, \sigma_{\sigma}^2)} \\
+    p(\sigma_y | \vec{\theta}, \vec{X_a}, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, \vec{X_a})}_{\mathcal{N}(\mu_{\sigma}, \sigma_{\sigma}^2)} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \underbrace{\sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2}_{\tilde{A}} \right\} * \exp\left\{ - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y - \mu_{\sigma} )^2 \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \tilde{A} - \frac{1}{2\sigma_{\sigma}^2} ( a^2 - a \mu_{\sigma} + \mu_{\sigma}^2 ) \right\} \\
     &\propto \exp\left\{ \sigma_y^2 \left( - \frac{1}{2\sigma_{\sigma}^2} \right) + \sigma_y \left( -  \frac{\mu_{\sigma}}{2\sigma_{\sigma}^2}\right) + \frac{1}{\sigma_y^2} \left( - \frac{\tilde{A}}{2} \right) \right\} 
