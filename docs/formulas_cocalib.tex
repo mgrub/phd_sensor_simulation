@@ -76,6 +76,15 @@ The statistical model therefore looks like \cite{dellaportas_1995}:
     X_{oi} &= X_{ai} + \tilde{\varepsilon}_i
 \end{align}
 
+With the following assumptions on the distributions of the errors
+\begin{align}
+    \varepsilon_i &\propto \mathcal{N}(\vec{0}, \sigma_y^2 * I_n)\\
+    \tilde{\varepsilon}_i &\propto \mathcal{N}(\vec{0}, \mat{U_x}) 
+\end{align}
+\begin{align}
+    \mat{U_x} &= \begin{bmatrix} u^2(t_k) && \\ &\ddots& \\ && u^2(t_{k+n-1}) \end{bmatrix} 
+\end{align}
+
 Available datapoints take the form of $\vec{\delta}_i$ and the proposed method operates on a set $\Delta$ containing $n$ datapoints $\vec{\delta}_i$ at a time.
 \begin{align}
     \vec{\delta}_i &= [t_i, y(t_i), x(t_i), u_x(t_i)]^T \nonumber \\
@@ -98,19 +107,7 @@ The main interest lies in inferring knowledge about these unknowns from the meas
 
 This leads to the following conditionals of a Gibbs Sampler \cite{dellaportas_1995}:
 \begin{align}
-    p(X_a | \vec{\theta}, \sigma_y, \sigma_x, Y, X_o) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} {\color{red} p(X_a | \sigma_x, X_o)} \\
-    p(\theta_j | \theta_{(j)}, X_a, \sigma_y, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\theta_j | \theta_{(j)}, X_a, \sigma_{y})}_{\text{assume } p(\theta_j)} \\
-    p(\sigma_y | \vec{\theta}, X_a, Y) &\propto {\color{cyan} p(Y | X_a, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, X_a)}_{\text{assume } p(\sigma_y)} 
-\end{align}
-
-
-\section{Assumptions on Distributions}
-\begin{align}
-    \mat{U_x} &= \begin{bmatrix} u^2(t_k) && \\ &\ddots& \\ && u^2(t_{k+n-1}) \end{bmatrix} 
-\end{align}
-\begin{align}
-    \varepsilon_i &\propto \mathcal{N}(\vec{0}, \sigma_y^2 * I_n)\\
-    \tilde{\varepsilon}_i &\propto \mathcal{N}(\vec{0}, \mat{U_x}) \\
+    p(\sigma_y | \vec{\theta}, \vec{X_a}, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, \vec{X_a})}_{\text{assume } p(\sigma_y)} \label{eq:posterior_sigma_y}
 \end{align}
 
 
