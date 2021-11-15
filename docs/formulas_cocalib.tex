@@ -196,23 +196,11 @@ Evaluate \cref{eq:posterior_sigma_y}.
 
 \section{Method Outline}
 \begin{enumerate}
-    \item obtain new data $X$
-    \item estimate likelihood of $X$ given prior belief
-    \item obtain posterior
-    \item update $\alpha$ from posterior (approximate posterior as gaussian)
-    \item check if $\mat{\Sigma}$ fulfills requirements on calibration accuracy
+    \item obtain new data $\Delta$
+    \item obtain posteriors, if necessary approximate result as gaussian
+    \item check if requirements on calibration accuracy are fulfilled
     \item terminate co-calibration or repeat with further data
 \end{enumerate}
-
-
-
-\section{Approximate Likelihood}
-
-Option 1: MCMC (Metropolis Hastings?) and $\chi^2$-test to estimate likelidhood*prior
-
-Option 2: Estimate+Approximate likelihood as multivariate normal + analytically update prior
-
-Option 3 (did not work): MLE to estimate only the maximum likelihood position, and MC of that gives only the sensitivity of that maximum -> yields too low uncertainties
 
 \bibliographystyle{plain}
 \bibliography{references.bib}
