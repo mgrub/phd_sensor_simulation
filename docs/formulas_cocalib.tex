@@ -135,11 +135,11 @@ Evaluate \cref{eq:posterior_X_a}.
     &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \nonumber \\
     &\quad * \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}} \vec{X_a} + \vec{X_a}^T (\vec{F_2} - \mat{U_x}^{-1} \vec{X_o}) + (\vec{F_2}^T - \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}} \vec{X_a} - \vec{X_a}^T (- \vec{F_2} + \mat{U_x}^{-1} \vec{X_o}) - (- \vec{F_2}^T + \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V} \vec{X_a} + \vec{X_a}^T \underbrace{(\vec{F_2} - \mat{U_x}^{-1} \vec{X_o}) \mat{V}^{-1}}_{\vec{M}} \mat{V} + \mat{V}^T \vec{M}^T \vec{X_a}) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V} \vec{X_a} - \vec{X_a}^T \underbrace{(\mat{U_x}^{-1} \vec{X_o} - \vec{F_2}) \mat{V}^{-1}}_{\vec{M}} \mat{V} - \mat{V}^T \vec{M}^T \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - M)^T \mat{V} (\vec{X_a} - M) \right\}
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V} (\vec{X_a} - \vec{M}) \right\}
 
 \end{align}
 Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V}^{-1})$. 
@@ -166,10 +166,10 @@ Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 Evaluate \cref{eq:posterior_params} for $\theta_i= b$.
 \begin{align}
     p(b|a, \vec{X_a}, \sigma_y, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(b | a, \vec{X_a}, \sigma_{y})}_{\mathcal{N}(\mu_b, \sigma_b^2)} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_b^2} ( a - \mu_b )^2 \right\} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i )- \frac{1}{2\sigma_b^2} ( a^2 - 2 a \mu_b - \mu_b^2 ) \right\} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (2 b (a X_{ai} - Y_i) + b^2 ) - \frac{1}{2\sigma_b^2} ( a^2 - 2 a \mu_b ) \right\} \\
-    &\propto \exp\left\{ - 2 b \underbrace{\left[ \sum_{i=1}^N \frac{a X_{ai} - Y_i}{2\sigma_y^2} - \frac{\mu_b}{2\sigma_b^2} \right]}_{B} + b^2 \underbrace{\left[ - \sum_{i=1}^N \frac{1}{2\sigma_y^2}  - \frac{1}{2\sigma_b^2} \right]}_{A} \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_b^2} ( b - \mu_b )^2 \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i )- \frac{1}{2\sigma_b^2} ( b^2 - 2 b \mu_b - \mu_b^2 ) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (2 b (a X_{ai} - Y_i) + b^2 ) - \frac{1}{2\sigma_b^2} ( b^2 - 2 b \mu_b ) \right\} \\
+    &\propto \exp\left\{ - 2 b \underbrace{\left[ \sum_{i=1}^N \frac{a X_{ai} - Y_i}{2\sigma_y^2} - \frac{\mu_b}{2\sigma_b^2} \right]}_{B} + b^2 \underbrace{\left[ - \frac{N}{2\sigma_y^2}  - \frac{1}{2\sigma_b^2} \right]}_{A} \right\} \\
     &\propto \exp\left\{A (a - \frac{B}{A})^2\right\}
 \end{align}
 Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
@@ -180,7 +180,7 @@ Evaluate \cref{eq:posterior_sigma_y}.
 \begin{align}
     p(\sigma_y | \vec{\theta}, \vec{X_a}, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, \vec{X_a})}_{\mathcal{N}(\mu_{\sigma}, \sigma_{\sigma}^2)} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \underbrace{\sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2}_{\tilde{A}} \right\} * \exp\left\{ - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y - \mu_{\sigma} )^2 \right\} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \tilde{A} - \frac{1}{2\sigma_{\sigma}^2} ( a^2 - a \mu_{\sigma} + \mu_{\sigma}^2 ) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \tilde{A} - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y^2 - \sigma_y \mu_{\sigma} + \mu_{\sigma}^2 ) \right\} \\
     &\propto \exp\left\{ \sigma_y^2 \left( - \frac{1}{2\sigma_{\sigma}^2} \right) + \sigma_y \left( -  \frac{\mu_{\sigma}}{2\sigma_{\sigma}^2}\right) + \frac{1}{\sigma_y^2} \left( - \frac{\tilde{A}}{2} \right) \right\} 
 \end{align}
 
