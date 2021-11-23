@@ -17,6 +17,22 @@ true_transfer_dut = LinearAffineModel(a=2.0, b=2.4)
 y = true_transfer_dut.apply(x_actual, np.zeros_like(x_actual))[0] + np.random.normal(scale=0.2, size=len(x_actual))
 
 
+# init prior knowledge
+prior = {
+    "a" : {
+        "mu" : 1.0,
+        "sigma" : 1.0,
+    },
+    "b" : {
+        "mu" : 0.0,
+        "sigma" : 1.0,
+    },
+    "sigma_y" : {
+        "mu" : 0.5,
+        "sigma" : 0.3,
+    }
+}
+
 # prepare some plotting
 fig, ax = plt.subplots(3, 1)
 
@@ -35,18 +51,77 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
     xx_actual = x_actual[current_indices]
     xx_observed = x_observed[current_indices]
     Uxx = Ux[current_indices][:,current_indices]
+    Uxx_inv = np.linalg.inv(Uxx)
     yy = y[current_indices]
 
     # plt
     ax[0].scatter(tt, yy)
 
+    # shortcuts for prior
+    mu_a = prior["a"]["mu"]
+    mu_b = prior["b"]["mu"]
+    mu_sigma_y = prior["sigma_y"]["mu"]
+
+    sigma_a = prior["a"]["sigma"]
+    sigma_b = prior["b"]["sigma"]
+    sigma_sigma_y = prior["sigma_y"]["sigma"]
+
     # update posteriors using (block-)Gibbs sampling
-    # samples = []
-    # for i_run in range(100):
-    #     # ...
-    #     samples.append([1,2,3])
+    samples = []
+    # initital sample from best guess (or any other method?)
+    initial_sample = {
+        "Xa" : xx_observed,
+        "a" : mu_a,
+        "b" : mu_b,
+        "sigma_y" : mu_sigma_y,
+    }
+    samples.append(initial_sample)
+
+    # init variables
+    ps = samples[0]
+    Xa_gibbs = ps["Xa"]
+    a_gibbs = ps["a"]
+    b_gibbs = ps["b"]
+    sigma_y_gibbs = ps["sigma_y"]
+
+    for i_run in range(1, 10000): # gibbs runs
+
+        # sample from posterior of Xa
+        F1 = np.diag(np.full_like(xx_observed, a_gibbs**2 / sigma_y_gibbs**2))
+        F2 = a_gibbs / sigma_y_gibbs**2 * (b_gibbs - yy)
+        V = F1 + Uxx_inv
+        V_inv = np.linalg.inv(V)
+        M = (Uxx_inv@xx_observed - F2)@V_inv
+        Xa_gibbs = np.random.multivariate_normal(M, V_inv)
+
+        # sample from posterior of a
+        A_a = - np.sum(np.square(Xa_gibbs) / (2*sigma_y_gibbs**2)) - 1.0/(2*sigma_a**2) 
+        B_a = np.sum((b_gibbs-yy)*Xa_gibbs / (2*sigma_y_gibbs**2)) - mu_a/(2*sigma_a**2)
+        a_gibbs = np.random.normal(B_a/A_a, np.sqrt(-1/(2*A_a)))
+
+        # sample from posterior of b
+        A_b = - Xa_gibbs.size / (2*sigma_y_gibbs**2) - 1.0/(2*sigma_b**2)
+        B_b = np.sum((a_gibbs * Xa_gibbs - yy) / (2*sigma_y_gibbs**2)) - mu_b/(2*sigma_b**2) 
+        b_gibbs = np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
+
+        # sample from posterior of sigma_y
+        # TODO : continue here
+        sigma_y_gibbs = 0.1
+
+        # 
+        samples.append({
+        "Xa" : Xa_gibbs,
+        "a" : a_gibbs,
+        "b" : b_gibbs,
+        "sigma_y" : sigma_y_gibbs,
+    })
 
     # estimate posterior from (avoid burn-in and take only every nth sample to avoid autocorrelation)
+    plt.show()
+    plt.plot([sample["a"] for sample in samples])
+    plt.plot([sample["b"] for sample in samples])
+    plt.show()
+    exit()
     # mu2 = np.mean(samples, axis=0)
     # S2 = np.cov(samples, rowvar=False)
     
@@ -56,6 +131,8 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
 
     # transfer_dut_calib.parameters = mu3
     # transfer_dut_calib.parameters_uncertainty = S3
+
+    prior = posterior
 
 
 ax[0].plot(t, x_actual, label="ground truth")
