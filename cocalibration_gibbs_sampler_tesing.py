@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.optimize as sco
+from numpy.linalg import norm
+from scipy.optimize import minimize_scalar
+from scipy.integrate import quad
 
 from models import LinearAffineModel
 
@@ -32,6 +34,13 @@ prior = {
         "sigma" : 0.3,
     }
 }
+
+def posterior_pdf_sigma_y(sigma_y, Y, Xa, a, b, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
+    div = 2*sigma_sigma_y**2
+    A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
+    exponent = - sigma_y**2 / div - sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
+        
+    return np.exp(exponent) / normalizer
 
 # prepare some plotting
 fig, ax = plt.subplots(3, 1)
@@ -105,7 +114,13 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
         b_gibbs = np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
 
         # sample from posterior of sigma_y
-        # TODO : continue here
+        # args = [yy, Xa_gibbs, a_gibbs, b_gibbs, mu_sigma_y, sigma_sigma_y, 1.0]
+        # normalizer = quad(posterior_pdf_sigma_y, -np.inf, np.inf, args=tuple(args))[0]
+        # target_quantile = np.random.random()
+        # args[-1] = normalizer
+        # evaluate = lambda x: norm(target_quantile - quad(posterior_pdf_sigma_y, -np.inf, x, args=tuple(args))[0])
+        # res = minimize_scalar(evaluate, bracket=(sigma_y_gibbs - sigma_sigma_y, sigma_y_gibbs + sigma_sigma_y))
+        # sigma_y_gibbs = res.x 
         sigma_y_gibbs = 0.1
 
         # 
