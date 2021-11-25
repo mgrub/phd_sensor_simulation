@@ -35,12 +35,19 @@ prior = {
     }
 }
 
+# pdf of sigma_y (up to proportionality constant)
 def posterior_pdf_sigma_y(sigma_y, Y, Xa, a, b, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
     div = 2*sigma_sigma_y**2
     A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
     exponent = - sigma_y**2 / div - sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
         
     return np.exp(exponent) / normalizer
+
+# gibbs sampler settings
+gibbs_runs = 1000
+burn_in = gibbs_runs // 10
+use_every = 50
+
 
 # prepare some plotting
 fig, ax = plt.subplots(3, 1)
@@ -93,7 +100,7 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
     b_gibbs = ps["b"]
     sigma_y_gibbs = ps["sigma_y"]
 
-    for i_run in range(1, 10000): # gibbs runs
+    for i_run in range(1, gibbs_runs): # gibbs runs
 
         # sample from posterior of Xa
         F1 = np.diag(np.full_like(xx_observed, a_gibbs**2 / sigma_y_gibbs**2))
@@ -114,6 +121,7 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
         b_gibbs = np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
 
         # sample from posterior of sigma_y
+        ### THIS IS CURRENTLY UNDER TESTING ###
         # args = [yy, Xa_gibbs, a_gibbs, b_gibbs, mu_sigma_y, sigma_sigma_y, 1.0]
         # normalizer = quad(posterior_pdf_sigma_y, -np.inf, np.inf, args=tuple(args))[0]
         # target_quantile = np.random.random()
@@ -132,21 +140,32 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
     })
 
     # estimate posterior from (avoid burn-in and take only every nth sample to avoid autocorrelation)
-    plt.show()
-    plt.plot([sample["a"] for sample in samples])
-    plt.plot([sample["b"] for sample in samples])
-    plt.show()
-    exit()
-    # mu2 = np.mean(samples, axis=0)
-    # S2 = np.cov(samples, rowvar=False)
+
+    considered_samples = samples[burn_in::use_every]
+    AA = [sample["a"] for sample in considered_samples]
+    BB = [sample["b"] for sample in considered_samples]
+    SY = [sample["sigma_y"] for sample in considered_samples]
+
+    posterior = {
+        "a" : {
+            "mu" : np.mean(AA),
+            "sigma" : np.std(AA),
+        },
+        "b" : {
+            "mu" : np.mean(BB),
+            "sigma" : np.std(BB),
+        },
+        "sigma_y" : {
+            "mu" : np.mean(SY),
+            "sigma" : np.std(SY),
+        }
+    }
     
     # log for plot
-    # parameters_history[tt[-1]] = mu3
-    # parameter_uncertainty_history[tt[-1]] = np.sqrt(np.diag(S3))
+    parameters_history[tt[-1]] = np.array([posterior["a"]["mu"], posterior["b"]["mu"], posterior["sigma_y"]["mu"]])
+    parameter_uncertainty_history[tt[-1]] = np.array([posterior["a"]["sigma"], posterior["b"]["sigma"], posterior["sigma_y"]["sigma"]])
 
-    # transfer_dut_calib.parameters = mu3
-    # transfer_dut_calib.parameters_uncertainty = S3
-
+    # prepare next cycle
     prior = posterior
 
 
@@ -159,16 +178,19 @@ ax[0].plot(t, y, label="dut indication")
 
 ax[0].legend()
 
-# #ax[1].plot(t, ux_ref)
-# # plot coefficient history
-# t_hist = np.array(list(parameters_history.keys()))
-# a_hist = np.array(list(parameters_history.values()))[:,0]
-# b_hist = np.array(list(parameters_history.values()))[:,1]
-# a_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,0]
-# b_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,1]
-# ax[1].errorbar(t_hist, a_hist, a_unc_hist, label="a", c="b")
-# ax[1].errorbar(t_hist, b_hist, b_unc_hist, label="b", c="k")
-# ax[2].plot(t_hist, a_unc_hist)
-# ax[2].plot(t_hist, b_unc_hist)
+#ax[1].plot(t, ux_ref)
+# plot coefficient history
+t_hist = np.array(list(parameters_history.keys()))
+a_hist = np.array(list(parameters_history.values()))[:,0]
+b_hist = np.array(list(parameters_history.values()))[:,1]
+a_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,0]
+b_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,1]
+ax[1].errorbar(t_hist, a_hist, a_unc_hist, label="a", c="b")
+ax[1].hlines(2.0, t_hist.min(), t_hist.max(), colors="b", linestyle="dashed")
+ax[1].errorbar(t_hist, b_hist, b_unc_hist, label="b", c="k")
+ax[1].hlines(2.4, t_hist.min(), t_hist.max(), colors="k", linestyle="dashed")
+ax[2].plot(t_hist, a_unc_hist, "b")
+ax[2].plot(t_hist, b_unc_hist, "k")
+ax[1].legend()
 
 plt.show()
