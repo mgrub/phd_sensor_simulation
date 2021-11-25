@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from numpy.linalg import norm
 from scipy.optimize import minimize_scalar
 from scipy.integrate import quad
+from scipy.stats import iqr
 
 from models import LinearAffineModel
 
@@ -148,16 +149,16 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
 
     posterior = {
         "a" : {
-            "mu" : np.mean(AA),
-            "sigma" : np.std(AA),
+            "mu" : np.median(AA),
+            "sigma" : iqr(AA),
         },
         "b" : {
-            "mu" : np.mean(BB),
-            "sigma" : np.std(BB),
+            "mu" : np.median(BB),
+            "sigma" : iqr(BB),
         },
         "sigma_y" : {
-            "mu" : np.mean(SY),
-            "sigma" : np.std(SY),
+            "mu" : np.median(SY),
+            "sigma" : iqr(SY),
         }
     }
     
