@@ -16,7 +16,9 @@ Ux = np.diag(np.full_like(x_actual, 0.01))
 x_observed = np.random.multivariate_normal(mean=x_actual, cov=Ux)
 
 # indication of DUT
-true_transfer_dut = LinearAffineModel(a=2.0, b=2.4)
+a_true = 1.0
+b_true = 2.5
+true_transfer_dut = LinearAffineModel(a=a_true, b=b_true)
 y = true_transfer_dut.apply(x_actual, np.zeros_like(x_actual))[0] + np.random.normal(scale=0.2, size=len(x_actual))
 
 
@@ -187,9 +189,9 @@ b_hist = np.array(list(parameters_history.values()))[:,1]
 a_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,0]
 b_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,1]
 ax[1].errorbar(t_hist, a_hist, a_unc_hist, label="a", c="b")
-ax[1].hlines(2.0, t_hist.min(), t_hist.max(), colors="b", linestyle="dashed")
+ax[1].hlines(a_true, t_hist.min(), t_hist.max(), colors="b", linestyle="dashed")
 ax[1].errorbar(t_hist, b_hist, b_unc_hist, label="b", c="k")
-ax[1].hlines(2.4, t_hist.min(), t_hist.max(), colors="k", linestyle="dashed")
+ax[1].hlines(b_true, t_hist.min(), t_hist.max(), colors="k", linestyle="dashed")
 ax[2].plot(t_hist, a_unc_hist, "b")
 ax[2].plot(t_hist, b_unc_hist, "k")
 ax[1].legend()
