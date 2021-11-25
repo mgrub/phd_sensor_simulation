@@ -58,7 +58,7 @@ The effect of simplifications of the proposed assumptions need to be investigate
 We consider sensors with an ideal linear affine measurement function from reference $x$ to indication $y$.
 This adopts the nomenclature and notation of \cite{bipm_2008,bipm_2012}.
 \begin{align}
-    y(t) &= a*x(t) + b \nonumber \\
+    y(t) &= a \cdot x(t) + b \nonumber \\
        &= f(x(t), \vec{\theta}) \\
     \vec{\theta} &= \begin{bmatrix} a \\ b \end{bmatrix}
 \end{align}
@@ -78,7 +78,7 @@ The statistical model therefore looks like \cite{dellaportas_1995}:
 
 With the following assumptions on the distributions of the errors
 \begin{align}
-    \varepsilon_i &\propto \mathcal{N}(\vec{0}, \sigma_y^2 * I_n)\\
+    \varepsilon_i &\propto \mathcal{N}(\vec{0}, \sigma_y^2 \cdot I_n)\\
     \tilde{\varepsilon}_i &\propto \mathcal{N}(\vec{0}, \mat{U_x}) 
 \end{align}
 \begin{align}
@@ -124,16 +124,16 @@ This leads to the following conditionals of a Gibbs Sampler \cite{dellaportas_19
 Evaluate \cref{eq:posterior_X_a}.
 \begin{align}
     p(\vec{X_a} | \vec{\theta}, \sigma_y, \sigma_x, \vec{Y}, \vec{X_o}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} {\color{red} p(\vec{X_a} | \sigma_x, \vec{X_o})} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{X_o})^T \mat{U_x}^{-1} (\vec{X_a} - \vec{X_o}) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} \cdot \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{X_o})^T \mat{U_x}^{-1} (\vec{X_a} - \vec{X_o}) \right\} \\
     
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i) \right\} \nonumber \\
-    &\quad * \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a} + \vec{X_o}^T \mat{U_x}^{-1} \vec{X_o} ) \right\} \\
+    &\quad \cdot \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a} + \vec{X_o}^T \mat{U_x}^{-1} \vec{X_o} ) \right\} \\
     
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) \right\} \nonumber \\
-    &\quad * \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
+    &\quad \cdot \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
     &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \nonumber \\
-    &\quad * \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
+    &\quad \cdot \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
     &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}} \vec{X_a} - \vec{X_a}^T (- \vec{F_2} + \mat{U_x}^{-1} \vec{X_o}) - (- \vec{F_2}^T + \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
     
@@ -145,7 +145,7 @@ Evaluate \cref{eq:posterior_X_a}.
 Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V}^{-1})$. 
 The following matrices are introduced to transform the sum into a matrix operation:
 \begin{align}
-    \mat{F_1} &= \frac{a^2}{\sigma_y^2} * \mat{I_N} \\
+    \mat{F_1} &= \frac{a^2}{\sigma_y^2} \cdot \mat{I_N} \\
     \vec{F_2} &= \frac{a}{\sigma_y^2} \begin{bmatrix} b-Y_1 & \dots & b-Y_N \end{bmatrix}^T
 \end{align}
 
@@ -153,7 +153,7 @@ The following matrices are introduced to transform the sum into a matrix operati
 Evaluate \cref{eq:posterior_params} for $\theta_i= a$.
 \begin{align}
     p(a|b, \vec{X_a}, \sigma_y, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(a | b, \vec{X_a}, \sigma_{y})}_{\mathcal{N}(\mu_a, \sigma_a^2)} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_a^2} ( a - \mu_a )^2 \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} \cdot \exp\left\{ - \frac{1}{2\sigma_a^2} ( a - \mu_a )^2 \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i) - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a - \mu_a^2 ) \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a ) \right\} \\
     &\propto \exp\left\{ - 2 a \underbrace{\left[ \sum_{i=1}^N \frac{(b - Y_i) X_{ai}}{2\sigma_y^2} - \frac{\mu_a}{2\sigma_a^2} \right]}_{B} + a^2 \underbrace{\left[ - \sum_{i=1}^N \frac{X_{ai}^2}{2\sigma_y^2}  - \frac{1}{2\sigma_a^2} \right]}_{A} \right\} \\
@@ -166,7 +166,7 @@ Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 Evaluate \cref{eq:posterior_params} for $\theta_i= b$.
 \begin{align}
     p(b|a, \vec{X_a}, \sigma_y, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(b | a, \vec{X_a}, \sigma_{y})}_{\mathcal{N}(\mu_b, \sigma_b^2)} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} * \exp\left\{ - \frac{1}{2\sigma_b^2} ( b - \mu_b )^2 \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2 \right\} \cdot \exp\left\{ - \frac{1}{2\sigma_b^2} ( b - \mu_b )^2 \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i )- \frac{1}{2\sigma_b^2} ( b^2 - 2 b \mu_b - \mu_b^2 ) \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (2 b (a X_{ai} - Y_i) + b^2 ) - \frac{1}{2\sigma_b^2} ( b^2 - 2 b \mu_b ) \right\} \\
     &\propto \exp\left\{ - 2 b \underbrace{\left[ \sum_{i=1}^N \frac{a X_{ai} - Y_i}{2\sigma_y^2} - \frac{\mu_b}{2\sigma_b^2} \right]}_{B} + b^2 \underbrace{\left[ - \frac{N}{2\sigma_y^2}  - \frac{1}{2\sigma_b^2} \right]}_{A} \right\} \\
@@ -179,7 +179,7 @@ Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 Evaluate \cref{eq:posterior_sigma_y}.
 \begin{align}
     p(\sigma_y | \vec{\theta}, \vec{X_a}, \vec{Y}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y | \vec{\theta}, \vec{X_a})}_{\mathcal{N}(\mu_{\sigma}, \sigma_{\sigma}^2)} \\
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \underbrace{\sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2}_{\tilde{A}} \right\} * \exp\left\{ - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y - \mu_{\sigma} )^2 \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \underbrace{\sum_{i=1}^N \left( Y_i - a X_{ai} - b \right)^2}_{\tilde{A}} \right\} \cdot \exp\left\{ - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y - \mu_{\sigma} )^2 \right\} \\
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \tilde{A} - \frac{1}{2\sigma_{\sigma}^2} ( \sigma_y^2 - \sigma_y \mu_{\sigma} + \mu_{\sigma}^2 ) \right\} \\
     &\propto \exp\left\{ \sigma_y^2 \left( - \frac{1}{2\sigma_{\sigma}^2} \right) + \sigma_y \left( -  \frac{\mu_{\sigma}}{2\sigma_{\sigma}^2}\right) + \frac{1}{\sigma_y^2} \left( - \frac{\tilde{A}}{2} \right) \right\} 
 \end{align}
