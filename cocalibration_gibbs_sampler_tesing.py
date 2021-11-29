@@ -114,10 +114,10 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
             # sample from posterior of Xa
             F1 = np.diag(np.full_like(xx_observed, a_gibbs**2 / sigma_y_gibbs**2))
             F2 = a_gibbs / sigma_y_gibbs**2 * (b_gibbs - yy)
-            V = F1 + Uxx_inv
-            V_inv = np.linalg.inv(V)
-            M = (Uxx_inv@xx_observed - F2)@V_inv
-            Xa_gibbs = np.random.multivariate_normal(M, V_inv)
+            V_inv = F1 + Uxx_inv
+            V = np.linalg.inv(V_inv)
+            M = V@(Uxx_inv@xx_observed - F2)
+            Xa_gibbs = np.random.multivariate_normal(M, V)
 
         # sample from posterior of a
         A_a = - np.sum(np.square(Xa_gibbs) / (2*sigma_y_gibbs**2)) - 1.0/(2*sigma_a**2) 

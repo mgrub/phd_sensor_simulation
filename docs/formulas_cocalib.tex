@@ -135,14 +135,14 @@ Evaluate \cref{eq:posterior_X_a}.
     &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \nonumber \\
     &\quad \cdot \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}} \vec{X_a} - \vec{X_a}^T (- \vec{F_2} + \mat{U_x}^{-1} \vec{X_o}) - (- \vec{F_2}^T + \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}^{-1}} \vec{X_a} - \vec{X_a}^T (- \vec{F_2} + \mat{U_x}^{-1} \vec{X_o}) - (- \vec{F_2}^T + \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V} \vec{X_a} - \vec{X_a}^T \underbrace{(\mat{U_x}^{-1} \vec{X_o} - \vec{F_2}) \mat{V}^{-1}}_{\vec{M}} \mat{V} - \mat{V}^T \vec{M}^T \vec{X_a}) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V}^{-1} \vec{X_a} - \vec{X_a}^T \mat{V}^{-1} \underbrace{\mat{V} (\mat{U_x}^{-1} \vec{X_o} - \vec{F_2}) }_{\vec{M}} - \vec{M}^T \mat{V}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V} (\vec{X_a} - \vec{M}) \right\}
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\}
 
 \end{align}
-Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V}^{-1})$. 
+Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V})$. 
 The following matrices are introduced to transform the sum into a matrix operation:
 \begin{align}
     \mat{F_1} &= \frac{a^2}{\sigma_y^2} \cdot \mat{I_N} \\
