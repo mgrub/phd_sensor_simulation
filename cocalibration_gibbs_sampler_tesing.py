@@ -49,6 +49,25 @@ def posterior_pdf_sigma_y(sigma_y, Y, Xa, a, b, mu_sigma_y, sigma_sigma_y, norma
         
     return np.exp(exponent) / normalizer
 
+# marginalized posterior of a
+def posterior_pdf_a_without_Xa(a, sigma_y, Y, Xo, UXo_inv, b, mu_a, sigma_a, normalizer=1.0):
+
+    F1 = np.diag(np.full_like(xx_observed, a**2 / sigma_y**2))
+    F2 = a / sigma_y**2 * (b - Y)
+
+    V_inv = F1 + UXo_inv
+    V = np.linalg.inv(V_inv)
+    M = V@(UXo_inv@Xo - F2)
+
+    W_inv = F1 + V_inv
+    W = np.linalg.inv(W_inv)
+    S = W@(V_inv@M - F2)
+
+    exponent = -0.5 * (1.0 / sigma_a**2 * (a**2 - 2*a*mu_a)) # + M.T@V_inv@M - S.T@W_inv@S)
+    det = 1#np.sqrt(np.linalg.det(W_inv))
+        
+    return det * np.exp(exponent) / normalizer
+
 # gibbs sampler settings
 gibbs_runs = 1000
 burn_in = gibbs_runs // 10
@@ -123,6 +142,13 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
         A_a = - np.sum(np.square(Xa_gibbs) / (2*sigma_y_gibbs**2)) - 1.0/(2*sigma_a**2) 
         B_a = np.sum((b_gibbs-yy)*Xa_gibbs / (2*sigma_y_gibbs**2)) - mu_a/(2*sigma_a**2)
         a_gibbs = np.random.normal(B_a/A_a, np.sqrt(-1/(2*A_a)))
+
+        ### TESTING marginalization over Xa
+        args = [sigma_y_gibbs, yy, xx_observed, Uxx_inv, b_gibbs, mu_a, sigma_a, 1.0]
+        posterior_pdf_a_without_Xa(1.0, *args)
+
+
+        ### /TESTING
 
         # sample from posterior of b
         A_b = - Xa_gibbs.size / (2*sigma_y_gibbs**2) - 1.0/(2*sigma_b**2)
