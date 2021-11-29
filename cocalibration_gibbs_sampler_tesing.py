@@ -16,11 +16,14 @@ Ux = np.diag(np.full_like(x_actual, 0.01))
 x_observed = np.random.multivariate_normal(mean=x_actual, cov=Ux)
 
 # indication of DUT
-a_true = 1.0
+a_true = 2.0
 b_true = 2.5
 true_transfer_dut = LinearAffineModel(a=a_true, b=b_true)
 y = true_transfer_dut.apply(x_actual, np.zeros_like(x_actual))[0] + np.random.normal(scale=0.2, size=len(x_actual))
 
+# special cases (activate by setting to True)
+sigma_y_is_given = True
+no_error_in_variables_model = False
 
 # init prior knowledge
 prior = {
@@ -105,13 +108,16 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
 
     for i_run in range(1, gibbs_runs): # gibbs runs
 
-        # sample from posterior of Xa
-        F1 = np.diag(np.full_like(xx_observed, a_gibbs**2 / sigma_y_gibbs**2))
-        F2 = a_gibbs / sigma_y_gibbs**2 * (b_gibbs - yy)
-        V = F1 + Uxx_inv
-        V_inv = np.linalg.inv(V)
-        M = (Uxx_inv@xx_observed - F2)@V_inv
-        Xa_gibbs = np.random.multivariate_normal(M, V_inv)
+        if no_error_in_variables_model:
+            Xa_gibbs = xx_observed
+        else:
+            # sample from posterior of Xa
+            F1 = np.diag(np.full_like(xx_observed, a_gibbs**2 / sigma_y_gibbs**2))
+            F2 = a_gibbs / sigma_y_gibbs**2 * (b_gibbs - yy)
+            V = F1 + Uxx_inv
+            V_inv = np.linalg.inv(V)
+            M = (Uxx_inv@xx_observed - F2)@V_inv
+            Xa_gibbs = np.random.multivariate_normal(M, V_inv)
 
         # sample from posterior of a
         A_a = - np.sum(np.square(Xa_gibbs) / (2*sigma_y_gibbs**2)) - 1.0/(2*sigma_a**2) 
@@ -124,15 +130,18 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
         b_gibbs = np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
 
         # sample from posterior of sigma_y
-        ### THIS IS CURRENTLY UNDER TESTING ###
-        # args = [yy, Xa_gibbs, a_gibbs, b_gibbs, mu_sigma_y, sigma_sigma_y, 1.0]
-        # normalizer = quad(posterior_pdf_sigma_y, -np.inf, np.inf, args=tuple(args))[0]
-        # target_quantile = np.random.random()
-        # args[-1] = normalizer
-        # evaluate = lambda x: norm(target_quantile - quad(posterior_pdf_sigma_y, -np.inf, x, args=tuple(args))[0])
-        # res = minimize_scalar(evaluate, bracket=(sigma_y_gibbs - sigma_sigma_y, sigma_y_gibbs + sigma_sigma_y))
-        # sigma_y_gibbs = res.x 
-        sigma_y_gibbs = 0.1
+        if sigma_y_is_given:
+            sigma_y_gibbs = 0.1
+        else:
+            ### THIS IS CURRENTLY UNDER TESTING ###
+            args = [yy, Xa_gibbs, a_gibbs, b_gibbs, mu_sigma_y, sigma_sigma_y, 1.0]
+            normalizer = quad(posterior_pdf_sigma_y, -np.inf, np.inf, args=tuple(args))[0]
+            target_quantile = np.random.random()
+            args[-1] = normalizer
+            evaluate = lambda x: norm(target_quantile - quad(posterior_pdf_sigma_y, -np.inf, x, args=tuple(args))[0])
+            res = minimize_scalar(evaluate, bracket=(sigma_y_gibbs - sigma_sigma_y, sigma_y_gibbs + sigma_sigma_y))
+            print(res.x)
+            sigma_y_gibbs = res.x 
 
         # 
         samples.append({
