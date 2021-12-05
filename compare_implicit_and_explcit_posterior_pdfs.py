@@ -35,20 +35,44 @@ print("="*30)
 
 # compare implicit and explicit posterior of a
 args = [b, Xa, sigma_y, Y, mu_a, sigma_a, 1.0]
-normalizer = quad(posterior_a_implicit, -np.inf, np.inf, args=tuple(args), epsabs=1e-40)[0]
-#target_quantile = np.random.random()
-#args[-1] = normalizer
-#bracket = (a - sigma_a, a + sigma_a)
-#evaluate = lambda x: norm(target_quantile - quad(posterior_a_implicit, -np.inf, x, args=tuple(args))[0])
-#res = minimize_scalar(evaluate, bracket=bracket)
-#print(res.x)
+normalizer = quad(posterior_a_implicit, -np.inf, np.inf, args=tuple(args), epsrel=-1)[0]
+args[-1] = normalizer
 
-x_plot = np.linspace(-5, 5, 100)
-pdf_implicit = np.array([posterior_a_implicit(xx, *args) for xx in x_plot])
-pdf_explicit = np.array([posterior_a_explicit(xx, *args) for xx in x_plot])
+x_plot = np.linspace(-5, 5, 200)
+pdf_a_implicit = np.array([posterior_a_implicit(xx, *args) for xx in x_plot])
+pdf_a_explicit = np.array([posterior_a_explicit(xx, *args) for xx in x_plot])
 
-plt.plot(x_plot, pdf_implicit, label="implicit")
-plt.plot(x_plot, pdf_explicit, label="explicit")
+plt.plot(x_plot, pdf_a_implicit, label="implicit")
+plt.plot(x_plot, pdf_a_explicit, label="explicit")
 plt.legend()
+plt.show()
 
+
+# compare implicit and explicit posterior of b
+args = [a, Xa, sigma_y, Y, mu_b, sigma_b, 1.0]
+normalizer = quad(posterior_b_implicit, -np.inf, np.inf, args=tuple(args), epsrel=-1)[0]
+args[-1] = normalizer
+
+x_plot = np.linspace(-5, 5, 200)
+pdf_b_implicit = np.array([posterior_b_implicit(xx, *args) for xx in x_plot])
+pdf_b_explicit = np.array([posterior_b_explicit(xx, *args) for xx in x_plot])
+
+plt.plot(x_plot, pdf_b_implicit, label="implicit")
+plt.plot(x_plot, pdf_b_explicit, label="explicit")
+plt.legend()
+plt.show()
+
+
+# compare implicit and explicit posterior of sigma_y
+args = [a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, 1.0]
+normalizer = quad(posterior_sigma_y_implicit, -np.inf, np.inf, args=tuple(args), epsrel=-1)[0]
+args[-1] = normalizer
+
+x_plot = np.linspace(-1, 1, 400)
+pdf_sigma_y_implicit = np.array([posterior_sigma_y_implicit(xx, *args) for xx in x_plot])
+pdf_sigma_y_explicit = np.array([posterior_sigma_y_explicit(xx, *args) for xx in x_plot])
+
+plt.plot(x_plot, pdf_sigma_y_implicit, label="implicit")
+plt.plot(x_plot, pdf_sigma_y_explicit, label="explicit")
+plt.legend()
 plt.show()
