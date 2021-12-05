@@ -14,7 +14,7 @@ def multivariate_gaussian(x, mu_x, cov_x):
 
 ### likelihoods
 def likelihood_Y(Y, a, b, Xa, sigma_y):
-    exponent = - np.sum(np.square(Y - a*Xa - b)) 
+    exponent = - 1.0 / (2*sigma_y**2) * np.sum(np.square(Y - a*Xa - b)) 
     return np.exp(exponent) / (sigma_y**len(Y))
 
 def likelihood_Xa(Xa, Xo, UXo_inv):
