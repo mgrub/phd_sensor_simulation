@@ -1,10 +1,12 @@
-from co_calibration_gibbs_sampler_expressions import *
-import numpy as np
-from numpy.linalg import norm
-from scipy.optimize import minimize_scalar
-from scipy.integrate import quad
+import copy
 
 import matplotlib.pyplot as plt
+import numpy as np
+from numpy.linalg import norm
+from scipy.integrate import quad
+from scipy.optimize import minimize_scalar
+
+from co_calibration_gibbs_sampler_expressions import *
 
 # init priors
 mu_a = 1.0
