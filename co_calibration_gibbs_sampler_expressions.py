@@ -66,9 +66,9 @@ def posterior_b_explicit(b, a, Xa, sigma_y, Y, mu_b, sigma_b, normalizer=1.0):
     return gaussian(b, B_b/A_b, np.sqrt(-1/(2*A_b)))
 
 def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
-    div = 2*sigma_sigma_y**2
+    div = sigma_sigma_y**2
     A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
-    exponent = - sigma_y**2 / div - sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
+    exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
     return np.exp(exponent) / normalizer
 
 
