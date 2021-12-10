@@ -67,16 +67,18 @@ plt.show()
 
 # compare implicit and explicit posterior of sigma_y
 args = [a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, 1.0]
-normalizer = quad(posterior_sigma_y_implicit, -np.inf, np.inf, args=tuple(args), epsrel=-1)[0]
-args[-1] = normalizer
+normalizer_imp = quad(posterior_sigma_y_implicit, -np.inf, np.inf, args=tuple(args), epsrel=-1)[0]
+normalizer_exp = quad(posterior_sigma_y_explicit, -np.inf, np.inf, args=tuple(args), epsrel=-1)[0]
+args_imp = copy.deepcopy(args)
+args_exp = copy.deepcopy(args)
+args_imp[-1] = normalizer_imp
+args_exp[-1] = normalizer_exp
 
 x_plot = np.linspace(-1, 1, 400)
-pdf_sigma_y_implicit = np.array([posterior_sigma_y_implicit(xx, *args) for xx in x_plot])
-pdf_sigma_y_explicit = np.array([posterior_sigma_y_explicit(xx, *args) for xx in x_plot])
+pdf_sigma_y_implicit = np.array([posterior_sigma_y_implicit(xx, *args_imp) for xx in x_plot])
+pdf_sigma_y_explicit = np.array([posterior_sigma_y_explicit(xx, *args_exp) for xx in x_plot])
 
-fig, ax = plt.subplots(2)
-ax[0].plot(x_plot, pdf_sigma_y_implicit, label="implicit")
-ax[1].plot(x_plot, pdf_sigma_y_explicit, label="explicit")
-ax[0].legend()
-ax[1].legend()
+plt.plot(x_plot, pdf_sigma_y_implicit, label="implicit")
+plt.plot(x_plot, pdf_sigma_y_explicit, label="explicit")
+plt.legend()
 plt.show()
