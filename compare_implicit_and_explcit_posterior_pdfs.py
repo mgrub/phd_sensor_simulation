@@ -47,6 +47,7 @@ pdf_a_explicit = np.array([posterior_a_explicit(xx, *args) for xx in x_plot])
 plt.plot(x_plot, pdf_a_implicit, label="implicit")
 plt.plot(x_plot, pdf_a_explicit, label="explicit")
 plt.legend()
+plt.title("a posterior")
 plt.show()
 
 
@@ -62,6 +63,7 @@ pdf_b_explicit = np.array([posterior_b_explicit(xx, *args) for xx in x_plot])
 plt.plot(x_plot, pdf_b_implicit, label="implicit")
 plt.plot(x_plot, pdf_b_explicit, label="explicit")
 plt.legend()
+plt.title("b posterior")
 plt.show()
 
 
@@ -74,11 +76,12 @@ args_exp = copy.deepcopy(args)
 args_imp[-1] = normalizer_imp
 args_exp[-1] = normalizer_exp
 
-x_plot = np.linspace(-1, 1, 400)
+x_plot = np.linspace(0.2, 0.5, 400)
 pdf_sigma_y_implicit = np.array([posterior_sigma_y_implicit(xx, *args_imp) for xx in x_plot])
 pdf_sigma_y_explicit = np.array([posterior_sigma_y_explicit(xx, *args_exp) for xx in x_plot])
 
 plt.plot(x_plot, pdf_sigma_y_implicit, label="implicit")
 plt.plot(x_plot, pdf_sigma_y_explicit, label="explicit")
 plt.legend()
+plt.title("sigma_y posterior")
 plt.show()
