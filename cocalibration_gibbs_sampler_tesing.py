@@ -1,3 +1,8 @@
+import datetime
+import json
+import os
+import copy
+
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
@@ -46,6 +51,7 @@ prior = {
         "sigma" : 0.3,
     }
 }
+init_prior = copy.deepcopy(prior)
 
 # gibbs sampler settings
 gibbs_runs = 1000
@@ -63,7 +69,7 @@ split_indices = np.sort(np.random.permutation(np.arange(3, len(t)-1))[:n_splits]
 # iterate over splitpoints
 parameters_history = {}
 parameter_uncertainty_history = {}
-for current_indices in np.split(np.arange(len(t)), split_indices):
+for current_indices in np.split(np.arange(len(t)), split_indices)[0:1]:
     
     # available measurement information
     tt = t[current_indices]
@@ -125,7 +131,7 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
 
         # sample from posterior of sigma_y
         if sigma_y_is_given:
-            sigma_y_gibbs = 0.1
+            sigma_y_gibbs = sigma_y_true
         else:
             sigma_y_gibbs = posterior_sigma_y_explicit(None, a_gibbs, b_gibbs, Xa_gibbs, yy, mu_sigma_y, sigma_sigma_y)
 
@@ -202,4 +208,52 @@ ax[2].plot(t_hist, b_unc_hist, "k")
 ax[2].plot(t_hist, sigma_y_unc_hist, "g")
 
 ax[1].legend()
-plt.show()
+
+# store output information
+if not os.path.exists("results"):
+    os.makedirs("results")
+
+now = datetime.datetime.isoformat(datetime.datetime.utcnow()).replace(":", "-")
+basename = os.path.join("results", "run_{NOW}.{EXT}")
+
+fig.set_size_inches(18.5, 10.5)
+fig.savefig(basename.format(NOW=now, EXT="png"), dpi=100)
+
+results = {
+    "parameters_history" : parameters_history,
+    "parameter_uncertainty_history": parameter_uncertainty_history,
+    "signals" : {
+        "t" : t,
+        "x_actual" : x_actual,
+        "x_observed" : x_observed,
+        "y": y,
+    },
+    "model" : {
+        "a_true" : a_true,
+        "b_true" : b_true,
+        "sigma_y_true" : sigma_y_true,
+        "init_prior" : init_prior,
+    },
+    "gibbs_settings" : {
+        "gibbs_runs" : gibbs_runs,
+        "burn_in" : burn_in,
+        "use_every" : use_every,
+        "sigma_y_is_given" : sigma_y_is_given,
+        "no_error_in_variables_model" : no_error_in_variables_model, 
+    },
+}
+
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+f = open(basename.format(NOW=now, EXT="json"), "w")
+json.dump(results, f, cls=NumpyEncoder, indent=4)
+f.close()
