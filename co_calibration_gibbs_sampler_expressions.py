@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.stats import norm, multivariate_normal
+from scipy.optimize import minimize_scalar
+from scipy.integrate import quad
 
 # default order: a, b, Xa, sigma_y, Y, Xo, UXo_inv, XYZ, normalizer=1.0
 
@@ -53,24 +55,57 @@ def posterior_Xa_explicit(Xa, a, b, sigma_y, Y, Xo, UXo_inv, normalizer=1.0):
     V_inv = F1 + UXo_inv
     V = np.linalg.inv(V_inv)
     M = V@(UXo_inv@Xo - F2)
-    return multivariate_gaussian(Xa, M, V)
+
+    if Xa == None:  # return a sample
+        return np.random.multivariate_normal(M, V)
+    else:  # return pdf at value Xa
+        return multivariate_gaussian(Xa, M, V)
 
 def posterior_a_explicit(a, b, Xa, sigma_y, Y, mu_a, sigma_a, normalizer=1.0):
     A_a = - np.sum(np.square(Xa) / (2*sigma_y**2)) - 1.0/(2*sigma_a**2) 
     B_a = np.sum((b-Y)*Xa / (2*sigma_y**2)) - mu_a/(2*sigma_a**2)
-    return gaussian(a, B_a/A_a, np.sqrt(-1/(2*A_a)))
+
+    if a == None:  # return a sample
+        return np.random.normal(B_a/A_a, np.sqrt(-1/(2*A_a)))
+    else:  # return pdf at value Xa
+        return gaussian(a, B_a/A_a, np.sqrt(-1/(2*A_a)))
 
 def posterior_b_explicit(b, a, Xa, sigma_y, Y, mu_b, sigma_b, normalizer=1.0):
     A_b = - Xa.size / (2*sigma_y**2) - 1.0/(2*sigma_b**2)
     B_b = np.sum((a * Xa - Y) / (2*sigma_y**2)) - mu_b/(2*sigma_b**2) 
-    return gaussian(b, B_b/A_b, np.sqrt(-1/(2*A_b)))
+
+    if b == None:  # return a sample
+        return np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
+    else:  # return pdf at value Xa
+        return gaussian(b, B_b/A_b, np.sqrt(-1/(2*A_b)))
 
 def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
     div = sigma_sigma_y**2
     A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
-    exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
-    return np.exp(exponent) / normalizer
 
+    if sigma_y == None:
+        A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
+        args = [A_tilde, mu_sigma_y, div, 1.0]
+        normalizer = quad(posterior_sigma_y_explicit_faster, -np.inf, np.inf, args=tuple(args))[0]
+        args[-1] = normalizer
+        target_quantile = np.random.random()
+        evaluate = lambda x: np.linalg.norm(target_quantile - quad(posterior_sigma_y_explicit_faster, -np.inf, x, args=tuple(args))[0])
+        res = minimize_scalar(evaluate, bracket=(mu_sigma_y - sigma_sigma_y, mu_sigma_y + sigma_sigma_y))
+        return res.x
+    else:
+        if sigma_y == 0.0:
+            exponent = - np.inf
+        else:
+            exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
+
+        return np.exp(exponent) / normalizer
+
+def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, mu_sigma_y, div, normalizer=1.0):
+    if sigma_y == 0.0:
+        return 0.0
+    else:
+        exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
+        return np.exp(exponent) / normalizer
 
 ### marginalizations
 def posterior_pdf_a_without_Xa(a, sigma_y, Y, Xo, UXo_inv, b, mu_a, sigma_a, normalizer=1.0):

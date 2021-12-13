@@ -1,11 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
-from scipy.optimize import minimize_scalar
-from scipy.integrate import quad
 from scipy.stats import iqr
+from scipy.integrate import quad
 
 from models import LinearAffineModel
+from co_calibration_gibbs_sampler_expressions import (
+    posterior_Xa_explicit,
+    posterior_a_explicit,
+    posterior_b_explicit,
+    posterior_sigma_y_explicit,
+)
 
 # actual ground truth
 t = np.linspace(0, 10, 101)
@@ -18,11 +23,12 @@ x_observed = np.random.multivariate_normal(mean=x_actual, cov=Ux)
 # indication of DUT
 a_true = 2.0
 b_true = 2.5
+sigma_y_true = 0.2
 true_transfer_dut = LinearAffineModel(a=a_true, b=b_true)
-y = true_transfer_dut.apply(x_actual, np.zeros_like(x_actual))[0] + np.random.normal(scale=0.2, size=len(x_actual))
+y = true_transfer_dut.apply(x_actual, np.zeros_like(x_actual))[0] + np.random.normal(scale=sigma_y_true, size=len(x_actual))
 
 # special cases (activate by setting to True)
-sigma_y_is_given = True
+sigma_y_is_given = False
 no_error_in_variables_model = False
 
 # init prior knowledge
@@ -40,33 +46,6 @@ prior = {
         "sigma" : 0.3,
     }
 }
-
-# pdf of sigma_y (up to proportionality constant)
-def posterior_pdf_sigma_y(sigma_y, Y, Xa, a, b, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
-    div = 2*sigma_sigma_y**2
-    A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
-    exponent = - sigma_y**2 / div - sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
-        
-    return np.exp(exponent) / normalizer
-
-# marginalized posterior of a
-def posterior_pdf_a_without_Xa(a, sigma_y, Y, Xo, UXo_inv, b, mu_a, sigma_a, normalizer=1.0):
-
-    F1 = np.diag(np.full_like(xx_observed, a**2 / sigma_y**2))
-    F2 = a / sigma_y**2 * (b - Y)
-
-    V_inv = F1 + UXo_inv
-    V = np.linalg.inv(V_inv)
-    M = V@(UXo_inv@Xo - F2)
-
-    W_inv = F1 + V_inv
-    W = np.linalg.inv(W_inv)
-    S = W@(V_inv@M - F2)
-
-    exponent = -0.5 * (1.0 / sigma_a**2 * (a**2 - 2*a*mu_a)) # + M.T@V_inv@M - S.T@W_inv@S)
-    det = 1#np.sqrt(np.linalg.det(W_inv))
-        
-    return det * np.exp(exponent) / normalizer
 
 # gibbs sampler settings
 gibbs_runs = 1000
@@ -131,43 +110,24 @@ for current_indices in np.split(np.arange(len(t)), split_indices):
             Xa_gibbs = xx_observed
         else:
             # sample from posterior of Xa
-            F1 = np.diag(np.full_like(xx_observed, a_gibbs**2 / sigma_y_gibbs**2))
-            F2 = a_gibbs / sigma_y_gibbs**2 * (b_gibbs - yy)
-            V_inv = F1 + Uxx_inv
-            V = np.linalg.inv(V_inv)
-            M = V@(Uxx_inv@xx_observed - F2)
-            Xa_gibbs = np.random.multivariate_normal(M, V)
+            Xa_gibbs = posterior_Xa_explicit(None, a_gibbs, b_gibbs, sigma_y_gibbs, yy, xx_observed, Uxx_inv)
 
         # sample from posterior of a
-        A_a = - np.sum(np.square(Xa_gibbs) / (2*sigma_y_gibbs**2)) - 1.0/(2*sigma_a**2) 
-        B_a = np.sum((b_gibbs-yy)*Xa_gibbs / (2*sigma_y_gibbs**2)) - mu_a/(2*sigma_a**2)
-        a_gibbs = np.random.normal(B_a/A_a, np.sqrt(-1/(2*A_a)))
+        a_gibbs = posterior_a_explicit(None, b_gibbs, Xa_gibbs, sigma_y_gibbs, yy, mu_a, sigma_a)
 
         ### TESTING marginalization over Xa
-        args = [sigma_y_gibbs, yy, xx_observed, Uxx_inv, b_gibbs, mu_a, sigma_a, 1.0]
-        posterior_pdf_a_without_Xa(1.0, *args)
-
-
+        #args = [sigma_y_gibbs, yy, xx_observed, Uxx_inv, b_gibbs, mu_a, sigma_a, 1.0]
+        #posterior_pdf_a_without_Xa(1.0, *args)
         ### /TESTING
 
         # sample from posterior of b
-        A_b = - Xa_gibbs.size / (2*sigma_y_gibbs**2) - 1.0/(2*sigma_b**2)
-        B_b = np.sum((a_gibbs * Xa_gibbs - yy) / (2*sigma_y_gibbs**2)) - mu_b/(2*sigma_b**2) 
-        b_gibbs = np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
+        b_gibbs = posterior_b_explicit(None, a_gibbs, Xa_gibbs, sigma_y_gibbs, yy, mu_b, sigma_b)
 
         # sample from posterior of sigma_y
         if sigma_y_is_given:
             sigma_y_gibbs = 0.1
         else:
-            ### THIS IS CURRENTLY UNDER TESTING ###
-            args = [yy, Xa_gibbs, a_gibbs, b_gibbs, mu_sigma_y, sigma_sigma_y, 1.0]
-            normalizer = quad(posterior_pdf_sigma_y, -np.inf, np.inf, args=tuple(args))[0]
-            target_quantile = np.random.random()
-            args[-1] = normalizer
-            evaluate = lambda x: norm(target_quantile - quad(posterior_pdf_sigma_y, -np.inf, x, args=tuple(args))[0])
-            res = minimize_scalar(evaluate, bracket=(sigma_y_gibbs - sigma_sigma_y, sigma_y_gibbs + sigma_sigma_y))
-            print(res.x)
-            sigma_y_gibbs = res.x 
+            sigma_y_gibbs = posterior_sigma_y_explicit(None, a_gibbs, b_gibbs, Xa_gibbs, yy, mu_sigma_y, sigma_sigma_y)
 
         # 
         samples.append({
@@ -219,16 +179,27 @@ ax[0].legend()
 #ax[1].plot(t, ux_ref)
 # plot coefficient history
 t_hist = np.array(list(parameters_history.keys()))
+
 a_hist = np.array(list(parameters_history.values()))[:,0]
 b_hist = np.array(list(parameters_history.values()))[:,1]
+sigma_y_hist = np.array(list(parameters_history.values()))[:,2]
+
 a_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,0]
 b_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,1]
+sigma_y_unc_hist = np.array(list(parameter_uncertainty_history.values()))[:,2]
+
 ax[1].errorbar(t_hist, a_hist, a_unc_hist, label="a", c="b")
 ax[1].hlines(a_true, t_hist.min(), t_hist.max(), colors="b", linestyle="dashed")
+
 ax[1].errorbar(t_hist, b_hist, b_unc_hist, label="b", c="k")
 ax[1].hlines(b_true, t_hist.min(), t_hist.max(), colors="k", linestyle="dashed")
+
+ax[1].errorbar(t_hist, sigma_y_hist, sigma_y_unc_hist, label="sigma_y", c="g")
+ax[1].hlines(sigma_y_true, t_hist.min(), t_hist.max(), colors="g", linestyle="dashed")
+
 ax[2].plot(t_hist, a_unc_hist, "b")
 ax[2].plot(t_hist, b_unc_hist, "k")
-ax[1].legend()
+ax[2].plot(t_hist, sigma_y_unc_hist, "g")
 
+ax[1].legend()
 plt.show()
