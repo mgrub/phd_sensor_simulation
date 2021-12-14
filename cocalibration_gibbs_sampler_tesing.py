@@ -17,8 +17,10 @@ from co_calibration_gibbs_sampler_expressions import (
     posterior_sigma_y_explicit,
 )
 
+rstate = np.random.get_state()
+
 # actual ground truth
-t = np.linspace(0, 10, 101)
+t = np.linspace(0, 20, 201)
 x_actual = np.sin(t) + 1
 
 # reference values
@@ -35,6 +37,7 @@ y = true_transfer_dut.apply(x_actual, np.zeros_like(x_actual))[0] + np.random.no
 # special cases (activate by setting to True)
 sigma_y_is_given = False
 no_error_in_variables_model = False
+use_robust_statistics = True
 
 # init prior knowledge
 prior = {
@@ -54,9 +57,9 @@ prior = {
 init_prior = copy.deepcopy(prior)
 
 # gibbs sampler settings
-gibbs_runs = 1000
+gibbs_runs = 10000
 burn_in = gibbs_runs // 10
-use_every = 50
+use_every = 100
 
 
 # prepare some plotting
@@ -69,7 +72,7 @@ split_indices = np.sort(np.random.permutation(np.arange(3, len(t)-1))[:n_splits]
 # iterate over splitpoints
 parameters_history = {}
 parameter_uncertainty_history = {}
-for current_indices in np.split(np.arange(len(t)), split_indices)[0:1]:
+for current_indices in np.split(np.arange(len(t)), split_indices):
     
     # available measurement information
     tt = t[current_indices]
@@ -150,21 +153,37 @@ for current_indices in np.split(np.arange(len(t)), split_indices)[0:1]:
     BB = [sample["b"] for sample in considered_samples]
     SY = [sample["sigma_y"] for sample in considered_samples]
 
-    posterior = {
-        "a" : {
-            "mu" : np.median(AA),
-            "sigma" : iqr(AA),
-        },
-        "b" : {
-            "mu" : np.median(BB),
-            "sigma" : iqr(BB),
-        },
-        "sigma_y" : {
-            "mu" : np.median(SY),
-            "sigma" : iqr(SY),
+    if use_robust_statistics:
+        posterior = {
+            "a" : {
+                "mu" : np.median(AA),
+                "sigma" : iqr(AA),
+            },
+            "b" : {
+                "mu" : np.median(BB),
+                "sigma" : iqr(BB),
+            },
+            "sigma_y" : {
+                "mu" : np.median(SY),
+                "sigma" : iqr(SY),
+            }
         }
-    }
-    
+    else:
+        posterior = {
+            "a" : {
+                "mu" : np.mean(AA),
+                "sigma" : np.std(AA),
+            },
+            "b" : {
+                "mu" : np.mean(BB), 
+                "sigma" : np.std(BB),
+            },
+            "sigma_y" : {
+                "mu" : np.mean(SY),
+                "sigma" : np.std(SY),
+            }
+        }
+
     # log for plot
     parameters_history[tt[-1]] = np.array([posterior["a"]["mu"], posterior["b"]["mu"], posterior["sigma_y"]["mu"]])
     parameter_uncertainty_history[tt[-1]] = np.array([posterior["a"]["sigma"], posterior["b"]["sigma"], posterior["sigma_y"]["sigma"]])
@@ -239,7 +258,9 @@ results = {
         "burn_in" : burn_in,
         "use_every" : use_every,
         "sigma_y_is_given" : sigma_y_is_given,
-        "no_error_in_variables_model" : no_error_in_variables_model, 
+        "no_error_in_variables_model" : no_error_in_variables_model,
+        "use_robust_statistics" : use_robust_statistics,
+        "random_state" : rstate,
     },
 }
 
