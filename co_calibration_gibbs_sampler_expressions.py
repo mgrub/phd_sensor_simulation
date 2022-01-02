@@ -67,7 +67,7 @@ def posterior_a_explicit(a, b, Xa, sigma_y, Y, mu_a, sigma_a, normalizer=1.0):
 
     if a == None:  # return a sample
         return np.random.normal(B_a/A_a, np.sqrt(-1/(2*A_a)))
-    else:  # return pdf at value Xa
+    else:  # return pdf at value a
         return gaussian(a, B_a/A_a, np.sqrt(-1/(2*A_a)))
 
 def posterior_b_explicit(b, a, Xa, sigma_y, Y, mu_b, sigma_b, normalizer=1.0):
@@ -76,35 +76,30 @@ def posterior_b_explicit(b, a, Xa, sigma_y, Y, mu_b, sigma_b, normalizer=1.0):
 
     if b == None:  # return a sample
         return np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
-    else:  # return pdf at value Xa
+    else:  # return pdf at value b
         return gaussian(b, B_b/A_b, np.sqrt(-1/(2*A_b)))
 
 def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
     div = sigma_sigma_y**2
     A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
+    N = Xa.size
+    args = [A_tilde, mu_sigma_y, div, N, normalizer]
 
-    if sigma_y == None:
-        A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
-        args = [A_tilde, mu_sigma_y, div, 1.0]
+    if sigma_y == None:  # return a sample
         normalizer = quad(posterior_sigma_y_explicit_faster, -np.inf, np.inf, args=tuple(args))[0]
         args[-1] = normalizer
         target_quantile = np.random.random()
         evaluate = lambda x: np.linalg.norm(target_quantile - quad(posterior_sigma_y_explicit_faster, -np.inf, x, args=tuple(args))[0])
         res = minimize_scalar(evaluate, bracket=(mu_sigma_y - sigma_sigma_y, mu_sigma_y + sigma_sigma_y))
         return res.x
-    else:
-        if sigma_y == 0.0:
-            exponent = - np.inf
-        else:
-            exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
+    else:  # return pdf at value sigma_y
+        return posterior_sigma_y_explicit_faster(sigma_y, *args)
 
-        return np.exp(exponent) / normalizer
-
-def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, mu_sigma_y, div, normalizer=1.0):
+def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, mu_sigma_y, div, N, normalizer=1.0):
     if sigma_y == 0.0:
         return 0.0
     else:
-        exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde
+        exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde - N * np.log(np.abs(sigma_y))
         return np.exp(exponent) / normalizer
 
 ### marginalizations
