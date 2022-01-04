@@ -37,7 +37,7 @@ y = true_transfer_dut.apply(x_actual, np.zeros_like(x_actual))[0] + np.random.no
 # special cases (activate by setting to True)
 sigma_y_is_given = False
 no_error_in_variables_model = False
-use_robust_statistics = True
+use_robust_statistics = False
 
 # init prior knowledge
 prior = {
@@ -57,9 +57,9 @@ prior = {
 init_prior = copy.deepcopy(prior)
 
 # gibbs sampler settings
-gibbs_runs = 10000
-burn_in = gibbs_runs // 10
-use_every = 100
+gibbs_runs = 1000
+burn_in = 300
+use_every = 50
 
 
 # prepare some plotting
