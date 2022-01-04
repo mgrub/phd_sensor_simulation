@@ -9,3 +9,4 @@ docs/*.bbl
 docs/*.blg
 docs/*.fdb_latexmk
 docs/*.fls
+results
