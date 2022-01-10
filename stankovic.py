@@ -7,14 +7,14 @@ class StankovicMethod:
     def simulate_sensor_reading(self, timestamp, measurand_value, sensors):
         for s in sensors:
             y, uy = s["sensor"].indicated_value(measurand_value)
-            y = y #+ uy * np.random.randn()
+            y = y + uy * np.random.randn()
             s["buffer_indication"].add(data=[[timestamp, y, uy]])
 
             x_hat, ux_hat = s["sensor"].estimated_value(y, uy)
             s["buffer_estimation"].add(data=[[timestamp, x_hat, ux_hat]])
 
     def update_single_sensor(
-        self, sensor, neighbors, delay=5, delta=0.001, calc_unc=False, use_unc=False
+        self, sensor, neighbors, delay=5, delta=0.001, calc_unc=False, use_unc=False, use_enhanced_model=False
     ):
         # define some shorthand notation
         neighbor_value_estimates = np.squeeze(
@@ -28,6 +28,9 @@ class StankovicMethod:
         y, uy = sensor["buffer_indication"].show(1)[2:]
 
         if len(sensor["buffer_indication"]) > delay:
+            model = sensor["sensor"].estimated_compensation_model
+            param = model.parameters
+
             y_delayed = sensor["buffer_indication"].show(delay)[2][0]
             # J = np.sum(np.square(neighbor_value_estimates - x_hat) / neighbor_uncertainty_estimates)
             if use_unc:
@@ -37,20 +40,23 @@ class StankovicMethod:
             else:
                 weights = np.ones_like(neighbor_value_estimates)
 
+            enhanced_sum = np.zeros(2)
+            if use_enhanced_model:
+                enhanced_sum[0] = np.square(uy) * np.sum(weights) / param[0]
+
             grad_J = np.sum(
                 (neighbor_value_estimates - x_hat)
                 * np.array([[y_delayed, 1]]).T
                 / weights,
                 axis=1,
             )
-            model = sensor["sensor"].estimated_compensation_model
-            param = model.parameters
-            new_param = param + delta * grad_J
+
+            new_param = param + delta * (grad_J + enhanced_sum)
 
             # adjust parameter estimation uncertainties
             if calc_unc:
                 C = self.build_derivative(
-                    param, neighbor_value_estimates, weights, y, delta
+                    param, neighbor_value_estimates, weights, y, uy, delta, use_enhanced_model
                 )
                 U = self.build_full_input_uncertainty_matrix(
                     model.parameters_uncertainty, neighbor_uncertainty_estimates, uy
@@ -71,7 +77,7 @@ class StankovicMethod:
         else:
             return None
 
-    def build_derivative(self, param, neighbor_value_estimates, weights, y, delta):
+    def build_derivative(self, param, neighbor_value_estimates, weights, y, uy, delta, use_enhanced_model):
         nn = neighbor_value_estimates.size
         shape = (2, 2 + nn + 1)
         C = np.zeros(shape)
@@ -90,6 +96,9 @@ class StankovicMethod:
         C[1, 1] = 1 + delta * np.sum(weights * (-1))
         C[1, 2 : 2 + nn] = 0 + delta * weights
         C[1, -1] = 0 + delta * np.sum(weights * (-a))
+
+        if use_enhanced_model:
+            C[0, 0] += - delta * np.square(uy) * np.sum(weights) / (2 * np.square(a))
 
         return C
 

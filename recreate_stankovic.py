@@ -25,15 +25,15 @@ neighbors, new_neighbors = sh.init_sensors(jsonstring=sensor_config, maxlen=maxl
 buffer_parameters = TimeSeriesBuffer(maxlen=maxlen, return_type="list")
 
 # init physical phenomenon that will be observed by sensors
-pp = DeterministicPhysicalPhenomenon(static_omega=False)
-#pp = PhysicalPhenomenon(sigma_x=0.0)
+#pp = DeterministicPhysicalPhenomenon(static_omega=False)
+pp = PhysicalPhenomenon(sigma_x=0.01)
 pp_buffer = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
 
 # init stankovic method
 sm = StankovicMethod()
  
 # observe the signal for some time
-time = np.linspace(0, 20, 500)
+time = np.linspace(0, 40, 1000)
 for t in time:
     # actual value of physical phenomenon
     real_value = pp.value(t)
@@ -43,7 +43,7 @@ for t in time:
     sm.simulate_sensor_reading(t, np.array([real_value]), sensors = neighbors + new_neighbors)
 
     # adjust/compensate new sensor by adjusting its parameters based on gradient
-    estimated_inverse_params = sm.update_single_sensor(new_neighbors[0], neighbors, delta=delta, calc_unc=True, use_unc=True)
+    estimated_inverse_params = sm.update_single_sensor(new_neighbors[0], neighbors, delta=delta, calc_unc=True, use_unc=True, use_enhanced_model=True)
     
     # store estimated new parameters for later visualization
     if estimated_inverse_params is not None:

@@ -90,8 +90,8 @@ class SimulationHelper:
             # select random model parameters
             a = 1 + 0.3 * np.random.randn()
             b = 0 + 0.3 * np.random.randn()
-            ua = 0.01 * (1 + np.random.random())
-            ub = 0.01 * (1 + np.random.random())
+            ua = 0.1 * (1 + np.random.random())
+            ub = 0.1 * (1 + np.random.random())
 
             # use in model
             transfer = LinearAffineModel(a=a, b=b, ua=ua, ub=ub)
