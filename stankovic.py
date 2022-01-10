@@ -40,9 +40,9 @@ class StankovicMethod:
             else:
                 weights = np.ones_like(neighbor_value_estimates)
 
-            enhanced_sum = np.zeros(2)
+            enhanced_factor = np.ones(2)
             if use_enhanced_model:
-                enhanced_sum[0] = np.square(uy) * np.sum(weights) / param[0]
+                enhanced_factor[0] += delta * np.square(uy) * np.sum(weights) 
 
             grad_J = np.sum(
                 (neighbor_value_estimates - x_hat)
@@ -51,7 +51,7 @@ class StankovicMethod:
                 axis=1,
             )
 
-            new_param = param + delta * (grad_J + enhanced_sum)
+            new_param = param * enhanced_factor + delta * grad_J
 
             # adjust parameter estimation uncertainties
             if calc_unc:
@@ -98,7 +98,7 @@ class StankovicMethod:
         C[1, -1] = 0 + delta * np.sum(weights * (-a))
 
         if use_enhanced_model:
-            C[0, 0] += - delta * np.square(uy) * np.sum(weights) / (2 * np.square(a))
+            C[0, 0] += delta * np.square(uy) * np.sum(weights) 
 
         return C
 

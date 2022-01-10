@@ -53,7 +53,7 @@
     
     For new a sensor $i$ the parameters $(a_i, b_i)$ are unknown and can be estimated from the neighbors $\mathcal{N}_i$ of the new sensor. This can be achieved by the proposed update equation from [stankovic\_2018], which is based on a gradient optimization scheme:
     \begin{align}
-        \vec{\theta}[n+1] &= \vec{\theta}[n] + \delta(t) * \vec{\nabla} J
+        \vec{\theta}[n+1] &= \vec{\theta}[n] + \delta(t) * \vec{\nabla} J  \label{eq:stankovic_main_update}
     \end{align}
     With
     \begin{align}
@@ -89,7 +89,7 @@
     
     And:
     \begin{align}
-        \frac{\partial a_i[n+1]}{\partial a_i[n]} &= 1 + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (- {y_i}[n-d]^2) \\
+        \frac{\partial a_i[n+1]}{\partial a_i[n]} &= 1 + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (- {y_i}[n-d]^2) \label{eq:stankovic_sensitivity_1} \\
         \frac{\partial a_i[n+1]}{\partial b_i[n]} &= 0 + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (- y_i[n-d]) \\
         \frac{\partial a_i[n+1]}{\partial y_i[n]} &= 0 + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (-2 a_i[n] * y_i[n-d] + \hat{x}_j[n] - b_i[n]) \\
         \frac{\partial a_i[n+1]}{\partial \hat{x}_j[n]} &= 0 + \delta(t) * \gamma_{ij} * y_i[n-d]\\
@@ -99,6 +99,15 @@
         \frac{\partial b_i[n+1]}{\partial y_i[n]} &= 0 + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (- a_i[n]) \\
         \frac{\partial b_i[n+1]}{\partial \hat{x}_j[n]} &= 0 + \delta(t) * \gamma_{ij}
     \end{align}    
+    
+    \section{The enhanced Stankovic algorithm}
+    [stankovic\_2018] proposes an enhanced version that is better suited for noisy measurements $y_i$ with known variance $\sigma_y = u_y$. This changes two formulas of the above presentation:
+    \begin{align}
+        \vec{\theta}[n+1] &= \begin{bmatrix} 1 + c & 0 \\ 0 & 1 \end{bmatrix} \vec{\theta}[n] + \delta(t) * \vec{\nabla} J  & \text{updates \cref{eq:stankovic_main_update}} \\ 
+        c &= \delta(t) \sigma_y^2 \sum_{j \in \mathcal{N}_i} \gamma_{ij} \\
+        \frac{\partial a_i[n+1]}{\partial a_i[n]} &= (1 + c) + \delta(t) * \sum_{j \in \mathcal{N}_i} \gamma_{ij} * (- {y_i}[n-d]^2) & \text{updates \cref{eq:stankovic_sensitivity_1}} 
+    \end{align}
+
     
     \section{Uncertainty of Output of linear affine Transfer-Function}
     A linear affine model with parameters $(a,b)$ and input $x$ can easily be written to fit the GUM-formalism:
