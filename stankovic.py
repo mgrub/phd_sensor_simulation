@@ -7,14 +7,14 @@ class StankovicMethod:
     def simulate_sensor_reading(self, timestamp, measurand_value, sensors):
         for s in sensors:
             y, uy = s["sensor"].indicated_value(measurand_value)
-            y = y + uy * np.random.randn()
+            y = y #+ uy * np.random.randn()
             s["buffer_indication"].add(data=[[timestamp, y, uy]])
 
             x_hat, ux_hat = s["sensor"].estimated_value(y, uy)
             s["buffer_estimation"].add(data=[[timestamp, x_hat, ux_hat]])
 
     def update_single_sensor(
-        self, sensor, neighbors, delay=5, delta=0.001, calc_unc=False
+        self, sensor, neighbors, delay=5, delta=0.001, calc_unc=False, use_unc=False
     ):
         # define some shorthand notation
         neighbor_value_estimates = np.squeeze(
@@ -30,7 +30,7 @@ class StankovicMethod:
         if len(sensor["buffer_indication"]) > delay:
             y_delayed = sensor["buffer_indication"].show(delay)[2][0]
             # J = np.sum(np.square(neighbor_value_estimates - x_hat) / neighbor_uncertainty_estimates)
-            if calc_unc:
+            if use_unc:
                 weights = neighbor_uncertainty_estimates / np.linalg.norm(
                     neighbor_uncertainty_estimates
                 )
@@ -72,7 +72,7 @@ class StankovicMethod:
             return None
 
     def build_derivative(self, param, neighbor_value_estimates, weights, y, delta):
-        nn = len(neighbor_value_estimates)
+        nn = neighbor_value_estimates.size
         shape = (2, 2 + nn + 1)
         C = np.zeros(shape)
         a = param[0]

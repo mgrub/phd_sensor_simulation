@@ -7,26 +7,30 @@ from models import LinearAffineModel
 
 
 class DeterministicPhysicalPhenomenon:
-    def __init__(self, tmin=0, tmax=10):
-
+    def __init__(self, tmin=0, tmax=10, static_omega = True):
+        self.static_omega = static_omega
         n_jumps = random.choice([0,2,5])
 
 
     def omega(self, time, f_min=1, f_max=10, period=60):
 
-        a = (np.log(f_max) - np.log(f_min)) / 2
-        b = a + np.log(f_min)
+        if self.static_omega:
+            return 2*np.pi
 
-        omega = 2*np.pi * np.exp(a * (np.sin(2*np.pi*time/period)) + b)
+        else:
+            a = (np.log(f_max) - np.log(f_min)) / 2
+            b = a + np.log(f_min)
+            omega = 2*np.pi * np.exp(a * (np.sin(2*np.pi*time/period)) + b)
 
-        return omega
+            return omega
 
     def value(self, time):
         return np.sin(self.omega(time) * time)
 
 
 class PhysicalPhenomenon:
-    def __init__(self):
+    def __init__(self, sigma_x = 0.01):
+        self.sigma_x = sigma_x
 
         # build the base chirp signal
         times = np.linspace(0, 5, 200)
@@ -49,8 +53,7 @@ class PhysicalPhenomenon:
         if self.counter >= self.base_signal.size:
             self.counter = 0
 
-        return value
-        # return 10 + 0.01 * np.random.randn()
+        return value + self.sigma_x * np.random.randn()
 
 
 class Sensor:
@@ -85,10 +88,10 @@ class SimulationHelper:
             provides_reference = i < n_neighbors
 
             # select random model parameters
-            a = 1 + 0.5 * np.random.randn()
-            b = 5 + 0.5 * np.random.randn()
-            ua = 0.1 * (1 + np.random.random())
-            ub = 0.1 * (1 + np.random.random())
+            a = 1 + 0.3 * np.random.randn()
+            b = 0 + 0.3 * np.random.randn()
+            ua = 0.01 * (1 + np.random.random())
+            ub = 0.01 * (1 + np.random.random())
 
             # use in model
             transfer = LinearAffineModel(a=a, b=b, ua=ua, ub=ub)
