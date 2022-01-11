@@ -10,3 +10,4 @@ docs/*.blg
 docs/*.fdb_latexmk
 docs/*.fls
 results
+experiments
