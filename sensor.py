@@ -4,6 +4,30 @@ from time_series_buffer import TimeSeriesBuffer
 from models import LinearAffineModel
 
 
+class Sensor:
+    def __init__(
+        self,
+        transfer_model,
+        estimated_transfer_model=None,
+        estimated_compensation_model=None,
+    ):
+        self.transfer_model = transfer_model  # simulation model
+        self.estimated_transfer_model = estimated_transfer_model  # calibration model
+        self.estimated_compensation_model = (
+            estimated_compensation_model  # compensation model
+        )
+
+    def indicated_value(self, physical_phenomenon_value):
+        value, value_unc = self.transfer_model.apply(physical_phenomenon_value, 0)
+        return value, value_unc
+
+    def estimated_value(self, indicated_value, indicated_uncertainty):
+        value, value_unc = self.estimated_compensation_model.apply(
+            indicated_value, indicated_uncertainty
+        )
+        return value, value_unc
+
+
 def generate_sensors(type, args, draw=False, n=1):
     sensors = {}
     for i in range(n):
