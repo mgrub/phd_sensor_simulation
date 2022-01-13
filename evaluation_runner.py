@@ -3,12 +3,16 @@ import datetime
 import json
 import logging
 import os
+import platform
+import shlex
+import subprocess
 import sys
 
 import numpy as np
+from pip._internal.operations import freeze
 
 from io_helper import NumpyEncoder
-from measurands import return_timestamps, return_measurand_object
+from measurands import return_measurand_object, return_timestamps
 from sensor import generate_sensor, generate_sensors
 
 # provide CLI that accepts a configuration file
@@ -36,9 +40,22 @@ logging.basicConfig(filename=log_path, level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 logging.info(f"Start: {datetime.datetime.now().isoformat()}")
 
-# TODO: get git status information for log
 
-# TODO: get pip status information for log
+# get system + python information
+modules = list(freeze.freeze())
+logging.info(f"Machine: {platform.node()}")
+logging.info(f"OS: {platform.platform()}")
+logging.info(f"Processor: {platform.processor()}")
+logging.info(f"Python: {platform.python_version()}")
+logging.info(f"Python environment: {modules}")
+
+
+# get git status information for log
+script_directory = os.path.dirname(os.path.abspath(__file__))
+cmd = shlex.split('git log -1 --format="%H"')
+p = subprocess.Popen(cmd, cwd=script_directory, stdout=subprocess.PIPE)
+out, err = p.communicate()
+logging.info(f"Repository Version: {out.decode('utf-8')}")
 
 
 # random state
@@ -69,7 +86,7 @@ else:
         draw=path_or_config["draw"],
         n=path_or_config["number"],
     )
-#reference_sensors = init_from(reference_sensors_description)
+reference_sensors = init_from(reference_sensors_description)
 
 reference_sensors_path = os.path.join(working_directory, "reference_sensors.json")
 with open(reference_sensors_path, "w") as f:
@@ -88,7 +105,7 @@ else:
         args=path_or_config["args"],
         draw=path_or_config["draw"],
     )
-#device_under_test = init_from(device_under_test_description)
+# device_under_test = init_from(device_under_test_description)
 
 device_under_test_path = os.path.join(working_directory, "device_under_test.json")
 with open(device_under_test_path, "w") as f:
