@@ -119,7 +119,9 @@ This leads to the following conditionals of a Gibbs Sampler \cite{dellaportas_19
     {\color{red} p(\vec{X_a} | \sigma_x, \vec{X_o})} &\propto \frac{1}{\sqrt{|\mat{U_x}|}} \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{X_o})^T \mat{U_x}^{-1} (\vec{X_a} - \vec{X_o}) \right\}
 \end{align}    
 
+
 \section{Posteriors}
+
 \subsection{Posterior for $\vec{X_a}$}
 Evaluate \cref{eq:posterior_X_a}.
 \begin{align}
@@ -139,7 +141,7 @@ Evaluate \cref{eq:posterior_X_a}.
     
     &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V}^{-1} \vec{X_a} - \vec{X_a}^T \mat{V}^{-1} \underbrace{\mat{V} (\mat{U_x}^{-1} \vec{X_o} - \vec{F_2}) }_{\vec{M}} - \vec{M}^T \mat{V}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\}
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\}  \label{eq:posterior_Xa}
 
 \end{align}
 Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V})$. 
@@ -161,66 +163,6 @@ Evaluate \cref{eq:posterior_params} for $\theta_i= a$.
 \end{align}
 Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
 
-\subsubsection{Marginalization over $\vec{X_a}$}
-To potentially raise the performance of the Gibbs sampler marginalization over $\vec{X_a}$ in the posterior of $a$ is investigated. 
-From Bayes theorem it holds $p(\alpha, \beta) = p(\alpha|\beta) p(\beta)$ which here translates to
-\begin{align}
-    p(a, \vec{X_a}|b, \sigma_y, \vec{Y}) &= p(a|b, \vec{X_a}, \sigma_y, \vec{Y}) \cdot p(\vec{X_a} | \vec{\theta}, \sigma_y, \sigma_x, \vec{Y}, \vec{X_o})
-\end{align}
-Marginalizing by integration yields
-\begin{align}
-    p(a |b, \sigma_y, \vec{Y}) &= \int_{\mathbb{R}^N} p(a, \vec{X_a}|b, \sigma_y, \vec{Y}) d\vec{X_a} \\
-    &= \int_{\mathbb{R}^N} p(a|b, \vec{X_a}, \sigma_y, \vec{Y}) \cdot p(\vec{X_a} | \vec{\theta}, \sigma_y, \sigma_x, \vec{Y}, \vec{X_o}) d\vec{X_a}
-\end{align}
-Replacing the expression with the values from above and performing the integration gives:
-{\tiny
-\begin{align}
-    p(a |b, \sigma_y, \vec{Y}) \\
-    &\propto \int_{\mathbb{R}^N} 
-    \exp\left\{ 
-        - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) 
-        - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a )
-    \right\} \cdot \exp\left\{ 
-        - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) 
-    \right\} d\vec{X_a} \\
-    
-    &= \exp\left\{
-        - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a ) 
-    \right\} \int_{\mathbb{R}^N} \exp\left\{ 
-        - \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) 
-    \right\} \exp\left\{ 
-        - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) 
-    \right\} d\vec{X_a} \\
-    
-    &= \exp\{ \cdots \} \int_{\mathbb{R}^N} \exp\left\{ 
-        - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{V}^{-1})}_{\mat{W}^{-1}} \vec{X_a} - \vec{X_a}^T \mat{W}^{-1} \underbrace{\mat{W} (\mat{V}^{-1} \vec{M} - \vec{F_2})}_{\vec{S}} - (\mat{V}^{-1} \vec{M} - \vec{F_2})^T \vec{X_a} + \vec{M}^T \mat{V}^{-1} \vec{M}) 
-    \right\} d\vec{X_a} \\
-    
-    &= \exp\{ \cdots \} \int_{\mathbb{R}^N} \exp\left\{ 
-        - \frac{1}{2} \bigg( (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) + \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \bigg) 
-    \right\} d\vec{X_a} \\
-    
-    &= \exp\{ \cdots \} \exp\left\{ 
-        - \frac{1}{2} \bigg( (\vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \bigg) 
-    \right\} \int_{\mathbb{R}^N} 
-    \exp\left\{ 
-        - \frac{1}{2} (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}))
-    \right\} d\vec{X_a} \\
-    
-    &\propto \exp\left\{
-        - \frac{1}{2\sigma_a^2} ( a^2 - 2 a \mu_a )
-    \right\} \exp\left\{ 
-        - \frac{1}{2} (\vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) 
-    \right\} 
-    \frac{1}{\sqrt{\det \mat{W}}} \\
-\end{align}
-}%
-
-If the definitions of $\mat{V}^{-1}$, $\mat{W}^{-1}$, $\vec{M}$ and $\vec{S}$ are further inserted, it can be seen that this contains terms in $a^2$, $a$, $a^{-1}$ and $a^{-2}$, which can not be represented as a normal distribution in $a$. 
-To sample from this non-classic distribution involves optimization over expression given by numeric integration.
-It needs to be investigated, whether this results in any performance benefits over not marginalizing the $\vec{X_a}$.
-
-
 \subsection{Posterior for $b$}
 Evaluate \cref{eq:posterior_params} for $\theta_i= b$.
 \begin{align}
@@ -232,7 +174,6 @@ Evaluate \cref{eq:posterior_params} for $\theta_i= b$.
     &\propto \exp\left\{A (a - \frac{B}{A})^2\right\}
 \end{align}
 Which corresponds to a Gaussian $\mathcal{N}(\frac{B}{A}, -\frac{1}{2A})$
-
 
 \subsection{Posterior for $\sigma_y$}
 Evaluate \cref{eq:posterior_sigma_y}.
@@ -252,7 +193,97 @@ $\vec{X_a} = \vec{X_o}$
 \subsection{Known Variance}
 $\sigma_y \equiv \text{known constant}$
 
-\subsection{Both?}
+
+\section{Alternative Approach without MCM}
+Instead of using Gibbs sampling (as a variant of MCM), the joint marginalized posterior of the sought parameters $a$, $b$ and $\sigma_y$ can be directly evaluated. 
+The calculation can then be executed numerically on a discrete (hyper)cube. 
+
+\subsection{Joint Posterior}
+\begin{align}
+    p(\sigma_y, \vec{\theta}, \vec{X_a} | \vec{Y}, \vec{X_o}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a})}_{p_0 \text{ see \cref{sec:initial_informative_prior}}}  \label{eq:joined_posterior}
+\end{align}
+
+
+\subsection{Marginalization over $\vec{X_a}$}
+From Bayes theorem it holds $p(\alpha, \beta) = p(\alpha|\beta) p(\beta)$ which here translates to
+\begin{align}
+    p(\sigma_y, \vec{\theta}, \vec{X_a} | \vec{Y}, \vec{X_o}) &= \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a}, \vec{Y}, \vec{X_o})}_{\text{\cref{eq:joined_posterior}}} \cdot \underbrace{p(\vec{X_a} | \vec{Y}, \vec{X_o})}_{\text{\cref{eq:posterior_Xa}}}
+\end{align}
+Marginalizing by integration yields
+{\tiny
+\begin{align}
+    p(\sigma_y, \vec{\theta} | \vec{Y}, \vec{X_o}) &= \int_{\mathbb{R}^N} p(\sigma_y, \vec{\theta}, \vec{X_a} | \vec{Y}, \vec{X_o}) d\vec{X_a} \\
+    
+    &= \int_{\mathbb{R}^N} 
+        \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a}, \vec{Y}, \vec{X_o})}_{\text{\cref{eq:joined_posterior}}} \cdot 
+        \underbrace{p(\vec{X_a} | \vec{Y}, \vec{X_o})}_{\text{\cref{eq:posterior_Xa}}} d\vec{X_a} \\
+    
+    &= \int_{\mathbb{R}^N} 
+        p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y) \cdot 
+        p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+        p(\vec{X_a} | \vec{Y}, \vec{X_o}) d\vec{X_a} \\
+    
+    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \int_{\mathbb{R}^N} 
+        p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y) \cdot 
+        p(\vec{X_a} | \vec{Y}, \vec{X_o}) d\vec{X_a} \\
+        
+    &\propto p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \int_{\mathbb{R}^N} 
+        \exp\left\{- \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) \right\} \cdot 
+        \exp\left\{- \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\} d\vec{X_a} \\
+        
+    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \int_{\mathbb{R}^N} 
+        \exp\left\{- \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \cdot 
+        \exp\left\{- \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\} d\vec{X_a} \\
+        
+    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \int_{\mathbb{R}^N} 
+        \exp\left\{- \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{V}^{-1})}_{\mat{W}^{-1}} \vec{X_a} - \vec{X_a}^T \mat{W}^{-1} \underbrace{\mat{W} (\mat{V}^{-1} \vec{M} - \vec{F_2})}_{\vec{S}} - (\mat{V}^{-1} \vec{M} - \vec{F_2})^T \vec{X_a} + \vec{M}^T \mat{V}^{-1} \vec{M})  \right\} d\vec{X_a} \\
+
+    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \int_{\mathbb{R}^N} 
+        \exp\left\{ - \frac{1}{2} \bigg( (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) + \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \bigg) \right\} d\vec{X_a} \\
+    
+    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
+    \int_{\mathbb{R}^N} 
+        \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) ) \right\} d\vec{X_a} \\
+        
+    &\propto p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
+    \frac{1}{\sqrt{\det \mat{W}}} \\
+    
+    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
+    \sqrt{\det \mat{W}^{-1}}
+\end{align}
+}
+
+\subsection{Informative Joined Prior}
+The initial choice for the prior is
+\label{sec:initial_informative_prior}
+Assume $(a,b,\sigma_y) \sim \mathcal{N}(\mu_a, \sigma_a) \times \mathcal{N}(\mu_a, \sigma_a) \times \text{InverseGamma}(\alpha, \beta) $, therefore:
+\begin{align}
+    p(\sigma_y, \vec{\theta} | \vec{X_a}) &= p_0(a, b, \sigma_y) \\
+    &= 
+    \frac{1}{\sqrt{2 \pi \sigma_{a}^2}} \exp\left\{ - \frac{1}{2\sigma_{a}^2} ( a - \mu_{a} )^2 \right\} \cdot 
+    \frac{1}{\sqrt{2 \pi \sigma_{b}^2}} \exp\left\{ - \frac{1}{2\sigma_{b}^2} ( b - \mu_{b} )^2 \right\} \cdot
+    \frac{\beta^{\alpha}}{\Gamma{\alpha}} \sigma_y^{-\alpha-1} \exp\left\{ - \frac{\beta}{\sigma_y} \right\} \\
+    &\propto 
+    \exp\left\{ - \frac{1}{2\sigma_{a}^2} ( a - \mu_{a} )^2 \right\} \cdot 
+    \exp\left\{ - \frac{1}{2\sigma_{b}^2} ( b - \mu_{b} )^2 \right\} \cdot
+    \sigma_y^{-\alpha-1} \exp\left\{ - \frac{\beta}{\sigma_y} \right\} 
+\end{align}
+
+After that, the prior is approximated by the posterior of the last iteration.
+
+\subsection{Numerical Calculation}
+hypercube of $[\mu_a - 6 * \sigma_a, \mu_a + 6 * \sigma_a] \times [\mu_b - 6 * \sigma_b, \mu_b + 6 * \sigma_b] \times [1e-6, 1e2]$
+use logarithmic scaling for $\sigma_y$
+
+Detection of out of boundary?
 
 
 \section{Method Outline}
