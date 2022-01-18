@@ -1,6 +1,4 @@
-import json
 import numpy as np
-from time_series_buffer import TimeSeriesBuffer
 from models import LinearAffineModel
 
 
@@ -17,8 +15,8 @@ class Sensor:
             estimated_compensation_model  # compensation model
         )
 
-    def indicated_value(self, physical_phenomenon_value):
-        value, value_unc = self.transfer_model.apply(physical_phenomenon_value, 0)
+    def indicated_value(self, measurand_value):
+        value, value_unc = self.transfer_model.apply(measurand_value, 0)
         return value, value_unc
 
     def estimated_value(self, indicated_value, indicated_uncertainty):
@@ -75,18 +73,12 @@ def generate_sensor(type, kwargs, draw=False):
     
 
 
-def init_sensors(path=None, jsonstring=None, maxlen=None):
-    """ load a bunch of sensors from json file/string """
-    if path is not None:
-        f = open(path, "r")
-        jsonstring = f.read()
+def init_sensor_objects(sensor_descriptions):
+    """ load a bunch of sensors from description """
 
-    sensors = json.loads(jsonstring)
+    sensors = {}
 
-    reference_sensors = []
-    non_reference_sensors = []
-
-    for sensor_params in sensors.values():
+    for sensor_name, sensor_params in sensor_descriptions.items():
         # load transfer behavior
         transfer_type = sensor_params["transfer_behavior_type"]
         if transfer_type == "LinearAffineModel":
@@ -113,22 +105,7 @@ def init_sensors(path=None, jsonstring=None, maxlen=None):
         sensor = Sensor(
             transfer_model=transfer, estimated_compensation_model=inverse
         )
-        if maxlen:
-            buffer_indication = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
-            buffer_estimation = TimeSeriesBuffer(maxlen=maxlen, return_type="arrays")
-        else:
-            buffer_indication = None
-            buffer_estimation = None
 
-        tmp = {
-            "sensor": sensor,
-            "buffer_indication": buffer_indication,
-            "buffer_estimation": buffer_estimation,
-        }
+        sensors[sensor_name] = sensor
 
-        if sensor_params["provides_reference"]:
-            reference_sensors.append(tmp)
-        else:
-            non_reference_sensors.append(tmp)
-
-    return reference_sensors, non_reference_sensors
+    return sensors

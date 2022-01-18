@@ -13,7 +13,7 @@ from pip._internal.operations import freeze
 
 from io_helper import NumpyEncoder
 from measurands import return_measurand_object, return_timestamps
-from sensor import generate_sensor, generate_sensors
+from sensor import generate_sensor, generate_sensors, init_sensor_objects
 
 # provide CLI that accepts a configuration file
 parser = argparse.ArgumentParser("Run an evaluation based on a configuration file")
@@ -86,7 +86,7 @@ else:
         draw=path_or_config["draw"],
         n=path_or_config["number"],
     )
-reference_sensors = init_from(reference_sensors_description)
+reference_sensors = init_sensor_objects(reference_sensors_description)
 
 reference_sensors_path = os.path.join(working_directory, "reference_sensors.json")
 with open(reference_sensors_path, "w") as f:
@@ -105,7 +105,7 @@ else:
         args=path_or_config["args"],
         draw=path_or_config["draw"],
     )
-# device_under_test = init_from(device_under_test_description)
+device_under_test = init_sensor_objects(device_under_test_description)
 
 device_under_test_path = os.path.join(working_directory, "device_under_test.json")
 with open(device_under_test_path, "w") as f:
@@ -128,7 +128,31 @@ with open(measurand_path, "w") as f:
     json.dump(measurand, f, cls=NumpyEncoder, indent=4)
 
 
-# sensor readings
+# sensor readings (simulate and make blocks in advance)
+path_or_config = config["sensor_readings"]
+if isinstance(path_or_config, str):
+    with open(path_or_config, "r") as f:
+        sensor_readings = json.load(f)
+        logging.info(f"Read device under test from {path_or_config}.")
+else:
+    sensor_readings = {}
+    for sensor_name, sensor in {
+        **device_under_test,
+        **reference_sensors,
+    }.items():
+
+        indications, indication_uncertainties = sensor.indicated_value(measurand["quantity"])
+        indications += indication_uncertainties * np.random.randn(len(indications))
+
+        sensor_readings[sensor_name] = {
+            "time" : measurand["time"],
+            "val" : indications,
+            "val_unc" : indication_uncertainties,
+        }
+
+sensor_readings_path = os.path.join(working_directory, "sensor_readings.json")
+with open(sensor_readings_path, "w") as f:
+    json.dump(sensor_readings, f, cls=NumpyEncoder, indent=None)
 
 
 # run cocalibration methods

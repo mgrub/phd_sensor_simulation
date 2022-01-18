@@ -50,8 +50,8 @@ class JumpingMeasurand:
         if self.counter >= self.base_signal.size:
             self.counter = 0
 
-        return value + self.sigma_x * np.random.randn()
-
+        result = {"time": time, "quantity": value + self.sigma_x * np.random.randn()}
+        return result
 
 def return_measurand_object(type, kwargs):
     if type == "SinusoidalMeasurand":
