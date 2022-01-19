@@ -167,14 +167,14 @@ class Stankovic(CocalibrationMethod):
 
 class GibbsPosterior(CocalibrationMethod):
 
-    def __init__(self, gibbs_runs = 1000, further_settings=None):
+    def __init__(self, gibbs_runs = 100, burn_in = 10, use_every = 5, sigma_y_is_given = False, no_error_in_variables_model = False, use_robust_statistics = False):
         self.gibbs_runs = gibbs_runs
 
     def update_params(self, sensor_readings, device_under_test):
         dut_timestamps, references, references_unc, dut_indications, dut_indications_unc, device_under_test_name = self.data_conversion(sensor_readings, device_under_test)
         result = []
 
-        # fuse reference
+        # cox fusion of reference
 
         # run MCM
 
