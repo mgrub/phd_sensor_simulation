@@ -23,34 +23,38 @@ class Stankovic:
         references_unc = np.array([sensor_readings[sn]["val_unc"] for sn in sensor_readings if sn is not device_under_test_name]).T
 
         dut_timestamps = np.array(sensor_readings[device_under_test_name]["time"])
-        dut_indications = np.array(sensor_readings[device_under_test_name]["val"])
-        dut_indications_unc = np.array(sensor_readings[device_under_test_name]["val_unc"])
+        dut_indications = np.array([sensor_readings[device_under_test_name]["val"]]).T
+        dut_indications_unc = np.array([sensor_readings[device_under_test_name]["val_unc"]]).T
 
-        dut = device_under_test[device_under_test_name]
+        dut_object = device_under_test[device_under_test_name]
+
+        results = []
 
         # sequentially loop over all timestamps
         for timestamp, neighbor_values, neighbor_uncertainties, y, uy in zip(dut_timestamps, references, references_unc, dut_indications, dut_indications_unc):
 
             # perform next estimation step
-            dut = self.update_params_single_timestep(timestamp, neighbor_values, neighbor_uncertainties, y, uy, dut)
+            dut_object = self.update_params_single_timestep(timestamp, neighbor_values, neighbor_uncertainties, y, uy, dut_object)
 
-        # collect results
-        updated_device_under_test = {device_under_test_name : dut}
-        result = {
-            "time" : 123,
-            "params" : {
-                "a" : {
-                    "val" : 30,
-                    "std_unc" : 1.0,
-                },
-                "b" : {
-                    "val" : 30,
-                    "std_unc" : 1.0,
-                },
+            # store result
+            if isinstance(dut_object.estimated_transfer_model, LinearAffineModel):
+                p, up = dut_object.estimated_transfer_model.get_params(separate_unc=True)
+            result = {
+                "time" : timestamp,
+                "params" : {
+                    "a" : {
+                        "val" : p["a"],
+                        "val_unc" : up["ua"],
+                    },
+                    "b" : {
+                        "val" : p["b"],
+                        "val_unc" : up["ub"],
+                    },
+                }
             }
-        }
+            results.append(result)
 
-        return result, updated_device_under_test
+        return results
 
 
     def update_params_single_timestep(self, timestamp, neighbor_values, neighbor_uncertainties, y, uy, dut):
@@ -62,7 +66,7 @@ class Stankovic:
         x_hat, ux_hat = dut.estimated_value(y, uy)
 
 
-        if len(self.buffer_indication) > self.delay:
+        if len(self.buffer_indication) == self.delay:
             model = dut.estimated_compensation_model
             param = model.parameters
 
@@ -111,70 +115,6 @@ class Stankovic:
             
         return dut
 
-
-    def update_single_sensor(
-        self, sensor, neighbors, delay=5, delta=0.001, calc_unc=False, use_unc=False, use_enhanced_model=False
-    ):
-        # define some shorthand notation
-        neighbor_value_estimates = np.squeeze(
-            [n["buffer_estimation"].show(1)[2] for n in neighbors]
-        )
-        neighbor_uncertainty_estimates = np.squeeze(
-            [n["buffer_estimation"].show(1)[3] for n in neighbors]
-        )
-        timestamp = sensor["buffer_estimation"].show(1)[0]
-        x_hat = sensor["buffer_estimation"].show(1)[2]
-        y, uy = sensor["buffer_indication"].show(1)[2:]
-
-        if len(sensor["buffer_indication"]) > delay:
-            model = sensor["sensor"].estimated_compensation_model
-            param = model.parameters
-
-            y_delayed = sensor["buffer_indication"].show(delay)[2][0]
-            # J = np.sum(np.square(neighbor_value_estimates - x_hat) / neighbor_uncertainty_estimates)
-            if use_unc:
-                weights = neighbor_uncertainty_estimates / np.linalg.norm(
-                    neighbor_uncertainty_estimates
-                )
-            else:
-                weights = np.ones_like(neighbor_value_estimates)
-
-            enhanced_factor = np.ones(2)
-            if use_enhanced_model:
-                enhanced_factor[0] += delta * np.square(uy) * np.sum(weights) 
-
-            grad_J = np.sum(
-                (neighbor_value_estimates - x_hat)
-                * np.array([[y_delayed, 1]]).T
-                / weights,
-                axis=1,
-            )
-
-            new_param = param * enhanced_factor + delta * grad_J
-
-            # adjust parameter estimation uncertainties
-            if calc_unc:
-                C = self.build_derivative(
-                    param, neighbor_value_estimates, weights, y, uy, delta, use_enhanced_model
-                )
-                U = self.build_full_input_uncertainty_matrix(
-                    model.parameters_uncertainty, neighbor_uncertainty_estimates, uy
-                )
-                new_param_unc = C @ U @ C.T
-            else:
-                new_param_unc = None
-
-            model.set_parameters(
-                parameters=new_param, parameters_uncertainty=new_param_unc
-            )
-
-            # calculate estimated inverse model
-            p_inv, up_inv = model.inverse_model_parameters(separate_unc=True)
-            sensor["sensor"].estimated_transfer_model = LinearAffineModel(**p_inv, **up_inv)
-
-            return [timestamp, p_inv, up_inv]
-        else:
-            return None
 
     def build_derivative(self, param, neighbor_value_estimates, weights, y, uy, delta, use_enhanced_model):
         nn = neighbor_value_estimates.size

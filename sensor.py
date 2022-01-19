@@ -61,12 +61,12 @@ def generate_sensor(type, kwargs, draw=False):
         raise ValueError(f"Unsupported model type <{type}>.")
 
     sensor = {
-        "transfer_behavior_type": type,
-        "transfer_behavior_params": params,
-        "estimated_transfer_behavior_type": type,
-        "estimated_transfer_behavior_params": params_est,
-        "estimated_correction_model_type": type,
-        "estimated_correction_model_params": params_inv
+        "transfer_model_type": type,
+        "transfer_model_params": params,
+        "estimated_transfer_model_type": type,
+        "estimated_transfer_model_params": params_est,
+        "estimated_compensation_model_type": type,
+        "estimated_compensation_model_params": params_inv
     }
 
     return sensor
@@ -79,32 +79,31 @@ def init_sensor_objects(sensor_descriptions):
     sensors = {}
 
     for sensor_name, sensor_params in sensor_descriptions.items():
-        # load transfer behavior
-        transfer_type = sensor_params["transfer_behavior_type"]
-        if transfer_type == "LinearAffineModel":
-            transfer = LinearAffineModel(
-                **sensor_params["transfer_behavior_params"]
-            )
-        else:
-            raise NotImplementedError(
-                f"Transfer Model type {transfer_type} not supported."
-            )
 
-        # load inverse behavior
-        inverse_type = sensor_params["estimated_correction_model_type"]
-        if inverse_type == "LinearAffineModel":
-            inverse = LinearAffineModel(
-                **sensor_params["estimated_correction_model_params"]
-            )
-        else:
-            raise NotImplementedError(
-                f"Transfer Model type {inverse_type} not supported."
-            )
+        # init the three different internally used models
+        sensor_args = {
+            "transfer_model" : None, 
+            "estimated_transfer_model" : None,
+            "estimated_compensation_model" : None, 
+        }
+
+        for model_name in sensor_args.keys():
+            model_type = sensor_params[f"{model_name}_type"]
+
+            # load transfer behavior
+            if model_type == "LinearAffineModel":
+                model = LinearAffineModel(
+                    **sensor_params[f"{model_name}_params"]
+                )
+            else:
+                raise NotImplementedError(
+                    f"Transfer Model type {model_type} not supported."
+                )
+
+            sensor_args[model_name] = model
 
         # init sensor
-        sensor = Sensor(
-            transfer_model=transfer, estimated_compensation_model=inverse
-        )
+        sensor = Sensor(**sensor_args)
 
         sensors[sensor_name] = sensor
 

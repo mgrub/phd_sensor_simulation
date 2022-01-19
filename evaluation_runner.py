@@ -1,4 +1,5 @@
 import argparse
+import copy
 import datetime
 import json
 import logging
@@ -187,6 +188,10 @@ with open(cocalibration_path, "w") as f:
 use_interpolation = cocalibration["interpolate"]
 run_blockwise = cocalibration["blockwise"]
 
+results_directory = os.path.join(working_directory, "results")
+if not os.path.exists(results_directory):
+    os.mkdir(results_directory)
+
 for method_name, method_args in cocalibration["methods"].items():
     logging.info("-" * 10)
     logging.info(f"Starting {method_name} at {datetime.datetime.now().isoformat()}.")
@@ -195,11 +200,18 @@ for method_name, method_args in cocalibration["methods"].items():
     method_class = getattr(cocalibration_methods, method_args["class_name"])
     method = method_class(**method_args["arguments"])
 
+    device_under_test_copy = copy.deepcopy(device_under_test)
+
     if run_blockwise:
         # TODO (split sensor readings into blocks, consume blocks one after another)
         pass
     else:
-        tmp = method.update_params(sensor_readings, device_under_test)
+        results = method.update_params(sensor_readings, device_under_test_copy)
+    
+    # write results to file
+    method_results_path = os.path.join(results_directory, f"{method_name}.json")
+    with open(method_results_path, "w") as f:
+        json.dump(results, f, cls=NumpyEncoder, indent=4)
         
     logging.info(f"Finished {method_name} at {datetime.datetime.now().isoformat()}.")
 logging.info("-" * 10)
