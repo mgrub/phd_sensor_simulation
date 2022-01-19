@@ -1,4 +1,7 @@
+from collections import deque
 import numpy as np
+from models import LinearAffineModel
+from time_series_buffer import TimeSeriesBuffer
 
 class Stankovic:
 
@@ -9,12 +12,30 @@ class Stankovic:
         self.delta = delta
         self.delay = delay
 
+        self.buffer_indication = TimeSeriesBuffer(maxlen=delay, return_type="list")
+
     
     def update_params(self, sensor_readings, device_under_test):
         
-        neighbor_value_estimates = 1
-        neighbor_uncertainty_estimates = 1
+        device_under_test_name = list(device_under_test.keys())[0]
 
+        references = np.array([sensor_readings[sn]["val"] for sn in sensor_readings if sn is not device_under_test_name]).T
+        references_unc = np.array([sensor_readings[sn]["val_unc"] for sn in sensor_readings if sn is not device_under_test_name]).T
+
+        dut_timestamps = np.array(sensor_readings[device_under_test_name]["time"])
+        dut_indications = np.array(sensor_readings[device_under_test_name]["val"])
+        dut_indications_unc = np.array(sensor_readings[device_under_test_name]["val_unc"])
+
+        dut = device_under_test[device_under_test_name]
+
+        # sequentially loop over all timestamps
+        for timestamp, neighbor_values, neighbor_uncertainties, y, uy in zip(dut_timestamps, references, references_unc, dut_indications, dut_indications_unc):
+
+            # perform next estimation step
+            dut = self.update_params_single_timestep(timestamp, neighbor_values, neighbor_uncertainties, y, uy, dut)
+
+        # collect results
+        updated_device_under_test = {device_under_test_name : dut}
         result = {
             "time" : 123,
             "params" : {
@@ -29,23 +50,67 @@ class Stankovic:
             }
         }
 
-        return result, internal_state, updated_device_under_test
+        return result, updated_device_under_test
 
 
+    def update_params_single_timestep(self, timestamp, neighbor_values, neighbor_uncertainties, y, uy, dut):
+
+        # update buffer
+        self.buffer_indication.add(time=timestamp, val=y, val_unc=uy)
+        
+        # estimated based on most recent parameter estimate
+        x_hat, ux_hat = dut.estimated_value(y, uy)
 
 
-    def update_params_single_timestep():
-        pass
+        if len(self.buffer_indication) > self.delay:
+            model = dut.estimated_compensation_model
+            param = model.parameters
 
+            y_delayed = self.buffer_indication.show(self.delay)[2][0]
+            # J = np.sum(np.square(neighbor_values - x_hat) / neighbor_uncertainties)
+            if self.use_unc:
+                weights = neighbor_uncertainties / np.linalg.norm(
+                    neighbor_uncertainties
+                )
+            else:
+                weights = np.ones_like(neighbor_values)
 
-    def simulate_sensor_reading(self, timestamp, measurand_value, sensors):
-        for s in sensors:
-            y, uy = s["sensor"].indicated_value(measurand_value)
-            y = y + uy * np.random.randn()
-            s["buffer_indication"].add(data=[[timestamp, y, uy]])
+            enhanced_factor = np.ones(2)
+            if self.use_enhanced_model:
+                enhanced_factor[0] += self.delta * np.square(uy) * np.sum(weights) 
 
-            x_hat, ux_hat = s["sensor"].estimated_value(y, uy)
-            s["buffer_estimation"].add(data=[[timestamp, x_hat, ux_hat]])
+            grad_J = np.sum(
+                (neighbor_values - x_hat)
+                * np.array([[y_delayed, 1]]).T
+                / weights,
+                axis=1,
+            )
+
+            new_param = param * enhanced_factor + self.delta * grad_J
+
+            # adjust parameter estimation uncertainties
+            if self.calc_unc:
+                C = self.build_derivative(
+                    param, neighbor_values, weights, y, uy, self.delta, self.use_enhanced_model
+                )
+                U = self.build_full_input_uncertainty_matrix(
+                    model.parameters_uncertainty, neighbor_uncertainties, uy
+                )
+                new_param_unc = C @ U @ C.T
+            else:
+                new_param_unc = None
+
+            model.set_parameters(
+                parameters=new_param, parameters_uncertainty=new_param_unc
+            )
+
+            # update DUT 
+            # calculate estimated inverse model
+            p_inv, up_inv = model.inverse_model_parameters(separate_unc=True)
+            dut.estimated_transfer_model = LinearAffineModel(**p_inv, **up_inv)
+            
+        return dut
+
 
     def update_single_sensor(
         self, sensor, neighbors, delay=5, delta=0.001, calc_unc=False, use_unc=False, use_enhanced_model=False

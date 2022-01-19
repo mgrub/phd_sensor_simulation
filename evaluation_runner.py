@@ -192,7 +192,7 @@ for method_name, method_args in cocalibration["methods"].items():
     logging.info(f"Starting {method_name} at {datetime.datetime.now().isoformat()}.")
 
     # init method class
-    method_class = getattr(cocalibration, method_args["class_name"])
+    method_class = getattr(cocalibration_methods, method_args["class_name"])
     method = method_class(**method_args["arguments"])
 
     if run_blockwise:
