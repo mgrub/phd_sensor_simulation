@@ -202,11 +202,14 @@ for method_name, method_args in cocalibration["methods"].items():
 
     device_under_test_copy = copy.deepcopy(device_under_test)
 
+    results = []
+
     if run_blockwise:
         # TODO (split sensor readings into blocks, consume blocks one after another)
         pass
     else:
-        results = method.update_params(sensor_readings, device_under_test_copy)
+        result = method.update_params(sensor_readings, device_under_test_copy)
+        results.append(result)
     
     # write results to file
     method_results_path = os.path.join(results_directory, f"{method_name}.json")

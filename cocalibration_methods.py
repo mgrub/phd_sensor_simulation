@@ -3,7 +3,30 @@ import numpy as np
 from models import LinearAffineModel
 from time_series_buffer import TimeSeriesBuffer
 
-class Stankovic:
+
+class CocalibrationMethod:
+
+    def __init__(self):
+        pass
+
+    def update_params(self, sensor_readings, device_under_test):
+        pass
+
+    def data_conversion(self, sensor_readings, device_under_test):
+
+        device_under_test_name = list(device_under_test.keys())[0]
+
+        references = np.array([sensor_readings[sn]["val"] for sn in sensor_readings if sn is not device_under_test_name]).T
+        references_unc = np.array([sensor_readings[sn]["val_unc"] for sn in sensor_readings if sn is not device_under_test_name]).T
+
+        dut_timestamps = np.array(sensor_readings[device_under_test_name]["time"])
+        dut_indications = np.array([sensor_readings[device_under_test_name]["val"]]).T
+        dut_indications_unc = np.array([sensor_readings[device_under_test_name]["val_unc"]]).T
+
+        return dut_timestamps, references, references_unc, dut_indications, dut_indications_unc, device_under_test_name
+
+
+class Stankovic(CocalibrationMethod):
 
     def __init__(self, calc_unc=False, use_unc=False, use_enhanced_model=False, delay=5, delta=0.001):
         self.calc_unc=calc_unc
@@ -17,18 +40,9 @@ class Stankovic:
     
     def update_params(self, sensor_readings, device_under_test):
         
-        device_under_test_name = list(device_under_test.keys())[0]
-
-        references = np.array([sensor_readings[sn]["val"] for sn in sensor_readings if sn is not device_under_test_name]).T
-        references_unc = np.array([sensor_readings[sn]["val_unc"] for sn in sensor_readings if sn is not device_under_test_name]).T
-
-        dut_timestamps = np.array(sensor_readings[device_under_test_name]["time"])
-        dut_indications = np.array([sensor_readings[device_under_test_name]["val"]]).T
-        dut_indications_unc = np.array([sensor_readings[device_under_test_name]["val_unc"]]).T
-
+        dut_timestamps, references, references_unc, dut_indications, dut_indications_unc, device_under_test_name = self.data_conversion(sensor_readings, device_under_test)
         dut_object = device_under_test[device_under_test_name]
-
-        results = []
+        result = []
 
         # sequentially loop over all timestamps
         for timestamp, neighbor_values, neighbor_uncertainties, y, uy in zip(dut_timestamps, references, references_unc, dut_indications, dut_indications_unc):
@@ -39,7 +53,7 @@ class Stankovic:
             # store result
             if isinstance(dut_object.estimated_transfer_model, LinearAffineModel):
                 p, up = dut_object.estimated_transfer_model.get_params(separate_unc=True)
-            result = {
+            result_timestamp = {
                 "time" : timestamp,
                 "params" : {
                     "a" : {
@@ -52,9 +66,9 @@ class Stankovic:
                     },
                 }
             }
-            results.append(result)
+            result.append(result_timestamp)
 
-        return results
+        return result
 
 
     def update_params_single_timestep(self, timestamp, neighbor_values, neighbor_uncertainties, y, uy, dut):
@@ -151,19 +165,25 @@ class Stankovic:
         return U
 
 
-class GibbsPosterior:
+class GibbsPosterior(CocalibrationMethod):
 
     def __init__(self, gibbs_runs = 1000, further_settings=None):
         self.gibbs_runs = gibbs_runs
 
-    def update_params(self, timestamps, reference_sensor_values):
-        pass
+    def update_params(self, sensor_readings, device_under_test):
+        dut_timestamps, references, references_unc, dut_indications, dut_indications_unc, device_under_test_name = self.data_conversion(sensor_readings, device_under_test)
+        result = []
+
+        # fuse reference
+
+        # run MCM
+
 
     def cox_fusion(self, timestamps, reference_sensor_values, reference_sensor_uncs):
         pass
 
 
-class DirectPosterior:
+class DirectPosterior(CocalibrationMethod):
 
     def __init__(self, gibbs_runs = 1000, further_settings=None):
         self.gibbs_runs = gibbs_runs
