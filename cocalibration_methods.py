@@ -1,7 +1,10 @@
 from collections import deque
+
 import numpy as np
-from models import LinearAffineModel
+from scipy.stats import chi2
 from time_series_buffer import TimeSeriesBuffer
+
+from models import LinearAffineModel
 
 
 class CocalibrationMethod:
@@ -212,7 +215,56 @@ class Stankovic(CocalibrationMethod):
         return U
 
 
-class GibbsPosterior(CocalibrationMethod):
+class Gruber(CocalibrationMethod):
+
+    def cox_fusion(self, reference_sensor_values, reference_sensor_uncs):
+
+    #def fuse(self, value_uncs, values):
+
+        weights = 1 / np.square(reference_sensor_uncs)
+        val, val_unc = self.weighted_mean(reference_sensor_values, reference_sensor_uncs, weights)
+
+        # chi-square test for outliers
+        chi2_obs = np.sum(np.square((reference_sensor_values - val) / reference_sensor_uncs), axis=1)
+        dof = len(reference_sensor_values) - 1
+        p = chi2.sf(chi2_obs, dof)
+
+        # remove outliers
+        if p < 0.05:
+            d = values - val
+            ud = np.square(value_uncs) - np.square(val_unc)
+            within_limits = np.abs(d) <= 2 * ud
+
+            if np.any(within_limits):
+                values_inside = values[within_limits]
+                value_uncs_inside = value_uncs[within_limits]
+                weights_inside = weights[within_limits]
+
+                # recalculate the fusion value without outliers
+                val, val_unc = self.weighted_mean(
+                    values_inside, value_uncs_inside, weights_inside
+                )
+
+            else:  # if all values are rejected, take the median
+                median_index = np.argsort(values)[len(values) // 2]
+                val = values[median_index]
+                val_unc = value_uncs[median_index]
+
+        return val_unc, val
+    
+    def weighted_mean(self, values, value_uncs, weights):
+        k = np.sum(weights, axis=1)
+
+        # calculate the weighted mean
+        val = np.sum(weights * values, axis=1) / k
+
+        # uncertainty according GUM for uncorrelated inputs
+        val_unc = np.linalg.norm(weights / k[:,None] * value_uncs, ord=2, axis=1)
+
+        return val, val_unc
+
+
+class GibbsPosterior(Gruber):
     def __init__(
         self,
         gibbs_runs=100,
@@ -236,14 +288,13 @@ class GibbsPosterior(CocalibrationMethod):
         result = []
 
         # cox fusion of reference
+        self.cox_fusion(references, references_unc)
 
         # run MCM
 
-    def cox_fusion(self, timestamps, reference_sensor_values, reference_sensor_uncs):
-        pass
 
 
-class DirectPosterior(CocalibrationMethod):
+class DirectPosterior(Gruber):
     def __init__(self, gibbs_runs=1000, further_settings=None):
         self.gibbs_runs = gibbs_runs
 
