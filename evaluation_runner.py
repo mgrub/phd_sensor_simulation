@@ -209,7 +209,7 @@ for method_name, method_args in cocalibration["methods"].items():
         pass
     else:
         result = method.update_params(sensor_readings, device_under_test_copy)
-        results.append(result)
+        results += result
     
     # write results to file
     method_results_path = os.path.join(results_directory, f"{method_name}.json")
