@@ -1,4 +1,5 @@
 from collections import deque
+from os import remove
 
 import numpy as np
 from scipy.stats import chi2
@@ -225,32 +226,15 @@ class Gruber(CocalibrationMethod):
         val, val_unc = self.weighted_mean(reference_sensor_values, reference_sensor_uncs, weights)
 
         # chi-square test for outliers
-        chi2_obs = np.sum(np.square((reference_sensor_values - val) / reference_sensor_uncs), axis=1)
-        dof = len(reference_sensor_values) - 1
+        chi2_obs = np.sum(np.square((reference_sensor_values - val[:,None]) / reference_sensor_uncs), axis=1)
+        dof = reference_sensor_values.shape[1] - 1
         p = chi2.sf(chi2_obs, dof)
 
         # remove outliers
-        if p < 0.05:
-            d = values - val
-            ud = np.square(value_uncs) - np.square(val_unc)
-            within_limits = np.abs(d) <= 2 * ud
+        for i in range(len(p)):
+            val[i], val_unc[i] = self.outlier_removal(p[i], val[i], val_unc[i], weights[i], reference_sensor_values[i], reference_sensor_uncs[i])
 
-            if np.any(within_limits):
-                values_inside = values[within_limits]
-                value_uncs_inside = value_uncs[within_limits]
-                weights_inside = weights[within_limits]
-
-                # recalculate the fusion value without outliers
-                val, val_unc = self.weighted_mean(
-                    values_inside, value_uncs_inside, weights_inside
-                )
-
-            else:  # if all values are rejected, take the median
-                median_index = np.argsort(values)[len(values) // 2]
-                val = values[median_index]
-                val_unc = value_uncs[median_index]
-
-        return val_unc, val
+        return val, val_unc
     
     def weighted_mean(self, values, value_uncs, weights):
         k = np.sum(weights, axis=1)
@@ -262,6 +246,30 @@ class Gruber(CocalibrationMethod):
         val_unc = np.linalg.norm(weights / k[:,None] * value_uncs, ord=2, axis=1)
 
         return val, val_unc
+    
+    def outlier_removal(self, p_row, val_row, val_unc_row, weights_row, values_row, value_uncs_row):
+        if p_row < 0.05:
+            d = values_row - val_row
+            ud = np.square(value_uncs_row) - np.square(val_unc_row)
+            within_limits = np.abs(d) <= 2 * ud
+
+            if np.any(within_limits):
+                values_inside = values_row[within_limits][:,None]
+                value_uncs_inside = value_uncs_row[within_limits][:,None]
+                weights_inside = weights_row[within_limits][:,None]
+                # [:,None] -> add singelton dimension
+
+                # recalculate the fusion value without outliers
+                val, val_unc = self.weighted_mean(
+                    values_inside, value_uncs_inside, weights_inside
+                )
+
+            else:  # if all values are rejected, take the median
+                median_index = np.argsort(values_row)[len(values_row) // 2]
+                val_row = values_row[median_index]
+                val_unc_row = value_uncs_row[median_index]
+        
+        return val_row, val_unc_row
 
 
 class GibbsPosterior(Gruber):
