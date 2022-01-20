@@ -217,25 +217,36 @@ class Stankovic(CocalibrationMethod):
 
 
 class Gruber(CocalibrationMethod):
-
     def cox_fusion(self, reference_sensor_values, reference_sensor_uncs):
 
-    #def fuse(self, value_uncs, values):
+        # def fuse(self, value_uncs, values):
 
         weights = 1 / np.square(reference_sensor_uncs)
-        val, val_unc = self.weighted_mean(reference_sensor_values, reference_sensor_uncs, weights)
+        val, val_unc = self.weighted_mean(
+            reference_sensor_values, reference_sensor_uncs, weights
+        )
 
         # chi-square test for outliers
-        chi2_obs = np.sum(np.square((reference_sensor_values - val[:,None]) / reference_sensor_uncs), axis=1)
+        chi2_obs = np.sum(
+            np.square((reference_sensor_values - val[:, None]) / reference_sensor_uncs),
+            axis=1,
+        )
         dof = reference_sensor_values.shape[1] - 1
         p = chi2.sf(chi2_obs, dof)
 
         # remove outliers
         for i in range(len(p)):
-            val[i], val_unc[i] = self.outlier_removal(p[i], val[i], val_unc[i], weights[i], reference_sensor_values[i], reference_sensor_uncs[i])
+            val[i], val_unc[i] = self.outlier_removal(
+                p[i],
+                val[i],
+                val_unc[i],
+                weights[i],
+                reference_sensor_values[i],
+                reference_sensor_uncs[i],
+            )
 
         return val, val_unc
-    
+
     def weighted_mean(self, values, value_uncs, weights):
         k = np.sum(weights, axis=1)
 
@@ -243,20 +254,22 @@ class Gruber(CocalibrationMethod):
         val = np.sum(weights * values, axis=1) / k
 
         # uncertainty according GUM for uncorrelated inputs
-        val_unc = np.linalg.norm(weights / k[:,None] * value_uncs, ord=2, axis=1)
+        val_unc = np.linalg.norm(weights / k[:, None] * value_uncs, ord=2, axis=1)
 
         return val, val_unc
-    
-    def outlier_removal(self, p_row, val_row, val_unc_row, weights_row, values_row, value_uncs_row):
+
+    def outlier_removal(
+        self, p_row, val_row, val_unc_row, weights_row, values_row, value_uncs_row
+    ):
         if p_row < 0.05:
             d = values_row - val_row
             ud = np.square(value_uncs_row) - np.square(val_unc_row)
             within_limits = np.abs(d) <= 2 * ud
 
             if np.any(within_limits):
-                values_inside = values_row[within_limits][:,None]
-                value_uncs_inside = value_uncs_row[within_limits][:,None]
-                weights_inside = weights_row[within_limits][:,None]
+                values_inside = values_row[within_limits][:, None]
+                value_uncs_inside = value_uncs_row[within_limits][:, None]
+                weights_inside = weights_row[within_limits][:, None]
                 # [:,None] -> add singelton dimension
 
                 # recalculate the fusion value without outliers
@@ -268,7 +281,7 @@ class Gruber(CocalibrationMethod):
                 median_index = np.argsort(values_row)[len(values_row) // 2]
                 val_row = values_row[median_index]
                 val_unc_row = value_uncs_row[median_index]
-        
+
         return val_row, val_unc_row
 
 
@@ -283,6 +296,11 @@ class GibbsPosterior(Gruber):
         use_robust_statistics=False,
     ):
         self.gibbs_runs = gibbs_runs
+        self.burn_in = burn_in
+        self.use_every = use_every
+        self.sigma_y_is_given = sigma_y_is_given
+        self.no_error_in_variables_model = no_error_in_variables_model
+        self.use_robust_statistics = use_robust_statistics
 
     def update_params(self, sensor_readings, device_under_test):
         (
@@ -296,10 +314,176 @@ class GibbsPosterior(Gruber):
         result = []
 
         # cox fusion of reference
-        self.cox_fusion(references, references_unc)
+        fused_reference, fused_reference_unc = self.cox_fusion(
+            references, references_unc
+        )
 
         # run MCM
 
+
+
+
+
+        # TODO
+
+
+
+
+
+
+
+    
+        # available measurement information
+        tt = t[current_indices]
+        print(tt[0])
+        xx_actual = x_actual[current_indices]
+        xx_observed = x_observed[current_indices]
+        Uxx = Ux[current_indices][:,current_indices]
+        Uxx_inv = np.linalg.inv(Uxx)
+        yy = y[current_indices]
+
+        # plt
+        ax[0].scatter(tt, yy)
+
+        # shortcuts for prior
+        mu_a = prior["a"]["mu"]
+        mu_b = prior["b"]["mu"]
+        mu_sigma_y = prior["sigma_y"]["mu"]
+
+        sigma_a = prior["a"]["sigma"]
+        sigma_b = prior["b"]["sigma"]
+        sigma_sigma_y = prior["sigma_y"]["sigma"]
+
+        # update posteriors using (block-)Gibbs sampling
+        samples = []
+        # initital sample from best guess (or any other method?)
+        initial_sample = {
+            "Xa" : xx_observed,
+            "a" : mu_a,
+            "b" : mu_b,
+            "sigma_y" : mu_sigma_y,
+        }
+        samples.append(initial_sample)
+
+        # init variables
+        ps = samples[0]
+        Xa_gibbs = ps["Xa"]
+        a_gibbs = ps["a"]
+        b_gibbs = ps["b"]
+        sigma_y_gibbs = ps["sigma_y"]
+
+        for i_run in range(1, gibbs_runs): # gibbs runs
+
+            if no_error_in_variables_model:
+                Xa_gibbs = xx_observed
+            else:
+                # sample from posterior of Xa
+                Xa_gibbs = posterior_Xa_explicit(None, a_gibbs, b_gibbs, sigma_y_gibbs, yy, xx_observed, Uxx_inv)
+
+            # sample from posterior of a
+            a_gibbs = posterior_a_explicit(None, b_gibbs, Xa_gibbs, sigma_y_gibbs, yy, mu_a, sigma_a)
+
+            ### TESTING marginalization over Xa
+            #args = [sigma_y_gibbs, yy, xx_observed, Uxx_inv, b_gibbs, mu_a, sigma_a, 1.0]
+            #posterior_pdf_a_without_Xa(1.0, *args)
+            ### /TESTING
+
+            # sample from posterior of b
+            b_gibbs = posterior_b_explicit(None, a_gibbs, Xa_gibbs, sigma_y_gibbs, yy, mu_b, sigma_b)
+
+            # sample from posterior of sigma_y
+            if sigma_y_is_given:
+                sigma_y_gibbs = sigma_y_true
+            else:
+                sigma_y_gibbs = posterior_sigma_y_explicit(None, a_gibbs, b_gibbs, Xa_gibbs, yy, mu_sigma_y, sigma_sigma_y)
+
+            # 
+            samples.append({
+            "Xa" : Xa_gibbs,
+            "a" : a_gibbs,
+            "b" : b_gibbs,
+            "sigma_y" : sigma_y_gibbs,
+        })
+
+        # estimate posterior from (avoid burn-in and take only every nth sample to avoid autocorrelation)
+
+        considered_samples = samples[burn_in::use_every]
+        AA = [sample["a"] for sample in considered_samples]
+        BB = [sample["b"] for sample in considered_samples]
+        SY = [sample["sigma_y"] for sample in considered_samples]
+
+        if use_robust_statistics:
+            posterior = {
+                "a" : {
+                    "mu" : np.median(AA),
+                    "sigma" : iqr(AA),
+                },
+                "b" : {
+                    "mu" : np.median(BB),
+                    "sigma" : iqr(BB),
+                },
+                "sigma_y" : {
+                    "mu" : np.median(SY),
+                    "sigma" : iqr(SY),
+                }
+            }
+        else:
+            posterior = {
+                "a" : {
+                    "mu" : np.mean(AA),
+                    "sigma" : np.std(AA),
+                },
+                "b" : {
+                    "mu" : np.mean(BB), 
+                    "sigma" : np.std(BB),
+                },
+                "sigma_y" : {
+                    "mu" : np.mean(SY),
+                    "sigma" : np.std(SY),
+                }
+            }
+
+        # log for plot
+        parameters_history[tt[-1]] = np.array([posterior["a"]["mu"], posterior["b"]["mu"], posterior["sigma_y"]["mu"]])
+        parameter_uncertainty_history[tt[-1]] = np.array([posterior["a"]["sigma"], posterior["b"]["sigma"], posterior["sigma_y"]["sigma"]])
+
+        # prepare next cycle
+        prior = posterior
+
+
+
+
+
+
+
+        # /TODO
+
+
+
+
+
+        # return estimate
+        result.append(
+            {
+                "time": dut_timestamps[-1],
+                "params": {
+                    "a": {
+                        "val": 1,
+                        "val_unc": 2,
+                    },
+                    "b": {
+                        "val": 3,
+                        "val_unc": 4,
+                    },
+                    "sigma_y": {
+                        "val": 5,
+                        "val_unc": 6,
+                    },
+                },
+            }
+        )
+
+        return result
 
 
 class DirectPosterior(Gruber):
