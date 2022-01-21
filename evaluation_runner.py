@@ -12,7 +12,7 @@ import sys
 import numpy as np
 from pip._internal.operations import freeze
 
-from io_helper import NumpyEncoder
+from io_helper import NumpyEncoder, current_block
 from measurands import return_measurand_object, return_timestamps
 from sensor import generate_sensor, generate_sensors, init_sensor_objects
 import cocalibration_methods
@@ -168,6 +168,19 @@ if isinstance(path_or_config, str):
 else:
     cocalibration = path_or_config
 
+use_interpolation = cocalibration["interpolate"]
+run_blockwise = cocalibration["blockwise"]
+if run_blockwise:
+    if "split_indices" in cocalibration.keys():
+        split_indices = cocalibration["split_indices"]
+    else:
+        t = measurand["time"]
+        n_splits = np.random.randint(1, len(t) // 3)
+        split_indices = np.sort(np.random.permutation(np.arange(3, len(t)-1))[:n_splits])
+        cocalibration["split_indices"] = split_indices
+    
+    blockwise_indices = np.split(np.arange(len(t)), split_indices)
+
 methods_full = {}
 for method_name, method_path_or_config in cocalibration["methods"].items():
     if isinstance(method_path_or_config, str):
@@ -185,8 +198,6 @@ with open(cocalibration_path, "w") as f:
 
 
 # run cocalibration methods
-use_interpolation = cocalibration["interpolate"]
-run_blockwise = cocalibration["blockwise"]
 
 results_directory = os.path.join(working_directory, "results")
 if not os.path.exists(results_directory):
@@ -208,10 +219,15 @@ for method_name, method_args in cocalibration["methods"].items():
         # TODO (split sensor readings into blocks, consume blocks one after another)
         # maybe implement this already at the level of sensor_readings and measurand?
         # somehow store the selected blocks?
-        pass
+
+        for current_indices in blockwise_indices:
+            current_sensor_readings = current_block(sensor_readings, current_indices)
+            block_result = method.update_params(current_sensor_readings, device_under_test_copy)
+            results.append(block_result)
+
     else:
         result = method.update_params(sensor_readings, device_under_test_copy)
-        results += result
+        results.append(result)
     
     # write results to file
     method_results_path = os.path.join(results_directory, f"{method_name}.json")
