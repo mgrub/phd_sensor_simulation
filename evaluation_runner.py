@@ -206,6 +206,8 @@ for method_name, method_args in cocalibration["methods"].items():
 
     if run_blockwise:
         # TODO (split sensor readings into blocks, consume blocks one after another)
+        # maybe implement this already at the level of sensor_readings and measurand?
+        # somehow store the selected blocks?
         pass
     else:
         result = method.update_params(sensor_readings, device_under_test_copy)
