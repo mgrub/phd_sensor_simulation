@@ -1,0 +1,35 @@
+{
+    "random_state": null,
+    "reference_sensors": {
+        "type": "LinearAffineModel",
+        "number": 4,
+        "draw": true,
+        "args": {
+            "a": 1,
+            "b": 0,
+            "ua": 0.3,
+            "ub": 0.3
+        }
+    },
+    "device_under_test": "experiments/scenario_A/example_sensor.json",
+    "measurand": {
+        "type": "SinusoidalMeasurand",
+        "args": {
+            "sigma_x": 0.1
+        },
+        "time_args": {
+            "time_start": 0,
+            "time_end": 20.0,
+            "dt": 0.01
+        }
+    },
+    "sensor_readings": null,
+    "cocalibration": {
+        "interpolate": false,
+        "blockwise": true,
+        "methods": {
+            "stankovic_base": "method_args/stankovic_base.json",
+            "gruber_minimal": "method_args/gruber_minimal.json"
+        }
+    }
+}

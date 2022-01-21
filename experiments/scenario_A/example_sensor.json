@@ -1,0 +1,28 @@
+{
+    "example_sensor": {
+        "transfer_model_type": "LinearAffineModel",
+        "transfer_model_params": {
+            "a": 2,
+            "b": 1,
+            "ua": 0.5,
+            "ub": 0.5,
+            "uab": 0.0
+        },
+        "estimated_transfer_model_type": "LinearAffineModel",
+        "estimated_transfer_model_params": {
+            "a": 1,
+            "b": 0,
+            "ua": 1,
+            "ub": 1,
+            "uab": 0.0
+        },
+        "estimated_compensation_model_type": "LinearAffineModel",
+        "estimated_compensation_model_params": {
+            "a": 1,
+            "b": 0,
+            "ua": 1,
+            "ub": 1,
+            "uab": 0.0
+        }
+    }
+}
