@@ -447,12 +447,42 @@ class GibbsPosterior(Gruber):
 
 
 
-class DirectPosterior(Gruber):
-    def __init__(self, gibbs_runs=1000, further_settings=None):
-        self.gibbs_runs = gibbs_runs
+class AnalyticalDiscretePosterior(Gruber):
+    def __init__(
+        self,
+        prior=None,
+    ):
+        self.prior = prior
 
-    def update_params(self, timestamps, reference_sensor_values):
-        pass
+    def update_params(self, sensor_readings, device_under_test):
+        (
+            dut_timestamps,
+            references,
+            references_unc,
+            dut_indications,
+            dut_indications_unc,
+            device_under_test_name,
+        ) = self.data_conversion(sensor_readings, device_under_test)
+        result = []
 
-    def cox_fusion(self, timestamps, reference_sensor_values, reference_sensor_uncs):
-        pass
+        # cox fusion of reference
+        fused_reference, fused_reference_unc = self.cox_fusion(
+            references, references_unc
+        )
+
+        # run MCM
+        Uxx = np.diag(np.square(fused_reference_unc))
+        posterior = self.update_discrete_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
+
+        # return estimate
+        result.append(
+            {
+                "time": dut_timestamps[-1],
+                "params": posterior,
+            }
+        )
+
+        return result
+
+    def update_discrete_posterior(self, xx_observed, Uxx, yy):
+        return self.prior
