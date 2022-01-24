@@ -27,9 +27,9 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
+        "split_indices" : [234, 543, 544, 1200, 1600, 1610],
         "methods": {
-            "stankovic_base": "method_args/stankovic_base.json",
-            "gruber_minimal": "method_args/gruber_minimal.json"
+            "gruber_joint_post": "method_args/gruber_joint_post.json"
         }
     }
 }
