@@ -12,7 +12,7 @@ import sys
 import numpy as np
 from pip._internal.operations import freeze
 
-from io_helper import NumpyEncoder, current_block
+from io_helper import NumpyEncoder, split_sensor_readings
 from measurands import return_measurand_object, return_timestamps
 from sensor import generate_sensor, generate_sensors, init_sensor_objects
 import cocalibration_methods
@@ -23,7 +23,7 @@ parser.add_argument(
     "--config",
     type=str,
     help="Path to configuration file",
-    default="experiments/scenario_A/config.json",
+    default="experiments/scenario_B/config.json",
 )
 args = parser.parse_args()
 
@@ -171,15 +171,15 @@ else:
 use_interpolation = cocalibration["interpolate"]
 run_blockwise = cocalibration["blockwise"]
 if run_blockwise:
+    t = measurand["time"]
     if "split_indices" in cocalibration.keys():
         split_indices = cocalibration["split_indices"]
     else:
-        t = measurand["time"]
         n_splits = np.random.randint(1, len(t) // 3)
         split_indices = np.sort(np.random.permutation(np.arange(3, len(t)-1))[:n_splits])
         cocalibration["split_indices"] = split_indices
     
-    blockwise_indices = np.split(np.arange(len(t)), split_indices)
+    sensor_readings_splitted = split_sensor_readings(sensor_readings, split_indices, len(t))
 
 methods_full = {}
 for method_name, method_path_or_config in cocalibration["methods"].items():
@@ -220,8 +220,7 @@ for method_name, method_args in cocalibration["methods"].items():
         # maybe implement this already at the level of sensor_readings and measurand?
         # somehow store the selected blocks?
 
-        for current_indices in blockwise_indices:
-            current_sensor_readings = current_block(sensor_readings, current_indices)
+        for current_sensor_readings in sensor_readings_splitted:
             block_result = method.update_params(current_sensor_readings, device_under_test_copy)
             results.append(block_result)
 
