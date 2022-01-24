@@ -102,8 +102,8 @@ def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, mu_sigma_y, div, N, norm
         exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde - N * np.log(np.abs(sigma_y))
         return np.exp(exponent) / normalizer
 
-### marginalizations
-def posterior_pdf_a_without_Xa(a, sigma_y, Y, Xo, UXo_inv, b, mu_a, sigma_a, normalizer=1.0):
+### joint distribution with Xa-marginalization
+def likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y, normalizer=1.0):
 
     F1 = np.diag(np.full_like(Xo, a**2 / sigma_y**2))
     F2 = a / sigma_y**2 * (b - Y)
@@ -116,7 +116,7 @@ def posterior_pdf_a_without_Xa(a, sigma_y, Y, Xo, UXo_inv, b, mu_a, sigma_a, nor
     W = np.linalg.inv(W_inv)
     S = W@(V_inv@M - F2)
 
-    exponent = -0.5 * (1.0 / sigma_a**2 * (a**2 - 2*a*mu_a)) # + M.T@V_inv@M - S.T@W_inv@S)
-    det = 1#np.sqrt(np.linalg.det(W_inv))
+    exponent = - 0.5 * (M.T@V_inv@M - S.T@W_inv@S)
+    det = np.sqrt(np.linalg.det(W))
         
     return det * np.exp(exponent) / normalizer

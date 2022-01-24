@@ -4,6 +4,7 @@ from os import remove
 import numpy as np
 from scipy.stats import chi2, iqr
 from time_series_buffer import TimeSeriesBuffer
+import matplotlib.pyplot as plt
 
 from models import LinearAffineModel
 from co_calibration_gibbs_sampler_expressions import (
@@ -11,6 +12,7 @@ from co_calibration_gibbs_sampler_expressions import (
     posterior_a_explicit,
     posterior_b_explicit,
     posterior_sigma_y_explicit,
+    likelidhood_a_b_sigma_y_without_Xa,
 )
 
 class CocalibrationMethod:
@@ -445,14 +447,30 @@ class GibbsPosterior(Gruber):
         return posterior
 
 
-
-
 class AnalyticalDiscretePosterior(Gruber):
+
     def __init__(
         self,
         prior=None,
     ):
-        self.prior = prior
+        # discrete grid to evaluate the posterior on
+        a_low = prior["a"]["mu"] - 3 * prior["a"]["sigma"]
+        a_high = prior["a"]["mu"] + 3 * prior["a"]["sigma"]
+        b_low = prior["b"]["mu"] - 3 * prior["b"]["sigma"]
+        b_high = prior["b"]["mu"] + 3 * prior["b"]["sigma"]
+        sigma_y_low = 1e-3
+        sigma_y_high = 2e0
+
+        self.a_range = np.linspace(a_low, a_high, num=9)
+        self.b_range = np.linspace(b_low, b_high, num=9)
+        self.sigma_y_range = np.logspace(np.log10(sigma_y_low), np.log10(sigma_y_high), num=9)
+
+        self.a_grid, self.b_grid, self.sigma_y_grid = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
+        self.discrete_posterior = self.init_informative_prior(prior)
+
+        # debug
+        #self.plot_discrete_distribution(self.discrete_posterior)
+
 
     def update_params(self, sensor_readings, device_under_test):
         (
@@ -470,9 +488,10 @@ class AnalyticalDiscretePosterior(Gruber):
             references, references_unc
         )
 
-        # run MCM
+        # update posterior
         Uxx = np.diag(np.square(fused_reference_unc))
-        posterior = self.update_discrete_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
+        self.update_discrete_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
+        posterior = self.MAP_estimate()
 
         # return estimate
         result.append(
@@ -484,5 +503,71 @@ class AnalyticalDiscretePosterior(Gruber):
 
         return result
 
+
     def update_discrete_posterior(self, xx_observed, Uxx, yy):
+
+        # shortcuts
+        A = self.a_grid
+        B = self.b_grid
+        SIGMA = self.sigma_y_grid
+        Uxx_inv = np.linalg.inv(Uxx)
+
+        # calculate likelihood
+        # alternatively: functools.partial??? 
+        f = lambda a, b, sigma_y : likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo = xx_observed, UXo_inv = Uxx_inv, Y = yy)
+        fv = np.vectorize(f)
+        likelihood = fv(A, B, SIGMA)
+
+        # actual update
+        self.discrete_posterior = self.discrete_posterior * likelihood
+        
+        # normalize
+        a = self.a_range
+        b = self.b_range
+        sigma = self.sigma_y_range
+        C = self.integrate_discrete_distribution(self.discrete_posterior, axes= [a, b, sigma])
+        self.discrete_posterior = self.discrete_posterior / C
+
+
+    def init_informative_prior(self, prior):
+        
+        # shortcuts
+        A = self.a_grid
+        B = self.b_grid
+        SIGMA = self.sigma_y_grid
+
+        a = self.a_range
+        b = self.b_range
+        sigma = self.sigma_y_range
+        
+        discrete_prior = np.exp(- 1.0 / (2*np.square(prior["a"]["sigma"])) * np.square(A - prior["a"]["mu"]))
+        discrete_prior *= np.exp(- 1.0 / (2*np.square(prior["b"]["sigma"])) * np.square(B - prior["b"]["mu"]))
+        discrete_prior *= np.power(SIGMA, - prior["sigma_y"]["alpha"] - 1) * np.exp(- prior["sigma_y"]["beta"] / SIGMA)
+
+        # normalize
+        C = self.integrate_discrete_distribution(discrete_prior, axes = [a, b, sigma])
+
+        return discrete_prior / C
+
+
+    def integrate_discrete_distribution(self, discrete_distribution, axes):
+        # axes = a_range, b_range, sigma_y_range
+        tmp = discrete_distribution
+
+        # integrate over all axes in reverse order
+        for axis in axes[::-1]:
+            tmp = np.transpose(np.trapz(tmp, axis))
+
+        return tmp
+
+
+    def MAP_estimate(self):
+        # TODO
         return self.prior
+
+
+    def plot_discrete_distribution(self, discrete_distribution):
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1, projection='3d')
+        ax.scatter(self.a_grid, self.b_grid, np.log10(self.sigma_y_grid), c=discrete_distribution)
+        plt.show()
