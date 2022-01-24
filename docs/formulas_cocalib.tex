@@ -250,14 +250,10 @@ Marginalizing by integration yields
     \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
     \int_{\mathbb{R}^N} 
         \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) ) \right\} d\vec{X_a} \\
-        
+    
     &\propto p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
     \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
-    \frac{1}{\sqrt{\det \mat{W}}} \\
-    
-    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
-    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
-    \sqrt{\det \mat{W}^{-1}}
+    \sqrt{\det \mat{W}}
 \end{align}
 }
 
