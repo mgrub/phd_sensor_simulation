@@ -199,17 +199,23 @@ Instead of using Gibbs sampling (as a variant of MCM), the joint marginalized po
 The calculation can then be executed numerically on a discrete (hyper)cube. 
 
 \subsection{Joint Posterior}
+From Bayes theorem it holds $p(\alpha, \beta) = p(\alpha|\beta) p(\beta)$ which here translates to
 \begin{align}
-    p(\sigma_y, \vec{\theta}, \vec{X_a} | \vec{Y}, \vec{X_o}) &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a})}_{p_0 \text{ see \cref{sec:initial_informative_prior}}}  \label{eq:joined_posterior}
+    p(\underbrace{\sigma_y, \vec{\theta}}_{\alpha}, \underbrace{\vec{X_a}}_{\beta} | \vec{Y}, \vec{X_o}) 
+    &= \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a}, \vec{Y}, \vec{X_o})}_{\text{\cref{eq:joined_posterior}}} \cdot 
+    \underbrace{p(\vec{X_a} | \vec{Y}, \vec{X_o})}_{\text{\cref{eq:posterior_Xa}}}  \label{eq:joint_posterior_with_Xa}
+\end{align}
+
+Bayes theorem can also be formulated as $p(\alpha | \beta) \propto p(\beta | \alpha) p(\alpha)$:
+\begin{align}
+    p(\underbrace{\sigma_y, \vec{\theta}}_{\alpha} | \underbrace{\vec{Y}}_{\beta}, \vec{X_a}, \vec{X_o}) 
+    &\propto {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a})}_{p_0 \text{ see \cref{sec:initial_informative_prior}}}  \label{eq:joined_posterior} \\
+    &\approx {\color{cyan} p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y)} \underbrace{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}_{\text{previous posterior}}
 \end{align}
 
 
 \subsection{Marginalization over $\vec{X_a}$}
-From Bayes theorem it holds $p(\alpha, \beta) = p(\alpha|\beta) p(\beta)$ which here translates to
-\begin{align}
-    p(\sigma_y, \vec{\theta}, \vec{X_a} | \vec{Y}, \vec{X_o}) &= \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a}, \vec{Y}, \vec{X_o})}_{\text{\cref{eq:joined_posterior}}} \cdot \underbrace{p(\vec{X_a} | \vec{Y}, \vec{X_o})}_{\text{\cref{eq:posterior_Xa}}}
-\end{align}
-Marginalizing by integration yields
+Integration of \cref{eq:joint_posterior_with_Xa} over $\vec{X_a}$ yields the marginalized joint posterior
 {\tiny
 \begin{align}
     p(\sigma_y, \vec{\theta} | \vec{Y}, \vec{X_o}) &= \int_{\mathbb{R}^N} p(\sigma_y, \vec{\theta}, \vec{X_a} | \vec{Y}, \vec{X_o}) d\vec{X_a} \\
@@ -218,7 +224,7 @@ Marginalizing by integration yields
         \underbrace{p(\sigma_y, \vec{\theta} | \vec{X_a}, \vec{Y}, \vec{X_o})}_{\text{\cref{eq:joined_posterior}}} \cdot 
         \underbrace{p(\vec{X_a} | \vec{Y}, \vec{X_o})}_{\text{\cref{eq:posterior_Xa}}} d\vec{X_a} \\
     
-    &= \int_{\mathbb{R}^N} 
+    &\approx \int_{\mathbb{R}^N} 
         p(\vec{Y} | \vec{X_a}, \vec{\theta}, \sigma_y) \cdot 
         p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
         p(\vec{X_a} | \vec{Y}, \vec{X_o}) d\vec{X_a} \\
@@ -230,30 +236,32 @@ Marginalizing by integration yields
         
     &\propto p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
     \int_{\mathbb{R}^N} 
+        \frac{1}{|\sigma_y|^N} \cdot 
         \exp\left\{- \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) \right\} \cdot 
+        \frac{1}{\sqrt{|\mat{V}|}} \cdot
         \exp\left\{- \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\} d\vec{X_a} \\
         
-    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
     \int_{\mathbb{R}^N} 
         \exp\left\{- \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \cdot 
         \exp\left\{- \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\} d\vec{X_a} \\
         
-    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
     \int_{\mathbb{R}^N} 
         \exp\left\{- \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{V}^{-1})}_{\mat{W}^{-1}} \vec{X_a} - \vec{X_a}^T \mat{W}^{-1} \underbrace{\mat{W} (\mat{V}^{-1} \vec{M} - \vec{F_2})}_{\vec{S}} - (\mat{V}^{-1} \vec{M} - \vec{F_2})^T \vec{X_a} + \vec{M}^T \mat{V}^{-1} \vec{M})  \right\} d\vec{X_a} \\
 
-    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
     \int_{\mathbb{R}^N} 
         \exp\left\{ - \frac{1}{2} \bigg( (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) + \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \bigg) \right\} d\vec{X_a} \\
     
-    &= p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
+    &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
     \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
     \int_{\mathbb{R}^N} 
         \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) ) \right\} d\vec{X_a} \\
     
     &\propto p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
     \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
-    \sqrt{\det \mat{W}}
+    \frac{\sqrt{|\mat{W}|}}{|\sigma_y|^N \sqrt{|\mat{V}|}}
 \end{align}
 }
 
