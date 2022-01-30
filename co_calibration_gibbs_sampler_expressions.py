@@ -120,3 +120,24 @@ def likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y, normalizer
     det = np.sqrt(np.linalg.det(W))
         
     return det * np.exp(exponent) / normalizer
+
+
+def log_likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y):
+
+    F1 = np.diag(np.full_like(Xo, a**2 / sigma_y**2))
+    F2 = a / sigma_y**2 * (b - Y)
+
+    V_inv = F1 + UXo_inv
+    V = np.linalg.inv(V_inv)
+    M = V@(UXo_inv@Xo - F2)
+
+    W_inv = F1 + V_inv
+    W = np.linalg.inv(W_inv)
+    S = W@(V_inv@M - F2)
+
+    exponent = - 0.5 * (M.T@V_inv@M - S.T@W_inv@S)
+    W_log_det = np.linalg.slogdet(W)[1] / 2
+    V_log_det = np.linalg.slogdet(V)[1] / 2
+    N = Xo.size
+        
+    return W_log_det - (W_log_det + N*np.log(sigma_y)) + exponent
