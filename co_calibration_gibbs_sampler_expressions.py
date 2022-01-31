@@ -51,10 +51,10 @@ def posterior_sigma_y_implicit(sigma_y, a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, 
 def posterior_Xa_explicit(Xa, a, b, sigma_y, Y, Xo, UXo_inv, normalizer=1.0):
     # sample from posterior of Xa
     F1 = np.diag(np.full_like(Xo, a**2 / sigma_y**2))
-    F2 = a / sigma_y**2 * (b - Y)
+    F2 = a / sigma_y**2 * (Y - b)
     V_inv = F1 + UXo_inv
     V = np.linalg.inv(V_inv)
-    M = V@(UXo_inv@Xo - F2)
+    M = V@(UXo_inv@Xo + F2)
 
     if Xa == None:  # return a sample
         return np.random.multivariate_normal(M, V)
@@ -104,40 +104,28 @@ def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, mu_sigma_y, div, N, norm
 
 ### joint distribution with Xa-marginalization
 def likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y, normalizer=1.0):
-
-    F1 = np.diag(np.full_like(Xo, a**2 / sigma_y**2))
-    F2 = a / sigma_y**2 * (b - Y)
-
-    V_inv = F1 + UXo_inv
-    V = np.linalg.inv(V_inv)
-    M = V@(UXo_inv@Xo - F2)
-
-    W_inv = F1 + V_inv
-    W = np.linalg.inv(W_inv)
-    S = W@(V_inv@M - F2)
-
-    exponent = - 0.5 * (M.T@V_inv@M - S.T@W_inv@S)
-    det = np.sqrt(np.linalg.det(W))
-        
-    return det * np.exp(exponent) / normalizer
-
-
-def log_likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y):
-
-    F1 = np.diag(np.full_like(Xo, a**2 / sigma_y**2))
-    F2 = a / sigma_y**2 * (b - Y)
-
-    V_inv = F1 + UXo_inv
-    V = np.linalg.inv(V_inv)
-    M = V@(UXo_inv@Xo - F2)
-
-    W_inv = F1 + V_inv
-    W = np.linalg.inv(W_inv)
-    S = W@(V_inv@M - F2)
-
-    exponent = - 0.5 * (M.T@V_inv@M - S.T@W_inv@S)
-    W_log_det = np.linalg.slogdet(W)[1] / 2
-    V_log_det = np.linalg.slogdet(V)[1] / 2
+    
     N = Xo.size
-        
-    return W_log_det - (W_log_det + N*np.log(sigma_y)) + exponent
+    G1_diag = a / sigma_y
+    G2 = (Y - b) / sigma_y
+
+    F1 = np.diag(np.full(N, np.square(G1_diag)))
+    F2 = G1_diag * G2
+    F3 = np.dot(G2, G2)
+
+    V_inv = F1 + UXo_inv
+    V = np.linalg.inv(V_inv)
+    M = V@(UXo_inv@Xo + F2)
+
+    W_inv = F1 + V_inv
+    W = np.linalg.inv(W_inv)
+    S = W@(V_inv@M + F2)
+
+    exponent = - 0.5 * (M.T@V_inv@M - S.T@W_inv@S + F3)
+
+    # add determinate to exponent (direct calculation likely produces float-overflow)
+    W_log_det = np.linalg.slogdet(W)[1] / 2  # np.sqrt(np.linalg.det(W))
+    V_log_det = np.linalg.slogdet(V)[1] / 2  # np.sqrt(np.linalg.det(V))
+    exponent += W_log_det - N*np.log(sigma_y) - V_log_det
+    
+    return np.exp(exponent) / normalizer

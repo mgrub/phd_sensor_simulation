@@ -1,6 +1,3 @@
-from collections import deque
-from os import remove
-
 import numpy as np
 from scipy.stats import chi2, iqr
 from time_series_buffer import TimeSeriesBuffer
@@ -13,7 +10,6 @@ from co_calibration_gibbs_sampler_expressions import (
     posterior_b_explicit,
     posterior_sigma_y_explicit,
     likelidhood_a_b_sigma_y_without_Xa,
-    log_likelidhood_a_b_sigma_y_without_Xa,
 )
 
 class CocalibrationMethod:
@@ -515,7 +511,7 @@ class AnalyticalDiscretePosterior(Gruber):
 
         # calculate likelihood
         # alternatively: functools.partial??? 
-        f = lambda a, b, sigma_y : log_likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo = xx_observed, UXo_inv = Uxx_inv, Y = yy)
+        f = lambda a, b, sigma_y : likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo = xx_observed, UXo_inv = Uxx_inv, Y = yy)
         fv = np.vectorize(f)
         likelihood = fv(A, B, SIGMA)
 
@@ -548,7 +544,7 @@ class AnalyticalDiscretePosterior(Gruber):
         # normalize
         C = self.integrate_discrete_distribution(discrete_prior, axes = [a, b, sigma])
 
-        return np.log(discrete_prior / C)
+        return discrete_prior / C
 
 
     def integrate_discrete_distribution(self, discrete_distribution, axes):
