@@ -131,15 +131,15 @@ Evaluate \cref{eq:posterior_X_a}.
     &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a b X_{ai} - 2 a Y_i X_{ai} + Y_i^2 + b^2 -2 b Y_i) \right\} \nonumber \\
     &\quad \cdot \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a} + \vec{X_o}^T \mat{U_x}^{-1} \vec{X_o} ) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) \right\} \nonumber \\
+    &\propto \exp\left\{ - \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (Y_i - b) X_{ai} ) \right\} \nonumber \\
     &\quad \cdot \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \nonumber \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} - \vec{X_a}^T \vec{F_2} - \vec{F_2}^T \vec{X_a}) \right\} \nonumber \\
     &\quad \cdot \exp\left\{ - \frac{1}{2} ( \vec{X_a}^T \mat{U_x}^{-1} \vec{X_a} - \vec{X_a}^T \mat{U_x}^{-1} \vec{X_o} -\vec{X_o}^T \mat{U_x}^{-1} \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}^{-1}} \vec{X_a} - \vec{X_a}^T (- \vec{F_2} + \mat{U_x}^{-1} \vec{X_o}) - (- \vec{F_2}^T + \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{U_x}^{-1})}_{\mat{V}^{-1}} \vec{X_a} - \vec{X_a}^T (\vec{F_2} + \mat{U_x}^{-1} \vec{X_o}) - (\vec{F_2}^T + \vec{X_o}^T \mat{U_x}^{-1}) \vec{X_a}) \right\} \\
     
-    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V}^{-1} \vec{X_a} - \vec{X_a}^T \mat{V}^{-1} \underbrace{\mat{V} (\mat{U_x}^{-1} \vec{X_o} - \vec{F_2}) }_{\vec{M}} - \vec{M}^T \mat{V}^{-1} \vec{X_a}) \right\} \\
+    &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a}^T \mat{V}^{-1} \vec{X_a} - \vec{X_a}^T \mat{V}^{-1} \underbrace{\mat{V} (\mat{U_x}^{-1} \vec{X_o} + \vec{F_2}) }_{\vec{M}} - \vec{M}^T \mat{V}^{-1} \vec{X_a}) \right\} \\
     
     &\propto \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\}  \label{eq:posterior_Xa}
 
@@ -148,7 +148,7 @@ Which corresponds to a multivariate Gaussian $\mathcal{N}(\vec{M}, \mat{V})$.
 The following matrices are introduced to transform the sum into a matrix operation:
 \begin{align}
     \mat{F_1} &= \frac{a^2}{\sigma_y^2} \cdot \mat{I_N} \\
-    \vec{F_2} &= \frac{a}{\sigma_y^2} \begin{bmatrix} b-Y_1 & \dots & b-Y_N \end{bmatrix}^T
+    \vec{F_2} &= \frac{a}{\sigma_y^2} \begin{bmatrix} Y_1 - b & \dots & Y_N -b \end{bmatrix}^T
 \end{align}
 
 \subsection{Posterior for $a$}
@@ -237,33 +237,44 @@ Integration of \cref{eq:joint_posterior_with_Xa} over $\vec{X_a}$ yields the mar
     &\propto p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
     \int_{\mathbb{R}^N} 
         \frac{1}{|\sigma_y|^N} \cdot 
-        \exp\left\{- \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  + 2 a (b - Y_i) X_{ai} ) \right\} \cdot 
+        \exp\left\{- \frac{1}{2\sigma_y^2} \sum_{i=1}^N (a^2 X_{ai}^2  - 2 a (Y_i - b) X_{ai} + (Y_i - b)^2) \right\} \nonumber \\
+    &   \qquad \cdot 
         \frac{1}{\sqrt{|\mat{V}|}} \cdot
         \exp\left\{- \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\} d\vec{X_a} \\
         
     &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
     \int_{\mathbb{R}^N} 
-        \exp\left\{- \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} + \vec{X_a}^T \vec{F_2} + \vec{F_2}^T \vec{X_a}) \right\} \cdot 
-        \exp\left\{- \frac{1}{2} (\vec{X_a} - \vec{M})^T \mat{V}^{-1} (\vec{X_a} - \vec{M}) \right\} d\vec{X_a} \\
+        \exp\left\{- \frac{1}{2} (\vec{X_a}^T \mat{F_1} \vec{X_a} - \vec{X_a}^T \vec{F_2} - \vec{F_2}^T \vec{X_a} + F_3) \right\}\nonumber \\
+    &   \qquad  \cdot 
+        \exp\left\{- \frac{1}{2} (\vec{X_a}^T \mat{V}^{-1} \vec{X_a} - \vec{X_a}^T \mat{V}^{-1} \vec{M} - \vec{M}^T \mat{V}^{-1} \vec{X_a} + \vec{M}^T \mat{V}^{-1} \vec{M}) \right\} d\vec{X_a} \\
         
     &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
     \int_{\mathbb{R}^N} 
-        \exp\left\{- \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{V}^{-1})}_{\mat{W}^{-1}} \vec{X_a} - \vec{X_a}^T \mat{W}^{-1} \underbrace{\mat{W} (\mat{V}^{-1} \vec{M} - \vec{F_2})}_{\vec{S}} - (\mat{V}^{-1} \vec{M} - \vec{F_2})^T \vec{X_a} + \vec{M}^T \mat{V}^{-1} \vec{M})  \right\} d\vec{X_a} \\
+        \exp\left\{- \frac{1}{2} (\vec{X_a}^T \underbrace{(\mat{F_1} + \mat{V}^{-1})}_{\mat{W}^{-1}} \vec{X_a} - \vec{X_a}^T \mat{W}^{-1} \underbrace{\mat{W} (\mat{V}^{-1} \vec{M} + \vec{F_2})}_{\vec{S}} - \vec{S}^T \mat{W}^{-1} \vec{X_a} + \vec{M}^T \mat{V}^{-1} \vec{M} + F_3 ) \right\} d\vec{X_a} \\
 
     &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
     \int_{\mathbb{R}^N} 
-        \exp\left\{ - \frac{1}{2} \bigg( (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) + \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \bigg) \right\} d\vec{X_a} \\
+        \exp\left\{ - \frac{1}{2} \bigg( (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) + \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S} + F_3) \bigg) \right\} d\vec{X_a} \\
     
     &= \frac{p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a})}{|\sigma_y|^N \sqrt{|\mat{V}|}} \cdot 
-    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
+    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S} + F_3) \right\} \cdot
     \int_{\mathbb{R}^N} 
         \exp\left\{ - \frac{1}{2} (\vec{X_a} - \vec{S})^T \mat{W}^{-1} (\mat{X_a} - \vec{S}) ) \right\} d\vec{X_a} \\
     
     &\propto p(\sigma_y, \vec{\theta} | \vec{\tilde{X}_a}) \cdot 
-    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S}) \right\} \cdot
+    \exp\left\{ - \frac{1}{2} ( \vec{M}^T \mat{V}^{-1} \vec{M} - \vec{S}^T \mat{W}^{-1} \vec{S} + F_3) \right\} \cdot
     \frac{\sqrt{|\mat{W}|}}{|\sigma_y|^N \sqrt{|\mat{V}|}}
 \end{align}
 }
+
+with (similar to ...)
+\begin{align}
+    \mat{F_1} &= \mat{G_1}^T \mat{G_1}\\
+    \vec{F_2} &= \mat{G_1} \vec{G_2}\\
+    F_3 &= \vec{G_2}^T \vec{G_2}\\
+    \mat{G_1} &= \frac{a}{\sigma_y} \cdot \mat{I_N} \\
+    \vec{G_2} &= \frac{1}{\sigma_y} \begin{bmatrix} Y_1 - b & \dots & Y_N -b \end{bmatrix}^T
+\end{align}
 
 \subsection{Informative Joined Prior}
 The initial choice for the prior is
