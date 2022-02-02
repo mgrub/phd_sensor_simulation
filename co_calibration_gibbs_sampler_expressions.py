@@ -103,7 +103,7 @@ def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, mu_sigma_y, div, N, norm
         return np.exp(exponent) / normalizer
 
 ### joint distribution with Xa-marginalization
-def likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y, normalizer=1.0):
+def log_likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y, log_normalizer=0.0):
     
     N = Xo.size
     G1_diag = a / sigma_y
@@ -121,6 +121,5 @@ def likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y, normalizer
 
     # add determinate to exponent (direct calculation likely produces float-overflow)
     V_log_det = np.linalg.slogdet(V)[1] / 2  # np.sqrt(np.linalg.det(V))
-    scaling = V_log_det - N*np.log(sigma_y)
     
-    return np.exp(exponent + scaling) / normalizer
+    return exponent + V_log_det - N*np.log(sigma_y) + log_normalizer

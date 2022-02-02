@@ -9,7 +9,7 @@ from co_calibration_gibbs_sampler_expressions import (
     posterior_a_explicit,
     posterior_b_explicit,
     posterior_sigma_y_explicit,
-    likelidhood_a_b_sigma_y_without_Xa,
+    log_likelidhood_a_b_sigma_y_without_Xa,
 )
 
 class CocalibrationMethod:
@@ -463,7 +463,7 @@ class AnalyticalDiscretePosterior(Gruber):
         self.sigma_y_range = np.logspace(np.log10(sigma_y_low), np.log10(sigma_y_high), num=15)
 
         self.a_grid, self.b_grid, self.sigma_y_grid = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
-        self.discrete_posterior = self.init_informative_prior(prior)
+        self.discrete_log_posterior = self.init_informative_prior(prior)
 
         # debug
         #self.plot_discrete_distribution(self.discrete_posterior)
@@ -487,8 +487,7 @@ class AnalyticalDiscretePosterior(Gruber):
 
         # update posterior
         Uxx = np.diag(np.square(fused_reference_unc))
-        self.update_discrete_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
-        posterior = self.MAP_estimate()
+        self.update_discrete_log_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
 
         # return estimate
         result.append(
@@ -501,7 +500,7 @@ class AnalyticalDiscretePosterior(Gruber):
         return result
 
 
-    def update_discrete_posterior(self, xx_observed, Uxx, yy):
+    def update_discrete_log_posterior(self, xx_observed, Uxx, yy):
 
         # shortcuts
         A = self.a_grid
@@ -511,19 +510,19 @@ class AnalyticalDiscretePosterior(Gruber):
 
         # calculate likelihood
         # alternatively: functools.partial??? 
-        f = lambda a, b, sigma_y : likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo = xx_observed, UXo_inv = Uxx_inv, Y = yy)
+        f = lambda a, b, sigma_y : log_likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo = xx_observed, UXo_inv = Uxx_inv, Y = yy)
         fv = np.vectorize(f)
-        likelihood = fv(A, B, SIGMA)
+        log_likelihood = fv(A, B, SIGMA)
 
         # actual update
-        self.discrete_posterior = self.discrete_posterior * likelihood
+        self.discrete_log_posterior = self.discrete_log_posterior + log_likelihood
         
         # normalize
         a = self.a_range
         b = self.b_range
         sigma = self.sigma_y_range
-        C = self.integrate_discrete_distribution(self.discrete_posterior, axes= [a, b, sigma])
-        self.discrete_posterior = self.discrete_posterior / C
+        C = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes= [a, b, sigma])
+        self.discrete_log_posterior = self.discrete_log_posterior - C
 
 
     def init_informative_prior(self, prior):
@@ -537,25 +536,39 @@ class AnalyticalDiscretePosterior(Gruber):
         b = self.b_range
         sigma = self.sigma_y_range
         
-        discrete_prior = np.exp(- 1.0 / (2*np.square(prior["a"]["sigma"])) * np.square(A - prior["a"]["mu"]))
-        discrete_prior *= np.exp(- 1.0 / (2*np.square(prior["b"]["sigma"])) * np.square(B - prior["b"]["mu"]))
-        discrete_prior *= np.power(SIGMA, - prior["sigma_y"]["alpha"] - 1) * np.exp(- prior["sigma_y"]["beta"] / SIGMA)
+        discrete_log_prior = norm.logpdf(A, loc = prior["a"]["mu"], scale=prior["a"]["sigma"])
+        discrete_log_prior += norm.logpdf(B, loc = prior["b"]["mu"], scale=prior["b"]["sigma"])
+        discrete_log_prior += invgamma.logpdf(SIGMA, a = prior["sigma_y"]["alpha"], scale=prior["sigma_y"]["beta"])
 
         # normalize
-        C = self.integrate_discrete_distribution(discrete_prior, axes = [a, b, sigma])
+        C = self.integrate_discrete_log_distribution(discrete_log_prior, axes = [a, b, sigma])
 
-        return discrete_prior / C
+        return discrete_log_prior - C
 
 
-    def integrate_discrete_distribution(self, discrete_distribution, axes):
+    def integrate_discrete_log_distribution(self, discrete_log_distribution, axes, return_log=True):
         # axes = a_range, b_range, sigma_y_range
-        tmp = discrete_distribution
+        tmp = np.exp(discrete_log_distribution)
 
+        # what to integrate
+        axis_offset = 0
+        axes_ids = []
+        axes_ranges = []
+        for i, given_range in enumerate(axes):
+            if given_range is not None:
+                axes_ids.append(axis_offset)
+                axes_ranges.append(given_range)
+            else:
+                axis_offset += 1
+                
         # integrate over all axes in reverse order
-        for axis in axes[::-1]:
-            tmp = np.transpose(np.trapz(tmp, axis))
+        for axis_id, axis_range in zip(axes_ids, axes_ranges):
+            tmp = np.trapz(y=tmp, x=axis_range, axis=axis_id)
 
-        return tmp
+        if return_log:
+            return np.log(tmp)
+        else:
+            return tmp
 
 
     def MAP_estimate(self):
@@ -566,8 +579,10 @@ class AnalyticalDiscretePosterior(Gruber):
     def plot_discrete_distribution(self, discrete_distribution):
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1, projection='3d')
-        ax.scatter(self.a_grid, self.b_grid, np.log10(self.sigma_y_grid), c=discrete_distribution)
+        p = ax.scatter(self.a_grid, self.b_grid, np.log10(self.sigma_y_grid), c=discrete_distribution)
+        fig.colorbar(p)
         ax.set_xlabel("a")
         ax.set_ylabel("b")
         ax.set_zlabel("sigma_y")
+        fig.colorbar()
         plt.show()
