@@ -27,7 +27,7 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
-        "split_indices" : [4, 5, 10, 15, 20, 234, 543, 1200, 1600, 1610],
+        "split_indices" : [4, 5, 20, 234, 543, 800, 850, 900, 950, 1000, 1200, 1600, 1610],
         "methods": {
             "gruber_joint_post": "method_args/gruber_joint_post.json"
         }

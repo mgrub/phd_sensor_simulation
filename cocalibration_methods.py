@@ -1,18 +1,17 @@
-import numpy as np
-from scipy.stats import chi2, iqr, invgamma, norm
-from scipy.optimize import minimize_scalar
-from scipy.interpolate import CubicSpline
-from time_series_buffer import TimeSeriesBuffer
-import matplotlib.pyplot as plt
+import logging
 
-from models import LinearAffineModel
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import CubicSpline
+from scipy.optimize import minimize_scalar
+from scipy.stats import chi2, invgamma, iqr, norm
+from time_series_buffer import TimeSeriesBuffer
+
 from co_calibration_gibbs_sampler_expressions import (
-    posterior_Xa_explicit,
-    posterior_a_explicit,
-    posterior_b_explicit,
-    posterior_sigma_y_explicit,
-    log_likelidhood_a_b_sigma_y_without_Xa,
-)
+    log_likelidhood_a_b_sigma_y_without_Xa, posterior_a_explicit,
+    posterior_b_explicit, posterior_sigma_y_explicit, posterior_Xa_explicit)
+from models import LinearAffineModel
+
 
 class CocalibrationMethod:
     def __init__(self):
@@ -587,11 +586,13 @@ class AnalyticalDiscretePosterior(Gruber):
         a_max = a[a_log_max_index]
 
         ## interpolate
-        a_interp = CubicSpline(a, - a_log_dist)
+        logging.info(a_log_dist)
+        finite_entries = np.logical_not(np.isneginf(a_log_dist))
+        a_interp = CubicSpline(a[finite_entries], - a_log_dist[finite_entries])
         a_interp_second_order_derivate = a_interp.derivative(2)
         
         ## find minimum and second order derivative at minimum
-        result = minimize_scalar(a_interp, bracket = [a.min(), a_max, a.max()])
+        result = minimize_scalar(a_interp)
         a_mean = result.x
         a_hess = a_interp_second_order_derivate(result.x)
         a_std = 1 / np.sqrt(a_hess)
@@ -604,11 +605,13 @@ class AnalyticalDiscretePosterior(Gruber):
         b_max = b[b_log_max_index]
 
         ## interpolate
-        b_interp = CubicSpline(b, - b_log_dist)
+        logging.info(b_log_dist)
+        finite_entries = np.logical_not(np.isneginf(b_log_dist))
+        b_interp = CubicSpline(b[finite_entries], - b_log_dist[finite_entries])
         b_interp_second_order_derivate = b_interp.derivative(2)
         
         ## find minimum and second order derivative at minimum
-        result = minimize_scalar(b_interp, bracket = [b.min(), b_max, b.max()])
+        result = minimize_scalar(b_interp)
         b_mean = result.x
         b_hess = b_interp_second_order_derivate(result.x)
         b_std = 1 / np.sqrt(b_hess)
@@ -621,12 +624,13 @@ class AnalyticalDiscretePosterior(Gruber):
         sigma_max = sigma[sigma_log_max_index]
 
         ## interpolate
+        logging.info(sigma_log_dist)
         finite_entries = np.logical_not(np.isneginf(sigma_log_dist))
         sigma_interp = CubicSpline(sigma[finite_entries], - sigma_log_dist[finite_entries])
         sigma_interp_second_order_derivate = sigma_interp.derivative(2)
         
         ## find minimum and second order derivative at minimum
-        result = minimize_scalar(sigma_interp, bracket = [sigma.min(), sigma_max, sigma.max()])
+        result = minimize_scalar(sigma_interp)
         sigma_mean = result.x
         sigma_hess = sigma_interp_second_order_derivate(result.x)
         sigma_std = 1 / np.sqrt(sigma_hess)
@@ -645,6 +649,7 @@ class AnalyticalDiscretePosterior(Gruber):
                 "sigma" : sigma_std,
             }
         }
+        logging.info(laplace_approximation)
     
         return laplace_approximation
 

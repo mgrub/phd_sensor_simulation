@@ -221,6 +221,7 @@ for method_name, method_args in cocalibration["methods"].items():
         # somehow store the selected blocks?
 
         for current_sensor_readings in sensor_readings_splitted:
+            logging.info("new block")
             block_result = method.update_params(current_sensor_readings, device_under_test_copy)
             results.append(block_result)
 
