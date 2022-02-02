@@ -1,5 +1,7 @@
 import numpy as np
-from scipy.stats import chi2, iqr
+from scipy.stats import chi2, iqr, invgamma, norm
+from scipy.optimize import minimize_scalar
+from scipy.interpolate import CubicSpline
 from time_series_buffer import TimeSeriesBuffer
 import matplotlib.pyplot as plt
 
@@ -488,6 +490,7 @@ class AnalyticalDiscretePosterior(Gruber):
         # update posterior
         Uxx = np.diag(np.square(fused_reference_unc))
         self.update_discrete_log_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
+        posterior = self.laplace_approximation_posterior()
 
         # return estimate
         result.append(
@@ -571,9 +574,79 @@ class AnalyticalDiscretePosterior(Gruber):
             return tmp
 
 
-    def MAP_estimate(self):
-        # TODO
-        return self.prior
+    def laplace_approximation_posterior(self):
+        # shortcuts
+        a = self.a_range
+        b = self.b_range
+        sigma = self.sigma_y_range
+
+        # a
+        ## marginal distribution of a
+        a_log_dist = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes = [None, b, sigma])
+        a_log_max_index = np.argmax(a_log_dist)
+        a_max = a[a_log_max_index]
+
+        ## interpolate
+        a_interp = CubicSpline(a, - a_log_dist)
+        a_interp_second_order_derivate = a_interp.derivative(2)
+        
+        ## find minimum and second order derivative at minimum
+        result = minimize_scalar(a_interp, bracket = [a.min(), a_max, a.max()])
+        a_mean = result.x
+        a_hess = a_interp_second_order_derivate(result.x)
+        a_std = 1 / np.sqrt(a_hess)
+
+
+        # b
+        ## marginal distribution of b
+        b_log_dist = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes = [a, None, sigma])
+        b_log_max_index = np.argmax(b_log_dist)
+        b_max = b[b_log_max_index]
+
+        ## interpolate
+        b_interp = CubicSpline(b, - b_log_dist)
+        b_interp_second_order_derivate = b_interp.derivative(2)
+        
+        ## find minimum and second order derivative at minimum
+        result = minimize_scalar(b_interp, bracket = [b.min(), b_max, b.max()])
+        b_mean = result.x
+        b_hess = b_interp_second_order_derivate(result.x)
+        b_std = 1 / np.sqrt(b_hess)
+
+
+        # sigma_y
+        ## marginal distribution of sigma
+        sigma_log_dist = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes = [a, b, None])
+        sigma_log_max_index = np.argmax(sigma_log_dist)
+        sigma_max = sigma[sigma_log_max_index]
+
+        ## interpolate
+        finite_entries = np.logical_not(np.isneginf(sigma_log_dist))
+        sigma_interp = CubicSpline(sigma[finite_entries], - sigma_log_dist[finite_entries])
+        sigma_interp_second_order_derivate = sigma_interp.derivative(2)
+        
+        ## find minimum and second order derivative at minimum
+        result = minimize_scalar(sigma_interp, bracket = [sigma.min(), sigma_max, sigma.max()])
+        sigma_mean = result.x
+        sigma_hess = sigma_interp_second_order_derivate(result.x)
+        sigma_std = 1 / np.sqrt(sigma_hess)
+
+        laplace_approximation = {
+            "a" : {
+                "mu" : a_mean,
+                "sigma" : a_std,
+            },
+            "b" : {
+                "mu" : b_mean, 
+                "sigma" : b_std,
+            },
+            "sigma_y" : {
+                "mu" : sigma_mean,
+                "sigma" : sigma_std,
+            }
+        }
+    
+        return laplace_approximation
 
 
     def plot_discrete_distribution(self, discrete_distribution):
