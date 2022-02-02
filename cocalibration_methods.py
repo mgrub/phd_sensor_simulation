@@ -451,16 +451,16 @@ class AnalyticalDiscretePosterior(Gruber):
         prior=None,
     ):
         # discrete grid to evaluate the posterior on
-        a_low = prior["a"]["mu"] - 3 * prior["a"]["sigma"]
-        a_high = prior["a"]["mu"] + 3 * prior["a"]["sigma"]
-        b_low = prior["b"]["mu"] - 3 * prior["b"]["sigma"]
-        b_high = prior["b"]["mu"] + 3 * prior["b"]["sigma"]
+        a_low = prior["a"]["mu"] - 2 * prior["a"]["sigma"]
+        a_high = prior["a"]["mu"] + 2 * prior["a"]["sigma"]
+        b_low = prior["b"]["mu"] - 2 * prior["b"]["sigma"]
+        b_high = prior["b"]["mu"] + 2 * prior["b"]["sigma"]
         sigma_y_low = 1e-3
         sigma_y_high = 2e0
 
-        self.a_range = np.linspace(a_low, a_high, num=9)
-        self.b_range = np.linspace(b_low, b_high, num=9)
-        self.sigma_y_range = np.logspace(np.log10(sigma_y_low), np.log10(sigma_y_high), num=9)
+        self.a_range = np.linspace(a_low, a_high, num=15)
+        self.b_range = np.linspace(b_low, b_high, num=15)
+        self.sigma_y_range = np.logspace(np.log10(sigma_y_low), np.log10(sigma_y_high), num=15)
 
         self.a_grid, self.b_grid, self.sigma_y_grid = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
         self.discrete_posterior = self.init_informative_prior(prior)
@@ -567,4 +567,7 @@ class AnalyticalDiscretePosterior(Gruber):
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1, projection='3d')
         ax.scatter(self.a_grid, self.b_grid, np.log10(self.sigma_y_grid), c=discrete_distribution)
+        ax.set_xlabel("a")
+        ax.set_ylabel("b")
+        ax.set_zlabel("sigma_y")
         plt.show()

@@ -117,15 +117,10 @@ def likelidhood_a_b_sigma_y_without_Xa(a, b, sigma_y, Xo, UXo_inv, Y, normalizer
     V = np.linalg.inv(V_inv)
     M = V@(UXo_inv@Xo + F2)
 
-    W_inv = F1 + V_inv
-    W = np.linalg.inv(W_inv)
-    S = W@(V_inv@M + F2)
-
-    exponent = - 0.5 * (M.T@V_inv@M - S.T@W_inv@S + F3)
+    exponent = - 0.5 * (Xo.T@UXo_inv@Xo + F3 - M.T@V_inv@M)
 
     # add determinate to exponent (direct calculation likely produces float-overflow)
-    W_log_det = np.linalg.slogdet(W)[1] / 2  # np.sqrt(np.linalg.det(W))
     V_log_det = np.linalg.slogdet(V)[1] / 2  # np.sqrt(np.linalg.det(V))
-    exponent += W_log_det - N*np.log(sigma_y) - V_log_det
+    scaling = V_log_det - N*np.log(sigma_y)
     
-    return np.exp(exponent) / normalizer
+    return np.exp(exponent + scaling) / normalizer
