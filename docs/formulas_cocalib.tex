@@ -299,21 +299,31 @@ Assume $(a,b,\sigma_y) \sim \mathcal{N}(\mu_a, \sigma_a) \times \mathcal{N}(\mu_
     &= 
     \frac{1}{\sqrt{2 \pi \sigma_{a}^2}} \exp\left\{ - \frac{1}{2\sigma_{a}^2} ( a - \mu_{a} )^2 \right\} \cdot 
     \frac{1}{\sqrt{2 \pi \sigma_{b}^2}} \exp\left\{ - \frac{1}{2\sigma_{b}^2} ( b - \mu_{b} )^2 \right\} \cdot
-    \frac{\beta^{\alpha}}{\Gamma{\alpha}} \sigma_y^{-\alpha-1} \exp\left\{ - \frac{\beta}{\sigma_y} \right\} \\
-    &\propto 
-    \exp\left\{ - \frac{1}{2\sigma_{a}^2} ( a - \mu_{a} )^2 \right\} \cdot 
-    \exp\left\{ - \frac{1}{2\sigma_{b}^2} ( b - \mu_{b} )^2 \right\} \cdot
-    \sigma_y^{-\alpha-1} \exp\left\{ - \frac{\beta}{\sigma_y} \right\} 
+    \frac{\beta^{\alpha}}{\Gamma(\alpha)} \sigma_y^{-\alpha-1} \exp\left\{ - \frac{\beta}{\sigma_y} \right\} \\ 
 \end{align}
 
 After that, the prior is approximated by the posterior of the last iteration.
 
-\subsection{Numerical Calculation}
-hypercube of $[\mu_a - 6 * \sigma_a, \mu_a + 6 * \sigma_a] \times [\mu_b - 6 * \sigma_b, \mu_b + 6 * \sigma_b] \times [1e-6, 1e2]$
-use logarithmic scaling for $\sigma_y$
+\subsection{Numerical Treatment}
+The sought joint distribution depends on three variables and is discretized on a rectlinear grid spanning 
+$
+    [\mu_a - 3 * \sigma_a, \mu_a + 3 * \sigma_a]_{\text{lin}} \times 
+    [\mu_b - 3 * \sigma_b, \mu_b + 3 * \sigma_b]_{\text{lin}} \times 
+    [1e-6, 1e2]_{\text{log}}
+$. 
+Because the grid remains the same for all iterations, the final position of the maximum a-posteriori probability (MAP) should lie within the bounds of the grid.
+The resolution of the grid should be chosen not too broad (meaningfulness of result), but also not too fine (computational cost).
 
-Detection of out of boundary?
+To avoid numerical overflow, the calculations and storage of the discrete distribution is done using the logarithm of the above mentioned probability distributions and likelihoods (except during integration).
 
+A uni-modal Laplace approximation (fit a Gaussian around the MAP) is used to extract current estimates for all three parameters. 
+The steps are
+\begin{enumerate}
+    \item marginalize all other variables with numeric integration (trapz)
+    \item fit a cubic spline to the remaining logarithmic probability density function
+    \item find the maximum of the spline
+    \item calculate the second order derivative of the spline at the position of the maximum
+\end{enumerate}
 
 \section{Method Outline}
 \begin{enumerate}
