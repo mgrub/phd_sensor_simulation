@@ -2,7 +2,7 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, LinearNDInterpolator
 from scipy.optimize import minimize_scalar
 from scipy.stats import chi2, invgamma, iqr, norm
 from time_series_buffer import TimeSeriesBuffer
@@ -490,6 +490,7 @@ class AnalyticalDiscretePosterior(Gruber):
         Uxx = np.diag(np.square(fused_reference_unc))
         self.update_discrete_log_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
         posterior = self.laplace_approximation_posterior()
+        self.update_grid()
 
         # return estimate
         result.append(
@@ -585,6 +586,9 @@ class AnalyticalDiscretePosterior(Gruber):
         a_log_max_index = np.argmax(a_log_dist)
         a_max = a[a_log_max_index]
 
+        plt.plot(a, a_log_dist)
+        plt.show()
+
         ## interpolate
         logging.info(a_log_dist)
         finite_entries = np.logical_not(np.isneginf(a_log_dist))
@@ -652,6 +656,70 @@ class AnalyticalDiscretePosterior(Gruber):
         logging.info(laplace_approximation)
     
         return laplace_approximation
+
+
+    def update_grid(self, log_threshold=-500, resolution=15, zoom_out=0.5):
+
+        # find bounding box of region that is above threshold (zoom in into relevant parts)
+        relevant_part_of_dist = self.discrete_log_posterior > log_threshold
+        a_above_limit = np.any(relevant_part_of_dist, axis=(1,2))
+        b_above_limit = np.any(relevant_part_of_dist, axis=(0,2))
+        sigma_y_above_limit = np.any(relevant_part_of_dist, axis=(0,1))
+
+        a_min_index, a_max_index = np.where(a_above_limit)[0][[0, -1]]
+        b_min_index, b_max_index = np.where(b_above_limit)[0][[0, -1]]
+        sigma_y_min_index, sigma_y_max_index = np.where(sigma_y_above_limit)[0][[0, -1]]
+
+        # ensure that bounding box never has min==max
+        if a_min_index == a_max_index:
+            a_min_index = max(0, a_min_index-1)
+            a_max_index = min(len(self.a_range), a_max_index + 1)
+        if b_min_index == b_max_index:
+            b_min_index = max(0, b_min_index-1)
+            b_max_index = min(len(self.b_range), b_max_index + 1)
+        if sigma_y_min_index == sigma_y_max_index:
+            sigma_y_min_index = max(0, sigma_y_min_index-1)
+            sigma_y_max_index = min(len(self.sigma_y_range), sigma_y_max_index + 1)
+        
+        # actual boundaries of bounding box
+        a_min_box, a_max_box = self.a_range[[a_min_index, a_max_index]]
+        b_min_box, b_max_box = self.b_range[[b_min_index, b_max_index]]
+        log_sigma_y_min_box, log_sigma_y_max_box = np.log10(self.sigma_y_range[[sigma_y_min_index, sigma_y_max_index]])
+
+        # make box bigger in every direction (zoom out to provide room for updates)
+        da = a_max_box - a_min_box
+        db = b_max_box - b_min_box
+        log_dsigma_y = log_sigma_y_max_box - log_sigma_y_min_box
+
+        a_min_new, a_max_new = a_min_box - da * zoom_out, a_max_box + da * zoom_out
+        b_min_new, b_max_new = b_min_box - db * zoom_out, b_max_box + db * zoom_out
+        log_sigma_y_min_new, log_sigma_y_max_new = log_sigma_y_min_box - log_dsigma_y * zoom_out, log_sigma_y_max_box + log_dsigma_y * zoom_out
+
+        # generate new grid
+        a_range_new = np.linspace(a_min_new, a_max_new, num=resolution)
+        b_range_new = np.linspace(b_min_new, b_max_new, num=resolution)
+        sigma_y_range_new = np.logspace(log_sigma_y_min_new, log_sigma_y_max_new, num=resolution)
+
+        a_grid_new, b_grid_new, sigma_y_grid_new = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
+
+        # interpolate old distrubtion onto new grid
+        # (need to turn grid into list of points first)
+        points = np.vstack([self.a_grid.ravel(), self.b_grid.ravel(), self.sigma_y_grid.ravel()])
+        values = self.discrete_log_posterior.ravel()
+        fill_value = -100 #values[np.logical_not(np.isinf(values))].min()
+        interp_dist = LinearNDInterpolator(points.T, values, fill_value = fill_value)
+        discrete_log_posterior_new = interp_dist(a_grid_new, b_grid_new, sigma_y_grid_new)
+
+        # update variables
+        self.a_range = a_range_new
+        self.b_range = b_range_new
+        self.sigma_y_range = sigma_y_range_new
+
+        self.a_grid = a_grid_new
+        self.b_grid = b_grid_new
+        self.sigma_y_grid = sigma_y_grid_new
+
+        self.discrete_log_posterior = discrete_log_posterior_new
 
 
     def plot_discrete_distribution(self, discrete_distribution):
