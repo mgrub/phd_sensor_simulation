@@ -450,6 +450,8 @@ class AnalyticalDiscretePosterior(Gruber):
     def __init__(
         self,
         prior=None,
+        use_adaptive_grid=False,
+        grid_resolution=15,
     ):
         # discrete grid to evaluate the posterior on
         a_low = prior["a"]["mu"] - 2 * prior["a"]["sigma"]
@@ -459,13 +461,15 @@ class AnalyticalDiscretePosterior(Gruber):
         sigma_y_low = 1e-3
         sigma_y_high = 2e0
 
-        self.a_range = np.linspace(a_low, a_high, num=15)
-        self.b_range = np.linspace(b_low, b_high, num=15)
-        self.sigma_y_range = np.logspace(np.log10(sigma_y_low), np.log10(sigma_y_high), num=15)
+        self.a_range = np.linspace(a_low, a_high, num=grid_resolution)
+        self.b_range = np.linspace(b_low, b_high, num=grid_resolution)
+        self.sigma_y_range = np.logspace(np.log10(sigma_y_low), np.log10(sigma_y_high), num=grid_resolution)
 
         self.a_grid, self.b_grid, self.sigma_y_grid = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
         self.discrete_log_posterior = self.init_informative_prior(prior)
 
+        self.use_adaptive_grid = use_adaptive_grid
+        self.grid_resolution = grid_resolution
         # debug
         #self.plot_discrete_distribution(self.discrete_posterior)
 
@@ -490,7 +494,8 @@ class AnalyticalDiscretePosterior(Gruber):
         Uxx = np.diag(np.square(fused_reference_unc))
         self.update_discrete_log_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
         posterior = self.laplace_approximation_posterior()
-        self.update_grid()
+        if self.use_adaptive_grid:
+            self.update_grid()
 
         # return estimate
         result.append(
@@ -658,7 +663,7 @@ class AnalyticalDiscretePosterior(Gruber):
         return laplace_approximation
 
 
-    def update_grid(self, log_threshold=-500, resolution=15, zoom_out=0.5):
+    def update_grid(self, log_threshold=-600, zoom_out=0.2):
 
         # find bounding box of region that is above threshold (zoom in into relevant parts)
         relevant_part_of_dist = self.discrete_log_posterior > log_threshold
@@ -672,14 +677,14 @@ class AnalyticalDiscretePosterior(Gruber):
 
         # ensure that bounding box never has min==max
         if a_min_index == a_max_index:
-            a_min_index = max(0, a_min_index-1)
-            a_max_index = min(len(self.a_range), a_max_index + 1)
+            a_min_index = max(0, a_min_index - 2)
+            a_max_index = min(len(self.a_range), a_max_index + 2)
         if b_min_index == b_max_index:
-            b_min_index = max(0, b_min_index-1)
-            b_max_index = min(len(self.b_range), b_max_index + 1)
+            b_min_index = max(0, b_min_index - 2)
+            b_max_index = min(len(self.b_range), b_max_index + 2)
         if sigma_y_min_index == sigma_y_max_index:
-            sigma_y_min_index = max(0, sigma_y_min_index-1)
-            sigma_y_max_index = min(len(self.sigma_y_range), sigma_y_max_index + 1)
+            sigma_y_min_index = max(0, sigma_y_min_index - 2)
+            sigma_y_max_index = min(len(self.sigma_y_range), sigma_y_max_index + 2)
         
         # actual boundaries of bounding box
         a_min_box, a_max_box = self.a_range[[a_min_index, a_max_index]]
@@ -687,18 +692,23 @@ class AnalyticalDiscretePosterior(Gruber):
         log_sigma_y_min_box, log_sigma_y_max_box = np.log10(self.sigma_y_range[[sigma_y_min_index, sigma_y_max_index]])
 
         # make box bigger in every direction (zoom out to provide room for updates)
-        da = a_max_box - a_min_box
-        db = b_max_box - b_min_box
-        log_dsigma_y = log_sigma_y_max_box - log_sigma_y_min_box
+        da = min(0.5, a_max_box - a_min_box)
+        db = min(0.5, b_max_box - b_min_box)
+        log_dsigma_y = min(0.5, log_sigma_y_max_box - log_sigma_y_min_box)
+        zoom_out = 1.0
 
         a_min_new, a_max_new = a_min_box - da * zoom_out, a_max_box + da * zoom_out
         b_min_new, b_max_new = b_min_box - db * zoom_out, b_max_box + db * zoom_out
         log_sigma_y_min_new, log_sigma_y_max_new = log_sigma_y_min_box - log_dsigma_y * zoom_out, log_sigma_y_max_box + log_dsigma_y * zoom_out
 
         # generate new grid
-        a_range_new = np.linspace(a_min_new, a_max_new, num=resolution)
-        b_range_new = np.linspace(b_min_new, b_max_new, num=resolution)
-        sigma_y_range_new = np.logspace(log_sigma_y_min_new, log_sigma_y_max_new, num=resolution)
+        a_range_new = np.linspace(a_min_new, a_max_new, num=self.grid_resolution)
+        b_range_new = np.linspace(b_min_new, b_max_new, num=self.grid_resolution)
+        sigma_y_range_new = np.logspace(log_sigma_y_min_new, log_sigma_y_max_new, num=self.grid_resolution)
+
+        logging.info(a_range_new)
+        logging.info(b_range_new)
+        logging.info(sigma_y_range_new)
 
         a_grid_new, b_grid_new, sigma_y_grid_new = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
 
@@ -706,7 +716,7 @@ class AnalyticalDiscretePosterior(Gruber):
         # (need to turn grid into list of points first)
         points = np.vstack([self.a_grid.ravel(), self.b_grid.ravel(), self.sigma_y_grid.ravel()])
         values = self.discrete_log_posterior.ravel()
-        fill_value = -100 #values[np.logical_not(np.isinf(values))].min()
+        fill_value = log_threshold #values[np.logical_not(np.isinf(values))].min()
         interp_dist = LinearNDInterpolator(points.T, values, fill_value = fill_value)
         discrete_log_posterior_new = interp_dist(a_grid_new, b_grid_new, sigma_y_grid_new)
 
