@@ -9,16 +9,16 @@
         "use_robust_statistics": false,
         "prior": {
             "a": {
-                "mu": 1.0,
-                "sigma": 1.0
+                "val": 1.0,
+                "val_unc": 1.0
             },
             "b": {
-                "mu": 0.0,
-                "sigma": 1.0
+                "val": 0.0,
+                "val_unc": 1.0
             },
             "sigma_y": {
-                "mu": 0.5,
-                "sigma": 0.3
+                "val": 0.5,
+                "val_unc": 0.3
             }
         },
         "sigma_y_true": 0.2

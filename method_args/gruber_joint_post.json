@@ -3,12 +3,12 @@
     "arguments": {
         "prior": {
             "a": {
-                "mu": 1.0,
-                "sigma": 1.0
+                "val": 1.0,
+                "val_unc": 1.0
             },
             "b": {
-                "mu": 0.0,
-                "sigma": 1.0
+                "val": 0.0,
+                "val_unc": 1.0
             },
             "sigma_y": {
                 "alpha": 2,

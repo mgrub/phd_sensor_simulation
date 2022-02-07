@@ -347,13 +347,13 @@ class GibbsPosterior(Gruber):
         Uxx_inv = np.linalg.inv(Uxx)
 
         # shortcuts for prior
-        mu_a = self.prior["a"]["mu"]
-        mu_b = self.prior["b"]["mu"]
-        mu_sigma_y = self.prior["sigma_y"]["mu"]
+        mu_a = self.prior["a"]["val"]
+        mu_b = self.prior["b"]["val"]
+        mu_sigma_y = self.prior["sigma_y"]["val"]
 
-        sigma_a = self.prior["a"]["sigma"]
-        sigma_b = self.prior["b"]["sigma"]
-        sigma_sigma_y = self.prior["sigma_y"]["sigma"]
+        sigma_a = self.prior["a"]["val_unc"]
+        sigma_b = self.prior["b"]["val_unc"]
+        sigma_sigma_y = self.prior["sigma_y"]["val_unc"]
 
         # update posteriors using (block-)Gibbs sampling
         samples = []
@@ -411,31 +411,31 @@ class GibbsPosterior(Gruber):
         if self.use_robust_statistics:
             posterior = {
                 "a" : {
-                    "mu" : np.median(AA),
-                    "sigma" : iqr(AA),
+                    "val" : np.median(AA),
+                    "val_unc" : iqr(AA),
                 },
                 "b" : {
-                    "mu" : np.median(BB),
-                    "sigma" : iqr(BB),
+                    "val" : np.median(BB),
+                    "val_unc" : iqr(BB),
                 },
                 "sigma_y" : {
-                    "mu" : np.median(SY),
-                    "sigma" : iqr(SY),
+                    "val" : np.median(SY),
+                    "val_unc" : iqr(SY),
                 }
             }
         else:
             posterior = {
                 "a" : {
-                    "mu" : np.mean(AA),
-                    "sigma" : np.std(AA),
+                    "val" : np.mean(AA),
+                    "val_unc" : np.std(AA),
                 },
                 "b" : {
-                    "mu" : np.mean(BB), 
-                    "sigma" : np.std(BB),
+                    "val" : np.mean(BB), 
+                    "sigmval_unca" : np.std(BB),
                 },
                 "sigma_y" : {
-                    "mu" : np.mean(SY),
-                    "sigma" : np.std(SY),
+                    "val" : np.mean(SY),
+                    "val_unc" : np.std(SY),
                 }
             }
 
@@ -454,10 +454,10 @@ class AnalyticalDiscretePosterior(Gruber):
         grid_resolution=15,
     ):
         # discrete grid to evaluate the posterior on
-        a_low = prior["a"]["mu"] - 2 * prior["a"]["sigma"]
-        a_high = prior["a"]["mu"] + 2 * prior["a"]["sigma"]
-        b_low = prior["b"]["mu"] - 2 * prior["b"]["sigma"]
-        b_high = prior["b"]["mu"] + 2 * prior["b"]["sigma"]
+        a_low = prior["a"]["val"] - 2 * prior["a"]["val_unc"]
+        a_high = prior["a"]["val"] + 2 * prior["a"]["val_unc"]
+        b_low = prior["b"]["val"] - 2 * prior["b"]["val_unc"]
+        b_high = prior["b"]["val"] + 2 * prior["b"]["val_unc"]
         sigma_y_low = 1e-3
         sigma_y_high = 2e0
 
@@ -544,8 +544,8 @@ class AnalyticalDiscretePosterior(Gruber):
         b = self.b_range
         sigma = self.sigma_y_range
         
-        discrete_log_prior = norm.logpdf(A, loc = prior["a"]["mu"], scale=prior["a"]["sigma"])
-        discrete_log_prior += norm.logpdf(B, loc = prior["b"]["mu"], scale=prior["b"]["sigma"])
+        discrete_log_prior = norm.logpdf(A, loc = prior["a"]["val"], scale=prior["a"]["val_unc"])
+        discrete_log_prior += norm.logpdf(B, loc = prior["b"]["val"], scale=prior["b"]["val_unc"])
         discrete_log_prior += invgamma.logpdf(SIGMA, a = prior["sigma_y"]["alpha"], scale=prior["sigma_y"]["beta"])
 
         # normalize
@@ -646,16 +646,16 @@ class AnalyticalDiscretePosterior(Gruber):
 
         laplace_approximation = {
             "a" : {
-                "mu" : a_mean,
-                "sigma" : a_std,
+                "val" : a_mean,
+                "val_unc" : a_std,
             },
             "b" : {
-                "mu" : b_mean, 
-                "sigma" : b_std,
+                "val" : b_mean, 
+                "val_unc" : b_std,
             },
             "sigma_y" : {
-                "mu" : sigma_mean,
-                "sigma" : sigma_std,
+                "val" : sigma_mean,
+                "val_unc" : sigma_std,
             }
         }
         logging.info(laplace_approximation)
