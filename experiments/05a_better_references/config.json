@@ -1,0 +1,38 @@
+{
+    "random_state": null,
+    "reference_sensors": {
+        "type": "LinearAffineModel",
+        "number": 1,
+        "draw": false,
+        "args": {
+            "a": 1,
+            "b": 0,
+            "ua": 0.1,
+            "ub": 0.1
+        }
+    },
+    "device_under_test": "experiments/sensor_under_test.json",
+    "measurand": {
+        "type": "SinusoidalMeasurand",
+        "args": {
+            "sigma_x": 0.1,
+            "amplitude": 2.0,
+            "value_offset": 1.0
+        },
+        "time_args": {
+            "time_start": 0,
+            "time_end": 20.0,
+            "dt": 0.01
+        }
+    },
+    "sensor_readings": null,
+    "cocalibration": {
+        "interpolate": false,
+        "blockwise": true,
+        "methods": {
+            "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
+            "gruber_gibbs_base": "method_args/gruber_gibbs_base.json",
+            "gruber_joint_posterior": "method_args/gruber_joint_posterior.json"
+        }
+    }
+}
