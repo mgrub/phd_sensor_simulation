@@ -139,8 +139,8 @@ sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
 sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
 
 # plot true values
-ax_params[0].hlines(a_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k")
-ax_params[2].hlines(b_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k")
+ax_params[0].hlines(a_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k", label="true")
+ax_params[2].hlines(b_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k", label="true")
 #ax_params[4].plot(sigma_y_true_time, sigma_y_true, color="k")
 
 
