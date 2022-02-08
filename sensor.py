@@ -8,6 +8,8 @@ class Sensor:
         transfer_model,
         estimated_transfer_model=None,
         estimated_compensation_model=None,
+        outlier_rate=0.0,
+        dropout_rate=0.0,
     ):
         self.transfer_model = transfer_model  # simulation model
         self.estimated_transfer_model = estimated_transfer_model  # calibration model
@@ -15,8 +17,20 @@ class Sensor:
             estimated_compensation_model  # compensation model
         )
 
+        self.outlier_rate = outlier_rate
+        self.dropout_rate = dropout_rate
+
     def indicated_value(self, measurand_value):
         value, value_unc = self.transfer_model.apply(measurand_value, 0)
+
+        if self.outlier_rate:
+            if np.random.random() < self.outlier_rate:
+                value = np.random.uniform(1e2, 1e8)
+
+        if self.dropout_rate:
+            if np.random.random() < self.dropout_rate:
+                value, value_unc = np.nan, np.nan
+
         return value, value_unc
 
     def estimated_value(self, indicated_value, indicated_uncertainty):
