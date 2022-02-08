@@ -1,0 +1,10 @@
+{
+    "class_name" : "Stankovic",
+    "arguments" : {
+        "calc_unc" : true,
+        "use_unc" : true,
+        "use_enhanced_model" : true,
+        "delay" : 5,
+        "delta" : 0.001
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "class_name": "GibbsPosterior",
+    "arguments": {
+        "gibbs_runs": 10000,
+        "burn_in": 1000,
+        "use_every": 100,
+        "sigma_y_is_given": true,
+        "no_error_in_variables_model": true,
+        "use_robust_statistics": false,
+        "prior": {
+            "a": {
+                "val": 1.0,
+                "val_unc": 1.0
+            },
+            "b": {
+                "val": 0.0,
+                "val_unc": 1.0
+            }
+        },
+        "sigma_y_true": 0.1
+    }
+}
