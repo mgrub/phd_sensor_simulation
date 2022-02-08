@@ -3,14 +3,17 @@ import scipy.signal as scs
 
 
 class SinusoidalMeasurand:
-    def __init__(self, sigma_x=0.01, static_omega=True):
+    def __init__(self, sigma_x=0.01, static_omega=2*np.pi, amplitude=1.0, phase_offset=0.0, value_offset=0.0):
         self.static_omega = static_omega
         self.sigma_x = sigma_x
+        self.amplitude = amplitude
+        self.phase_offset = phase_offset
+        self.value_offset = value_offset
 
     def omega(self, time, f_min=1, f_max=10, period=60):
 
-        if self.static_omega:
-            return 2 * np.pi
+        if isinstance(self.static_omega, (float, int)):
+            return self.static_omega
 
         else:
             a = (np.log(f_max) - np.log(f_min)) / 2
@@ -19,7 +22,7 @@ class SinusoidalMeasurand:
             return omega
 
     def value(self, time):
-        value = np.sin(self.omega(time) * time)
+        value = self.amplitude * np.sin(self.omega(time) * time + self.phase_offset) + self.value_offset
         result = {"time": time, "quantity": value + self.sigma_x * np.random.randn()}
         return result
 
@@ -52,6 +55,7 @@ class JumpingMeasurand:
 
         result = {"time": time, "quantity": value + self.sigma_x * np.random.randn()}
         return result
+
 
 def return_measurand_object(type, kwargs):
     if type == "SinusoidalMeasurand":
