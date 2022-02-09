@@ -34,8 +34,8 @@ sensor_readings_path = os.path.join(working_directory, "sensor_readings.json")
 method_results_paths = glob.glob(os.path.join(results_directory, f"*.json"))
 
 # check if any results available
-if not os.path.exists(results_directory):
-    raise FileNotFoundError(f"Path <{args.config}> does not store any 'results'. Exiting.\n")
+if not any(method_results_paths):
+    raise FileNotFoundError(f"Path <{args.scenario}> does not store any method's results. Exiting.\n")
 
 
 # load scenario and result data
@@ -126,7 +126,7 @@ ax_params[1].set_title("parameter a uncertainties")
 ax_params[2].set_title("parameter b estimates")
 ax_params[3].set_title("parameter b uncertainties")
 
-true_dut_model =  device_under_test[device_under_test_name]["transfer_model_params"]
+true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
 
 # true values
 a_true = true_dut_model["a"]
