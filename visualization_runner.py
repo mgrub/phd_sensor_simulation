@@ -129,11 +129,11 @@ ax_params[3].set_title("parameter b uncertainties")
 true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
 
 # true values
-a_true = true_dut_model["a"]
-ua_true = true_dut_model["ua"]
+a_true = true_dut_model["params"]["a"]
+ua_true = true_dut_model["params"]["ua"]
 
-b_true = true_dut_model["b"]
-ub_true = true_dut_model["ub"]
+b_true = true_dut_model["params"]["b"]
+ub_true = true_dut_model["params"]["ub"]
 
 sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
 sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])

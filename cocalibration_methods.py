@@ -431,7 +431,7 @@ class GibbsPosterior(Gruber):
                 },
                 "b" : {
                     "val" : np.mean(BB), 
-                    "sigmval_unca" : np.std(BB),
+                    "val_unc" : np.std(BB),
                 },
                 "sigma_y" : {
                     "val" : np.mean(SY),

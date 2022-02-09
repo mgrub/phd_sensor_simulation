@@ -98,7 +98,7 @@ if isinstance(path_or_config, str):
         device_under_test_description = json.load(f)
         logging.info(f"Read device under test from {path_or_config}.")
 else:
-    device_under_test_description = generate_sensor_description(**path_or_config))
+    device_under_test_description = generate_sensor_description(**path_or_config)
 device_under_test = init_sensor_objects(device_under_test_description)
 
 device_under_test_path = os.path.join(working_directory, "device_under_test.json")
