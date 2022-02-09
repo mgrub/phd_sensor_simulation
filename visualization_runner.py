@@ -149,11 +149,11 @@ for i, (method_name, method_result) in enumerate(results.items()):# choose color
 
     color = colors[i % len(colors)]
 
-    t = np.array([item[0]["time"] for item in method_result])
-    a =  np.array([item[0]["params"]["a"]["val"] for item in method_result])
-    ua = np.array([item[0]["params"]["a"]["val_unc"] for item in method_result])
-    b =  np.array([item[0]["params"]["b"]["val"] for item in method_result])
-    ub = np.array([item[0]["params"]["b"]["val_unc"] for item in method_result])
+    t = np.array([item[-1]["time"] for item in method_result])
+    a =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])
+    ua = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])
+    b =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])
+    ub = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])
 
     # estimates + unc-tube
     ax_params[0].plot(t, a, color=color, marker="o", label=method_name)
