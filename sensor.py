@@ -2,7 +2,7 @@ import numpy as np
 from models import LinearAffineModel
 
 
-class Sensor:
+class CalibratedSensor:
     def __init__(
         self,
         transfer_model,
@@ -40,28 +40,30 @@ class Sensor:
         return value, value_unc
 
 
-def generate_sensors(type, args, draw=False, n=1):
+def generate_sensor_descriptions(sensor_args, draw=False, number=1):
     sensors = {}
-    for i in range(n):
+    for i in range(number):
         sensor_name = f"sensor_{i}"
-        sensor = generate_sensor(type, args, draw=draw)
+        sensor = generate_sensor_description(sensor_args, draw=draw)
         sensors[sensor_name] = sensor
     return sensors
 
 
-def generate_sensor(type, kwargs, draw=False):
-    if type == "LinearAffineModel":
+def generate_sensor_description(sensor_args, draw=False):
+    model_type = sensor_args["model"]["type"]
+    if model_type == "LinearAffineModel":
+        params = sensor_args["model"]["params"]
 
-        transfer = LinearAffineModel(**kwargs)
+        transfer = LinearAffineModel(**params)
         params = transfer.get_params()
 
         if draw:
             # take into account that estimated transfer model is not the same as actual transfer model
             # select random model parameters
-            a = kwargs["a"] + kwargs["ua"] * np.random.randn()
-            b = kwargs["b"] + kwargs["ub"] * np.random.randn()
-            ua = kwargs["ua"] * (0.5 + np.random.random())
-            ub = kwargs["ub"] * (0.5 + np.random.random())
+            a = params["a"] + params["ua"] * np.random.randn()
+            b = params["b"] + params["ub"] * np.random.randn()
+            ua = params["ua"] * (0.5 + np.random.random())
+            ub = params["ub"] * (0.5 + np.random.random())
 
             transfer_estimate = LinearAffineModel(a=a, b=b, ua=ua, ub=ub)
             params_est = transfer_estimate.get_params()
@@ -72,18 +74,25 @@ def generate_sensor(type, kwargs, draw=False):
             params_inv = transfer.inverse_model_parameters()
     
     else:
-        raise ValueError(f"Unsupported model type <{type}>.")
+        raise ValueError(f"Unsupported model type <{model_type}>.")
 
-    sensor = {
-        "transfer_model_type": type,
-        "transfer_model_params": params,
-        "estimated_transfer_model_type": type,
-        "estimated_transfer_model_params": params_est,
-        "estimated_compensation_model_type": type,
-        "estimated_compensation_model_params": params_inv
+    sensor_description = {
+        "hasSimulationModel" : {
+            "type" : model_type,
+            "params" : params,
+        },
+        "hasCalibrationModel" : {
+            "type" : model_type,
+            "params" : params_est,
+        },
+        "hasCompensationModel" : {
+            "type" : model_type,
+            "params" : params_inv,
+        },
+        "misc" : sensor_args["misc"],
     }
 
-    return sensor
+    return sensor_description
     
 
 
@@ -91,33 +100,34 @@ def init_sensor_objects(sensor_descriptions):
     """ load a bunch of sensors from description """
 
     sensors = {}
+    model_dict = {
+        "transfer_model" : "hasSimulationModel", 
+        "estimated_transfer_model" : "hasCalibrationModel",
+        "estimated_compensation_model" : "hasCompensationModel", 
+    }
 
-    for sensor_name, sensor_params in sensor_descriptions.items():
+    for sensor_name, sensor_description in sensor_descriptions.items():
 
-        # init the three different internally used models
-        sensor_args = {
-            "transfer_model" : None, 
-            "estimated_transfer_model" : None,
-            "estimated_compensation_model" : None, 
-        }
+        model_args = {}
 
-        for model_name in sensor_args.keys():
-            model_type = sensor_params[f"{model_name}_type"]
+        # iterate over the three different internally used models
+        for model_name, property_name in model_dict.items():
+            model_type = sensor_description[property_name]["type"]
 
             # load transfer behavior
             if model_type == "LinearAffineModel":
                 model = LinearAffineModel(
-                    **sensor_params[f"{model_name}_params"]
+                    **sensor_description[property_name]["params"]
                 )
             else:
                 raise NotImplementedError(
                     f"Transfer Model type {model_type} not supported."
                 )
 
-            sensor_args[model_name] = model
+            model_args[model_name] = model
 
         # init sensor
-        sensor = Sensor(**sensor_args)
+        sensor = CalibratedSensor(**model_args, **sensor_description["misc"])
 
         sensors[sensor_name] = sensor
 

@@ -1,7 +1,7 @@
 {
     "random_state": null,
     "reference_sensors": {
-        "number": 1,
+        "number": 4,
         "draw": true,
         "sensor_args": {
             "model" : {
@@ -9,8 +9,8 @@
                 "params" : {
                     "a": 1,
                     "b": 0,
-                    "ua": 0.1,
-                    "ub": 0.1
+                    "ua": 0.3,
+                    "ub": 0.3
                 }
             },
             "misc" : {}
@@ -35,8 +35,12 @@
         "interpolate": false,
         "blockwise": true,
         "methods": {
+            "stankovic_base": "method_args/stankovic_base.json",
+            "stankovic_base_unc": "method_args/stankovic_base_unc.json",
             "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
             "gruber_gibbs_base": "method_args/gruber_gibbs_base.json",
+            "gruber_gibbs_known_sigma_y": "method_args/gruber_gibbs_known_sigma_y.json",
+            "gruber_gibbs_no_EIV": "method_args/gruber_gibbs_no_EIV.json",
             "gruber_joint_posterior": "method_args/gruber_joint_posterior.json"
         }
     }

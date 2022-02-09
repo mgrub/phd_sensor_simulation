@@ -1,14 +1,19 @@
 {
     "random_state": null,
     "reference_sensors": {
-        "type": "LinearAffineModel",
         "number": 2,
         "draw": true,
-        "args": {
-            "a": 1,
-            "b": 0,
-            "ua": 0.3,
-            "ub": 0.3
+        "sensor_args": {
+            "model" : {
+                "type" : "LinearAffineModel",
+                "params" : {
+                    "a": 1,
+                    "b": 0,
+                    "ua": 0.3,
+                    "ub": 0.3
+                }
+            },
+            "misc" : {}
         }
     },
     "device_under_test": "experiments/sensor_under_test.json",

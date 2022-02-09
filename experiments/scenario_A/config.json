@@ -1,14 +1,19 @@
 {
     "random_state": null,
     "reference_sensors": {
-        "type": "LinearAffineModel",
         "number": 4,
         "draw": true,
-        "args": {
-            "a": 1,
-            "b": 0,
-            "ua": 0.3,
-            "ub": 0.3
+        "sensor_args": {
+            "model" : {
+                "type" : "LinearAffineModel",
+                "params" : {
+                    "a": 1,
+                    "b": 0,
+                    "ua": 0.3,
+                    "ub": 0.3
+                }
+            },
+            "misc" : {}
         }
     },
     "device_under_test": "experiments/scenario_A/example_sensor.json",
@@ -29,7 +34,7 @@
         "blockwise": true,
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
-            "gruber_minimal": "method_args/gruber_minimal.json"
+            "gruber_minimal": "method_args/gruber_gibbs_minimal.json"
         }
     }
 }

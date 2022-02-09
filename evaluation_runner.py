@@ -14,7 +14,7 @@ from pip._internal.operations import freeze
 
 from io_helper import NumpyEncoder, split_sensor_readings
 from measurands import return_measurand_object, return_timestamps
-from sensor import generate_sensor, generate_sensors, init_sensor_objects
+from sensor import generate_sensor_description, generate_sensor_descriptions, init_sensor_objects
 import cocalibration_methods
 
 # provide CLI that accepts a configuration file
@@ -82,12 +82,8 @@ if isinstance(path_or_config, str):
         reference_sensors_description = json.load(f)
         logging.info(f"Read reference sensors from {path_or_config}.")
 else:
-    reference_sensors_description = generate_sensors(
-        type=path_or_config["type"],
-        args=path_or_config["args"],
-        draw=path_or_config["draw"],
-        n=path_or_config["number"],
-    )
+    reference_sensors_description = generate_sensor_descriptions(**path_or_config)
+
 reference_sensors = init_sensor_objects(reference_sensors_description)
 
 reference_sensors_path = os.path.join(working_directory, "reference_sensors.json")
@@ -102,11 +98,7 @@ if isinstance(path_or_config, str):
         device_under_test_description = json.load(f)
         logging.info(f"Read device under test from {path_or_config}.")
 else:
-    device_under_test_description = generate_sensor(
-        type=path_or_config["type"],
-        args=path_or_config["args"],
-        draw=path_or_config["draw"],
-    )
+    device_under_test_description = generate_sensor_description(**path_or_config))
 device_under_test = init_sensor_objects(device_under_test_description)
 
 device_under_test_path = os.path.join(working_directory, "device_under_test.json")
