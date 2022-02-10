@@ -10,10 +10,11 @@ import numpy as np
 # provide CLI that accepts a configuration file
 parser = argparse.ArgumentParser("Visualize the results of an evaluated cocalibration scenario.")
 parser.add_argument(
-    "--scenario",
+    "scenario",
+    nargs="?",
     type=str,
-    help="Path to a scenario",
     default="experiments/scenario_A/",
+    help="Path to a scenario",
 )
 parser.add_argument("--show", action='store_true', help="Show plot, rather than generating PNGs",
 )

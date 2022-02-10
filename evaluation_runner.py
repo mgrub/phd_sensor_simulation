@@ -20,19 +20,21 @@ import cocalibration_methods
 # provide CLI that accepts a configuration file
 parser = argparse.ArgumentParser("Run an evaluation based on a configuration file")
 parser.add_argument(
-    "--config",
+    "scenario",
+    nargs="?",
     type=str,
-    help="Path to configuration file",
-    default="experiments/scenario_B/config.json",
+    default="experiments/scenario_B",
+    help="Path to a scenario",
 )
 args = parser.parse_args()
 
 # load configuration
-if not os.path.exists(args.config):
-    raise FileNotFoundError(f"File <{args.config}> does not exist. Exiting.\n")
+config_path = os.path.join(args.scenario, "config.json")
+if not os.path.exists(config_path):
+    raise FileNotFoundError(f"File <{config_path}> does not exist. Exiting.\n")
 
-working_directory = os.path.dirname(args.config)
-with open(args.config, "r") as config_file:
+working_directory = os.path.dirname(config_path)
+with open(config_path, "r") as config_file:
     config = json.load(config_file)
 
 
