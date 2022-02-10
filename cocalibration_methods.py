@@ -597,11 +597,12 @@ class AnalyticalDiscretePosterior(Gruber):
         ## interpolate
         logging.info(a_log_dist)
         finite_entries = np.logical_not(np.isneginf(a_log_dist))
-        a_interp = CubicSpline(a[finite_entries], - a_log_dist[finite_entries])
+        a_finite = a[finite_entries]
+        a_interp = CubicSpline(a_finite, - a_log_dist[finite_entries])
         a_interp_second_order_derivate = a_interp.derivative(2)
         
         ## find minimum and second order derivative at minimum
-        result = minimize_scalar(a_interp)
+        result = minimize_scalar(a_interp, method="Bounded", bounds=[a_finite.min(), a_finite.max()])
         a_mean = result.x
         a_hess = a_interp_second_order_derivate(result.x)
         a_std = 1 / np.sqrt(a_hess)
@@ -616,11 +617,12 @@ class AnalyticalDiscretePosterior(Gruber):
         ## interpolate
         logging.info(b_log_dist)
         finite_entries = np.logical_not(np.isneginf(b_log_dist))
+        b_finite = b[finite_entries]
         b_interp = CubicSpline(b[finite_entries], - b_log_dist[finite_entries])
         b_interp_second_order_derivate = b_interp.derivative(2)
         
         ## find minimum and second order derivative at minimum
-        result = minimize_scalar(b_interp)
+        result = minimize_scalar(b_interp, method="Bounded", bounds=[b_finite.min(), b_finite.max()])
         b_mean = result.x
         b_hess = b_interp_second_order_derivate(result.x)
         b_std = 1 / np.sqrt(b_hess)
@@ -635,11 +637,12 @@ class AnalyticalDiscretePosterior(Gruber):
         ## interpolate
         logging.info(sigma_log_dist)
         finite_entries = np.logical_not(np.isneginf(sigma_log_dist))
+        sigma_y_finite = sigma_y[finite_entries]
         sigma_interp = CubicSpline(sigma[finite_entries], - sigma_log_dist[finite_entries])
         sigma_interp_second_order_derivate = sigma_interp.derivative(2)
         
         ## find minimum and second order derivative at minimum
-        result = minimize_scalar(sigma_interp)
+        result = minimize_scalar(sigma_interp, method="Bounded", bounds=[sigma_y_finite.min(), sigma_y_finite.max()])
         sigma_mean = result.x
         sigma_hess = sigma_interp_second_order_derivate(result.x)
         sigma_std = 1 / np.sqrt(sigma_hess)
