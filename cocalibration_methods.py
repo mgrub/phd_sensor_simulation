@@ -591,8 +591,8 @@ class AnalyticalDiscretePosterior(Gruber):
         a_log_max_index = np.argmax(a_log_dist)
         a_max = a[a_log_max_index]
 
-        plt.plot(a, a_log_dist)
-        plt.show()
+        #plt.plot(a, a_log_dist)
+        #plt.show()
 
         ## interpolate
         logging.info(a_log_dist)
