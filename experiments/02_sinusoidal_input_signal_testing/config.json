@@ -39,7 +39,7 @@
         "blockwise": true,
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
-            "gruber_joint_posterior": "method_args/gruber_joint_posterior.json"
+            "gruber_gibbs_minimal": "method_args/gruber_gibbs_minimal.json"
         }
     }
 }
