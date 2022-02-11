@@ -169,7 +169,7 @@ if run_blockwise:
     if "split_indices" in cocalibration.keys():
         split_indices = cocalibration["split_indices"]
     else:
-        n_splits = np.random.randint(1, len(t) // 3)
+        n_splits = np.random.randint(1, max(2, len(t) // 20))
         split_indices = np.sort(np.random.permutation(np.arange(3, len(t)-1))[:n_splits])
         cocalibration["split_indices"] = split_indices
     
@@ -210,10 +210,6 @@ for method_name, method_args in cocalibration["methods"].items():
     results = []
 
     if run_blockwise:
-        # TODO (split sensor readings into blocks, consume blocks one after another)
-        # maybe implement this already at the level of sensor_readings and measurand?
-        # somehow store the selected blocks?
-
         for current_sensor_readings in sensor_readings_splitted:
             logging.info("new block")
             block_result = method.update_params(current_sensor_readings, device_under_test_copy)
