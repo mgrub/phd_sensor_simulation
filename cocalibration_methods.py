@@ -588,64 +588,79 @@ class AnalyticalDiscretePosterior(Gruber):
         # a
         ## marginal distribution of a
         a_log_dist = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes = [None, b, sigma])
-        a_log_max_index = np.argmax(a_log_dist)
-        a_max = a[a_log_max_index]
 
         #plt.plot(a, a_log_dist)
         #plt.show()
 
+        # TODO: move interpolation+2nd_derivative into separate function, as it is used for a, b and sigma_y in the same way
+
         ## interpolate
         logging.info(a_log_dist)
         finite_entries = np.logical_not(np.isneginf(a_log_dist))
-        a_finite = a[finite_entries]
-        a_interp = CubicSpline(a_finite, - a_log_dist[finite_entries])
-        a_interp_second_order_derivate = a_interp.derivative(2)
         
-        ## find minimum and second order derivative at minimum
-        result = minimize_scalar(a_interp, method="Bounded", bounds=[a_finite.min(), a_finite.max()])
-        a_mean = result.x
-        a_hess = a_interp_second_order_derivate(result.x)
-        a_std = 1 / np.sqrt(a_hess)
+        if finite_entries.sum() > 2:
+            a_finite = a[finite_entries]
+            a_interp = CubicSpline(a_finite, - a_log_dist[finite_entries])
+            a_interp_second_order_derivate = a_interp.derivative(2)
+            
+            ## find minimum and second order derivative at minimum
+            result = minimize_scalar(a_interp, method="Bounded", bounds=[a_finite.min(), a_finite.max()])
+            a_mean = result.x
+            a_hess = a_interp_second_order_derivate(result.x)
+            a_std = 1 / np.sqrt(a_hess)
 
+        else: # if no interpolation possible, fall back to grid specs
+            a_log_max_index = np.argmax(a_log_dist)
+            a_mean = a[a_log_max_index]
+            a_std = a[a_log_max_index] - a[a_log_max_index-1]
 
         # b
         ## marginal distribution of b
         b_log_dist = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes = [a, None, sigma])
-        b_log_max_index = np.argmax(b_log_dist)
-        b_max = b[b_log_max_index]
 
         ## interpolate
         logging.info(b_log_dist)
         finite_entries = np.logical_not(np.isneginf(b_log_dist))
-        b_finite = b[finite_entries]
-        b_interp = CubicSpline(b[finite_entries], - b_log_dist[finite_entries])
-        b_interp_second_order_derivate = b_interp.derivative(2)
-        
-        ## find minimum and second order derivative at minimum
-        result = minimize_scalar(b_interp, method="Bounded", bounds=[b_finite.min(), b_finite.max()])
-        b_mean = result.x
-        b_hess = b_interp_second_order_derivate(result.x)
-        b_std = 1 / np.sqrt(b_hess)
 
+        if finite_entries.sum() > 2:
+            b_finite = b[finite_entries]
+            b_interp = CubicSpline(b[finite_entries], - b_log_dist[finite_entries])
+            b_interp_second_order_derivate = b_interp.derivative(2)
+            
+            ## find minimum and second order derivative at minimum
+            result = minimize_scalar(b_interp, method="Bounded", bounds=[b_finite.min(), b_finite.max()])
+            b_mean = result.x
+            b_hess = b_interp_second_order_derivate(result.x)
+            b_std = 1 / np.sqrt(b_hess)
+
+        else: # if no interpolation possible, fall back to grid specs
+            b_log_max_index = np.argmax(b_log_dist)
+            b_mean = b[b_log_max_index]
+            b_std = b[b_log_max_index] - b[b_log_max_index-1]
 
         # sigma_y
         ## marginal distribution of sigma
         sigma_log_dist = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes = [a, b, None])
-        sigma_log_max_index = np.argmax(sigma_log_dist)
-        sigma_max = sigma[sigma_log_max_index]
 
         ## interpolate
         logging.info(sigma_log_dist)
         finite_entries = np.logical_not(np.isneginf(sigma_log_dist))
-        sigma_y_finite = sigma_y[finite_entries]
-        sigma_interp = CubicSpline(sigma[finite_entries], - sigma_log_dist[finite_entries])
-        sigma_interp_second_order_derivate = sigma_interp.derivative(2)
-        
-        ## find minimum and second order derivative at minimum
-        result = minimize_scalar(sigma_interp, method="Bounded", bounds=[sigma_y_finite.min(), sigma_y_finite.max()])
-        sigma_mean = result.x
-        sigma_hess = sigma_interp_second_order_derivate(result.x)
-        sigma_std = 1 / np.sqrt(sigma_hess)
+
+        if finite_entries.sum() > 2:
+            sigma_finite = sigma[finite_entries]
+            sigma_interp = CubicSpline(sigma[finite_entries], - sigma_log_dist[finite_entries])
+            sigma_interp_second_order_derivate = sigma_interp.derivative(2)
+            
+            ## find minimum and second order derivative at minimum
+            result = minimize_scalar(sigma_interp, method="Bounded", bounds=[sigma_finite.min(), sigma_finite.max()])
+            sigma_mean = result.x
+            sigma_hess = sigma_interp_second_order_derivate(result.x)
+            sigma_std = 1 / np.sqrt(sigma_hess)
+
+        else: # if no interpolation possible, fall back to grid specs
+            sigma_log_max_index = np.argmax(sigma_log_dist)
+            sigma_mean = sigma[sigma_log_max_index]
+            sigma_std = sigma[sigma_log_max_index] - sigma[sigma_log_max_index-1]
 
         laplace_approximation = {
             "a" : {
