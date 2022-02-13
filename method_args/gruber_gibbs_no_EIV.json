@@ -9,16 +9,26 @@
         "use_robust_statistics": false,
         "prior": {
             "a": {
-                "val": 1.0,
-                "val_unc": 1.0
+                "type": "norm",
+                "params": {
+                    "loc": 1.0,
+                    "scale": 1.0
+                }
             },
             "b": {
-                "val": 0.0,
-                "val_unc": 1.0
+                "type": "norm",
+                "params": {
+                    "loc": 0.0,
+                    "scale": 1.0
+                }
             },
             "sigma_y": {
-                "val": 0.5,
-                "val_unc": 0.3
+                "type": "invgamma",
+                "params": {
+                    "a": 2.0,
+                    "loc": 0.0,
+                    "scale": 1.0
+                }
             }
         },
         "sigma_y_true": 0.1

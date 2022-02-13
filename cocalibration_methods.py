@@ -222,6 +222,7 @@ class Stankovic(CocalibrationMethod):
 
 
 class Gruber(CocalibrationMethod):
+
     def cox_fusion(self, reference_sensor_values, reference_sensor_uncs):
 
         # def fuse(self, value_uncs, values):
@@ -252,6 +253,7 @@ class Gruber(CocalibrationMethod):
 
         return val, val_unc
 
+
     def weighted_mean(self, values, value_uncs, weights):
         k = np.sum(weights, axis=1)
 
@@ -262,6 +264,7 @@ class Gruber(CocalibrationMethod):
         val_unc = np.linalg.norm(weights / k[:, None] * value_uncs, ord=2, axis=1)
 
         return val, val_unc
+
 
     def outlier_removal(
         self, p_row, val_row, val_unc_row, weights_row, values_row, value_uncs_row
@@ -288,6 +291,39 @@ class Gruber(CocalibrationMethod):
                 val_unc_row = value_uncs_row[median_index]
 
         return val_row, val_unc_row
+
+
+    def laplace_approximation_1d(self, x, log_y):
+        """ Given a log-PDF y given at discrete positions x, 
+            estimate the laplace approximation (fit a gaussian
+            around the maximum a-posteriori probability).
+
+            Uses spline interpolation if possible to get position of
+            maximum and an estimate of the hessian at that position.
+        """
+        
+        ## interpolate
+        logging.info(log_y)
+        finite_entries = np.logical_not(np.isneginf(log_y))
+        
+        # only interpolate, if enough finite datapoints
+        if finite_entries.sum() > 2:
+            x_finite = x[finite_entries]
+            y_interp = CubicSpline(x_finite, - log_y[finite_entries])
+            y_interp_second_order_derivate = y_interp.derivative(2)
+            
+            ## find minimum and second order derivative at minimum
+            result = minimize_scalar(y_interp, method="Bounded", bounds=[x_finite.min(), x_finite.max()])
+            laplace_mean = result.x
+            laplace_hess = y_interp_second_order_derivate(laplace_mean)
+            laplace_std = 1 / np.sqrt(laplace_hess)
+
+        else: # if no interpolation possible, fall back to grid specs
+            i_max = np.argmax(log_y)
+            laplace_mean = x[i_max]
+            laplace_std = (x[i_max+1] - x[i_max-1]) / 2
+        
+        return laplace_mean, laplace_std
 
 
 class GibbsPosterior(Gruber):
@@ -347,13 +383,17 @@ class GibbsPosterior(Gruber):
         Uxx_inv = np.linalg.inv(Uxx)
 
         # shortcuts for prior
-        mu_a = self.prior["a"]["val"]
-        mu_b = self.prior["b"]["val"]
-        mu_sigma_y = self.prior["sigma_y"]["val"]
+        mu_a = self.prior["a"]["params"]["loc"]
+        sigma_a = self.prior["a"]["params"]["scale"]
 
-        sigma_a = self.prior["a"]["val_unc"]
-        sigma_b = self.prior["b"]["val_unc"]
-        sigma_sigma_y = self.prior["sigma_y"]["val_unc"]
+        mu_b = self.prior["b"]["params"]["loc"]
+        sigma_b = self.prior["b"]["params"]["scale"]
+
+        shape_sigma_y = self.prior["sigma_y"]["params"]["a"]
+        loc_sigma_y = self.prior["sigma_y"]["params"]["loc"]
+        scale_sigma_y = self.prior["sigma_y"]["params"]["scale"]
+        mode_sigma_y = scale_sigma_y / (1 + shape_sigma_y)   # wikipedia
+
 
         # update posteriors using (block-)Gibbs sampling
         samples = []
@@ -362,7 +402,7 @@ class GibbsPosterior(Gruber):
             "Xa" : xx_observed,
             "a" : mu_a,
             "b" : mu_b,
-            "sigma_y" : mu_sigma_y,
+            "sigma_y" : mode_sigma_y,
         }
         samples.append(initial_sample)
 
@@ -391,7 +431,7 @@ class GibbsPosterior(Gruber):
             if self.sigma_y_is_given:
                 sigma_y_gibbs = self.sigma_y_true
             else:
-                sigma_y_gibbs = posterior_sigma_y_explicit(None, a_gibbs, b_gibbs, Xa_gibbs, yy, mu_sigma_y, sigma_sigma_y)
+                sigma_y_gibbs = posterior_sigma_y_explicit(None, a_gibbs, b_gibbs, Xa_gibbs, yy, shape_sigma_y, scale_sigma_y, loc_sigma_y)
 
             # 
             samples.append({
@@ -402,47 +442,77 @@ class GibbsPosterior(Gruber):
         })
 
         # estimate posterior from (avoid burn-in and take only every nth sample to avoid autocorrelation)
-
         considered_samples = samples[self.burn_in::self.use_every]
         AA = [sample["a"] for sample in considered_samples]
         BB = [sample["b"] for sample in considered_samples]
         SY = [sample["sigma_y"] for sample in considered_samples]
 
-        if self.use_robust_statistics:
-            posterior = {
+        # estimate a dist to the discrete hist (to be used as next prior)
+        a_norm_fit, a_norm_fit_std = norm.fit(AA)
+        b_norm_fit, b_norm_fit_std = norm.fit(BB)
+        sigma_invgamma_a, sigma_invgamma_loc, sigma_invgamma_scale = invgamma.fit(SY)
+
+        fitted_posterior = {
                 "a" : {
-                    "val" : np.median(AA),
-                    "val_unc" : iqr(AA),
+                    "type" : "norm",
+                    "params" : {
+                        "loc" : a_norm_fit,
+                        "scale" : a_norm_fit_std,
+                    }
                 },
                 "b" : {
-                    "val" : np.median(BB),
-                    "val_unc" : iqr(BB),
-                },
+                    "type" : "norm",
+                    "params" : {
+                        "loc" : b_norm_fit,
+                        "scale" : b_norm_fit_std,
+                    }
+                }, 
                 "sigma_y" : {
-                    "val" : np.median(SY),
-                    "val_unc" : iqr(SY),
-                }
-            }
-        else:
-            posterior = {
-                "a" : {
-                    "val" : np.mean(AA),
-                    "val_unc" : np.std(AA),
+                    "type" : "invgamma",
+                    "params" : {
+                        "a" : sigma_invgamma_a,
+                        "loc" : sigma_invgamma_loc,
+                        "scale" : sigma_invgamma_scale,
+                    }
                 },
-                "b" : {
-                    "val" : np.mean(BB), 
-                    "val_unc" : np.std(BB),
-                },
-                "sigma_y" : {
-                    "val" : np.mean(SY),
-                    "val_unc" : np.std(SY),
-                }
             }
+
+        # laplace approximatino for result / output
+        a_dist, a_hist_range = np.histogram(AA, density=True)
+        a_laplace_approx, a_laplace_approx_std = self.laplace_approximation_1d(a_hist_range[:-1], np.log(a_dist))
+
+        b_dist, b_hist_range = np.histogram(BB, density=True)
+        b_laplace_approx, b_laplace_approx_std = self.laplace_approximation_1d(b_hist_range[:-1], np.log(b_dist))
+
+        sigma_y_dist, sigma_y_hist_range = np.histogram(SY, density=True)
+        sigma_y_laplace_approx, sigma_y_laplace_approx_std = self.laplace_approximation_1d(sigma_y_hist_range[:-1], np.log(sigma_y_dist))
+
+        posterior_laplace_approximation = {
+            "a" : {
+                "val" : a_laplace_approx,
+                "val_unc" : a_laplace_approx_std,
+            },
+            "b" : {
+                "val" : b_laplace_approx,
+                "val_unc" : b_laplace_approx_std,
+            },
+            "sigma_y" : {
+                "val" : sigma_y_laplace_approx,
+                "val_unc" : sigma_y_hist_range,
+            }
+        }
+
+        # visualize for DEBUGGING
+        a_range = np.linspace(min(AA), max(AA))
+        plt.hist(AA, 20, density=True);
+        plt.plot(a_range, norm.pdf(a_range, a_laplace_approx, a_laplace_approx_std));
+        plt.plot(a_range, norm.pdf(a_range, a_norm_fit, a_norm_fit_std));
+        plt.show()
 
         # prepare next cycle
-        self.prior = posterior
+        self.prior = fitted_posterior
 
-        return posterior
+        return posterior_laplace_approximation
 
 
 class AnalyticalDiscretePosterior(Gruber):
@@ -454,10 +524,10 @@ class AnalyticalDiscretePosterior(Gruber):
         grid_resolution=15,
     ):
         # discrete grid to evaluate the posterior on
-        a_low = prior["a"]["val"] - 2 * prior["a"]["val_unc"]
-        a_high = prior["a"]["val"] + 2 * prior["a"]["val_unc"]
-        b_low = prior["b"]["val"] - 2 * prior["b"]["val_unc"]
-        b_high = prior["b"]["val"] + 2 * prior["b"]["val_unc"]
+        a_low = prior["a"]["params"]["loc"] - 2 * prior["a"]["params"]["scale"]
+        a_high = prior["a"]["params"]["loc"] + 2 * prior["a"]["params"]["scale"]
+        b_low = prior["b"]["params"]["loc"] - 2 * prior["b"]["params"]["scale"]
+        b_high = prior["b"]["params"]["loc"] + 2 * prior["b"]["params"]["scale"]
         sigma_y_low = 1e-3
         sigma_y_high = 2e0
 
@@ -544,9 +614,9 @@ class AnalyticalDiscretePosterior(Gruber):
         b = self.b_range
         sigma = self.sigma_y_range
         
-        discrete_log_prior = norm.logpdf(A, loc = prior["a"]["val"], scale=prior["a"]["val_unc"])
-        discrete_log_prior += norm.logpdf(B, loc = prior["b"]["val"], scale=prior["b"]["val_unc"])
-        discrete_log_prior += invgamma.logpdf(SIGMA, a = prior["sigma_y"]["alpha"], scale=prior["sigma_y"]["beta"])
+        discrete_log_prior = norm.logpdf(A, **prior["a"]["params"])
+        discrete_log_prior += norm.logpdf(B, **prior["b"]["params"])
+        discrete_log_prior += invgamma.logpdf(SIGMA, **prior["sigma_y"]["params"])
 
         # normalize
         C = self.integrate_discrete_log_distribution(discrete_log_prior, axes = [a, b, sigma])
@@ -577,39 +647,6 @@ class AnalyticalDiscretePosterior(Gruber):
             return np.log(tmp)
         else:
             return tmp
-
-
-    def laplace_approximation_1d(self, x, y):
-        """ Given a PDF y given at discrete positions x, 
-            estimate the laplace approximation (fit a gaussian
-            around the maximum a-posteriori probability).
-
-            Uses spline interpolation if possible to get position of
-            maximum and an estimate of the hessian at that position.
-        """
-        
-        ## interpolate
-        logging.info(y)
-        finite_entries = np.logical_not(np.isneginf(y))
-        
-        # only interpolate, if enough finite datapoints
-        if finite_entries.sum() > 2:
-            x_finite = x[finite_entries]
-            y_interp = CubicSpline(x_finite, - y[finite_entries])
-            y_interp_second_order_derivate = y_interp.derivative(2)
-            
-            ## find minimum and second order derivative at minimum
-            result = minimize_scalar(y_interp, method="Bounded", bounds=[x_finite.min(), x_finite.max()])
-            laplace_mean = result.x
-            laplace_hess = y_interp_second_order_derivate(laplace_mean)
-            laplace_std = 1 / np.sqrt(laplace_hess)
-
-        else: # if no interpolation possible, fall back to grid specs
-            i_max = np.argmax(y)
-            laplace_mean = x[i_max]
-            laplace_std = (x[i_max+1] - x[i_max-1]) / 2
-        
-        return laplace_mean, laplace_std
 
 
     def laplace_approximation_posterior(self):

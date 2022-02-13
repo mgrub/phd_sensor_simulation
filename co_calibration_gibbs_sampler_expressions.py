@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import norm, multivariate_normal
+from scipy.stats import norm, multivariate_normal, invgamma
 from scipy.optimize import minimize_scalar
 from scipy.integrate import quad
 
@@ -12,6 +12,8 @@ def gaussian(x, mu_x, sigma_x):
 def multivariate_gaussian(x, mu_x, cov_x):
     return multivariate_normal.pdf(x, mean=mu_x, cov=cov_x)
 
+def inverse_gamma(x, shape_x, scale_x, loc_x):
+    return invgamma.pdf(x, a=shape_x, scale=scale_x, loc=loc_x)
 
 
 ### likelihoods
@@ -41,9 +43,9 @@ def posterior_b_implicit(b, a, Xa, sigma_y, Y, mu_b, sigma_b, normalizer=1.0):
     expr2 = gaussian(b, mu_b, sigma_b)
     return expr1 * expr2 / normalizer
 
-def posterior_sigma_y_implicit(sigma_y, a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
+def posterior_sigma_y_implicit(sigma_y, a, b, Xa, Y, shape_sigma_y, scale_sigma_y, loc_sigma_y, normalizer=1.0):
     expr1 = likelihood_Y(Y, a, b, Xa, sigma_y)
-    expr2 = gaussian(sigma_y, mu_sigma_y, sigma_sigma_y)
+    expr2 = inverse_gamma(sigma_y, shape_sigma_y, scale_sigma_y, loc_sigma_y)
     return expr1 * expr2 / normalizer
 
 
@@ -79,27 +81,32 @@ def posterior_b_explicit(b, a, Xa, sigma_y, Y, mu_b, sigma_b, normalizer=1.0):
     else:  # return pdf at value b
         return gaussian(b, B_b/A_b, np.sqrt(-1/(2*A_b)))
 
-def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, mu_sigma_y, sigma_sigma_y, normalizer=1.0):
-    div = sigma_sigma_y**2
+def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, shape_sigma_y, scale_sigma_y, loc_sigma_y, normalizer=1.0):
     A_tilde = 0.5 * np.sum(np.square(Y - a*Xa - b))
+    mode_sigma_y = scale_sigma_y / (1 + shape_sigma_y) 
     N = Xa.size
-    args = [A_tilde, mu_sigma_y, div, N, normalizer]
+    args = [A_tilde, shape_sigma_y, scale_sigma_y, loc_sigma_y, N, normalizer]
 
     if sigma_y == None:  # return a sample
         normalizer = quad(posterior_sigma_y_explicit_faster, -np.inf, np.inf, args=tuple(args))[0]
         args[-1] = normalizer
         target_quantile = np.random.random()
         evaluate = lambda x: np.linalg.norm(target_quantile - quad(posterior_sigma_y_explicit_faster, -np.inf, x, args=tuple(args))[0])
-        res = minimize_scalar(evaluate, bracket=(mu_sigma_y - sigma_sigma_y, mu_sigma_y + sigma_sigma_y))
+        res = minimize_scalar(evaluate, bracket=(0.5*mode_sigma_y, 1.5*mode_sigma_y))
         return res.x
     else:  # return pdf at value sigma_y
         return posterior_sigma_y_explicit_faster(sigma_y, *args)
 
-def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, mu_sigma_y, div, N, normalizer=1.0):
+def posterior_sigma_y_explicit_faster(sigma_y, A_tilde, shape_sigma_y, scale_sigma_y, loc_sigma_y, N, normalizer=1.0):
     if sigma_y == 0.0:
         return 0.0
     else:
-        exponent = - sigma_y**2 / (2*div) + sigma_y * mu_sigma_y / div - sigma_y ** (-2) * A_tilde - N * np.log(np.abs(sigma_y))
+        exponent = (
+            - sigma_y ** (-2) * A_tilde 
+            - N * np.log(np.abs(sigma_y)) 
+            - (shape_sigma_y + 1) * np.log(sigma_y - loc_sigma_y) 
+            - scale_sigma_y / (sigma_y - loc_sigma_y)
+        )
         return np.exp(exponent) / normalizer
 
 ### joint distribution with Xa-marginalization
