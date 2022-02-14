@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import norm, multivariate_normal, invgamma
-from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize_scalar, minimize, basinhopping
 from scipy.integrate import quad
 
 # default order: a, b, Xa, sigma_y, Y, Xo, UXo_inv, XYZ, normalizer=1.0
@@ -91,9 +91,22 @@ def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, shape_sigma_y, scale_sigma_
         normalizer = quad(posterior_sigma_y_explicit_faster, loc_sigma_y, np.inf, args=tuple(args))[0]
         args[-1] = normalizer
         target_quantile = np.random.random()
+
+        # use scalar interval optimization
         evaluate = lambda x: np.linalg.norm(target_quantile - quad(posterior_sigma_y_explicit_faster, loc_sigma_y, x, args=tuple(args))[0])
         res = minimize_scalar(evaluate, bracket=(0.5*mode_sigma_y, 1.5*mode_sigma_y))
-        return res.x
+
+        # use different optimization strategy (gradient-based) if first approach unsuccessful
+        if not res.success:
+            evaluate = lambda x: np.square(target_quantile - quad(posterior_sigma_y_explicit_faster, loc_sigma_y, x, args=tuple(args))[0])
+            res = minimize(evaluate, x0=mode_sigma_y, bounds=((loc_sigma_y, None),), method="TNC")
+        
+        # use yet another optimization strategy (global) if previous result(s) unplausible
+        if np.float(res.x) <= loc_sigma_y:
+            evaluate = lambda x: np.square(target_quantile - quad(posterior_sigma_y_explicit_faster, loc_sigma_y, x, args=tuple(args))[0])
+            res = basinhopping(evaluate, x0=mode_sigma_y)
+
+        return np.float(res.x)
     else:  # return pdf at value sigma_y
         return posterior_sigma_y_explicit_faster(sigma_y, *args)
 
