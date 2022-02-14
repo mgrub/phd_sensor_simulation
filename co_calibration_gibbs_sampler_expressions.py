@@ -88,10 +88,10 @@ def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, shape_sigma_y, scale_sigma_
     args = [A_tilde, shape_sigma_y, scale_sigma_y, loc_sigma_y, N, normalizer]
 
     if sigma_y == None:  # return a sample
-        normalizer = quad(posterior_sigma_y_explicit_faster, -np.inf, np.inf, args=tuple(args))[0]
+        normalizer = quad(posterior_sigma_y_explicit_faster, loc_sigma_y, np.inf, args=tuple(args))[0]
         args[-1] = normalizer
         target_quantile = np.random.random()
-        evaluate = lambda x: np.linalg.norm(target_quantile - quad(posterior_sigma_y_explicit_faster, -np.inf, x, args=tuple(args))[0])
+        evaluate = lambda x: np.linalg.norm(target_quantile - quad(posterior_sigma_y_explicit_faster, loc_sigma_y, x, args=tuple(args))[0])
         res = minimize_scalar(evaluate, bracket=(0.5*mode_sigma_y, 1.5*mode_sigma_y))
         return res.x
     else:  # return pdf at value sigma_y
