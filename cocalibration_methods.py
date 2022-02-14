@@ -498,7 +498,7 @@ class GibbsPosterior(Gruber):
             },
             "sigma_y" : {
                 "val" : sigma_y_laplace_approx,
-                "val_unc" : sigma_y_hist_range,
+                "val_unc" : sigma_y_laplace_approx_std,
             }
         }
 
