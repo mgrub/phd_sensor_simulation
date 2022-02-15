@@ -34,6 +34,7 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
+        "split_indices" : [5, 20, 234, 400, 543, 800, 850, 900, 950, 1000, 1200, 1600, 1610],
         "methods": {
             "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
             "gruber_gibbs_base": "method_args/gruber_gibbs_base.json",
