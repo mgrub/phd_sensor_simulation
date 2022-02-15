@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import norm, multivariate_normal, invgamma
-from scipy.optimize import minimize_scalar, minimize, basinhopping
+from scipy.optimize import minimize_scalar, minimize, basinhopping, dual_annealing
 from scipy.integrate import quad
 
 # default order: a, b, Xa, sigma_y, Y, Xo, UXo_inv, XYZ, normalizer=1.0
@@ -104,7 +104,8 @@ def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, shape_sigma_y, scale_sigma_
         # use yet another optimization strategy (global) if previous result(s) unplausible
         if np.float(res.x) <= loc_sigma_y:
             evaluate = lambda x: np.square(target_quantile - quad(posterior_sigma_y_explicit_faster, loc_sigma_y, x, args=tuple(args))[0])
-            res = basinhopping(evaluate, x0=mode_sigma_y)
+            #res = basinhopping(evaluate, x0=mode_sigma_y)
+            res = dual_annealing(evaluate, bounds=((loc_sigma_y, loc_sigma_y+10),))
 
         return np.float(res.x)
     else:  # return pdf at value sigma_y
