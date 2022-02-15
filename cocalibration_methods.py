@@ -607,12 +607,16 @@ class AnalyticalDiscretePosterior(Gruber):
         # actual update
         self.discrete_log_posterior = self.discrete_log_posterior + log_likelihood
         
+        # condition log-posterior to avoid numerical issues (i.e. C=-np.inf) from integration
+        conditioner = self.discrete_log_posterior.max()
+        self.discrete_log_posterior -= conditioner
+
         # normalize
         a = self.a_range
         b = self.b_range
         sigma = self.sigma_y_range
         C = self.integrate_discrete_log_distribution(self.discrete_log_posterior, axes= [a, b, sigma])
-        self.discrete_log_posterior = self.discrete_log_posterior - C
+        self.discrete_log_posterior -= C
 
 
     def init_informative_prior(self, prior):
