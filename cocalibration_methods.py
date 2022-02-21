@@ -255,13 +255,17 @@ class Gruber(CocalibrationMethod):
 
 
     def weighted_mean(self, values, value_uncs, weights):
-        k = np.sum(weights, axis=1)
+        k = np.nansum(weights, axis=1)
 
         # calculate the weighted mean
-        val = np.sum(weights * values, axis=1) / k
+        val = np.nansum(weights * values, axis=1) / k
 
         # uncertainty according GUM for uncorrelated inputs
-        val_unc = np.linalg.norm(weights / k[:, None] * value_uncs, ord=2, axis=1)
+        # not suitable if nans are expected:
+        # val_unc = np.linalg.norm(weights / k[:, None] * value_uncs, ord=2, axis=1)
+        # use this to achieve robustness against nans
+        tmp = weights / k[:, None] * value_uncs
+        val_unc = np.sqrt(np.nansum(np.square(tmp), axis=1))
 
         return val, val_unc
 
