@@ -383,6 +383,11 @@ class GibbsPosterior(Gruber):
 
 
     def gibbs_routine(self, xx_observed, Uxx, yy):
+        # handle nans (dropouts)
+        mask = np.isfinite(xx_observed)
+        xx_observed = xx_observed[mask]
+        yy = yy[mask]
+        Uxx = Uxx[:,mask][mask]
 
         Uxx_inv = np.linalg.inv(Uxx)
 
