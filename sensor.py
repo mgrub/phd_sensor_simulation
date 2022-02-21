@@ -24,12 +24,13 @@ class CalibratedSensor:
         value, value_unc = self.transfer_model.apply(measurand_value, 0)
 
         if self.outlier_rate:
-            if np.random.random() < self.outlier_rate:
-                value = np.random.uniform(1e2, 1e8)
+            outliers = np.random.random(size=len(measurand_value)) < self.outlier_rate
+            value[outliers] = np.random.uniform(1e2, 1e8, size=outliers.sum())
 
         if self.dropout_rate:
-            if np.random.random() < self.dropout_rate:
-                value, value_unc = np.nan, np.nan
+            dropouts = np.random.random(size=len(measurand_value)) < self.dropout_rate
+            value[dropouts] = np.nan
+            value_unc[dropouts] = np.nan
 
         return value, value_unc
 
