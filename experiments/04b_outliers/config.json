@@ -14,8 +14,7 @@
                 }
             },
             "misc" : {
-                "outlier_rate" : 0.1,
-                "dropout_rate" : 0.1
+                "outlier_rate" : 0.1
             }
         }
     },
@@ -39,7 +38,11 @@
         "blockwise": true,
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
-            "gruber_gibbs_minimal": "method_args/gruber_gibbs_minimal.json",
+            "stankovic_base_unc": "method_args/stankovic_base_unc.json",
+            "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
+            "gruber_gibbs_base": "method_args/gruber_gibbs_base.json",
+            "gruber_gibbs_known_sigma_y": "method_args/gruber_gibbs_known_sigma_y.json",
+            "gruber_gibbs_no_EIV": "method_args/gruber_gibbs_no_EIV.json",
             "gruber_joint_posterior": "method_args/gruber_joint_posterior.json"
         }
     }
