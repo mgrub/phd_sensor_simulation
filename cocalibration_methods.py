@@ -367,17 +367,20 @@ class GibbsPosterior(Gruber):
             references, references_unc
         )
 
-        # run MCM
         Uxx = np.diag(np.square(fused_reference_unc))
-        posterior = self.gibbs_routine(fused_reference, Uxx, np.squeeze(dut_indications))
 
-        # return estimate
-        result.append(
-            {
-                "time": dut_timestamps[-1],
-                "params": posterior,
-            }
-        )
+        # only run if at least a single valid datapoint in the reference
+        if not np.all(np.isnan(fused_reference)):
+            # run MCM
+            posterior = self.gibbs_routine(fused_reference, Uxx, np.squeeze(dut_indications))
+
+            # return estimate
+            result.append(
+                {
+                    "time": dut_timestamps[-1],
+                    "params": posterior,
+                }
+            )
 
         return result
 
@@ -581,20 +584,22 @@ class AnalyticalDiscretePosterior(Gruber):
             references, references_unc
         )
 
-        # update posterior
-        Uxx = np.diag(np.square(fused_reference_unc))
-        self.update_discrete_log_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
-        posterior = self.laplace_approximation_posterior()
-        if self.use_adaptive_grid:
-            self.update_grid()
+        # only run if at least a single valid datapoint in the reference
+        if not np.all(np.isnan(fused_reference)):
+            # update posterior
+            Uxx = np.diag(np.square(fused_reference_unc))
+            self.update_discrete_log_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
+            posterior = self.laplace_approximation_posterior()
+            if self.use_adaptive_grid:
+                self.update_grid()
 
-        # return estimate
-        result.append(
-            {
-                "time": dut_timestamps[-1],
-                "params": posterior,
-            }
-        )
+            # return estimate
+            result.append(
+                {
+                    "time": dut_timestamps[-1],
+                    "params": posterior,
+                }
+            )
 
         return result
 
