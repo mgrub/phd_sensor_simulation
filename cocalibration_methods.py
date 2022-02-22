@@ -600,6 +600,11 @@ class AnalyticalDiscretePosterior(Gruber):
 
 
     def update_discrete_log_posterior(self, xx_observed, Uxx, yy):
+        # handle nans (dropouts)
+        mask = np.isfinite(xx_observed)
+        xx_observed = xx_observed[mask]
+        yy = yy[mask]
+        Uxx = Uxx[:,mask][mask]
 
         # shortcuts
         A = self.a_grid
