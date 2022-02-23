@@ -372,7 +372,7 @@ class GibbsPosterior(Gruber):
         # only run if at least a single valid datapoint in the reference
         if not np.all(np.isnan(fused_reference)):
             # run MCM
-            posterior = self.gibbs_routine(fused_reference, Uxx, np.squeeze(dut_indications))
+            posterior = self.gibbs_routine(fused_reference, Uxx, np.squeeze(dut_indications, axis=-1))
 
             # return estimate
             result.append(
