@@ -1,0 +1,68 @@
+{
+    "S1": {
+        "hasSimulationModel": {
+            "type": "LinearAffineModel",
+            "params": {
+                "a": 1,
+                "b": 0,
+                "ua": 0.3,
+                "ub": 0.3,
+                "uab": 0.0
+            }
+        },
+        "hasCalibrationModel": {
+            "type": "LinearAffineModel",
+            "params": {
+                "a": 1.0037214805994865,
+                "b": 0.1107771075409681,
+                "ua": 0.42248518112878214,
+                "ub": 0.3234870110052864,
+                "uab": 0.0
+            }
+        },
+        "hasCompensationModel": {
+            "type": "LinearAffineModel",
+            "params": {
+                "a": 0.9962923174691212,
+                "b": -0.11036638119451718,
+                "ua": 0.41935810714318505,
+                "ub": 0.3256184966542527,
+                "uab": -0.019481397504739484
+            }
+        },
+        "misc": {}
+    },
+    "S2": {
+        "hasSimulationModel": {
+            "type": "LinearAffineModel",
+            "params": {
+                "a": 1,
+                "b": 0,
+                "ua": 0.3,
+                "ub": 0.3,
+                "uab": 0.0
+            }
+        },
+        "hasCalibrationModel": {
+            "type": "LinearAffineModel",
+            "params": {
+                "a": 0.2788431139430836,
+                "b": -0.27703272203482987,
+                "ua": 0.24781531635258303,
+                "ub": 0.35492462483798626,
+                "uab": 0.0
+            }
+        },
+        "hasCompensationModel": {
+            "type": "LinearAffineModel",
+            "params": {
+                "a": 3.5862459928062496,
+                "b": 0.9935074892736162,
+                "ua": 3.1871925135898014,
+                "ub": 1.5491132652854738,
+                "uab": 2.8141527217223605
+            }
+        },
+        "misc": {}
+    }
+}
