@@ -189,6 +189,9 @@ ax_params[0].legend()
 ax_params_unc[0].legend()
 
 if args.show:
+    fig_ref.set_tight_layout(True)
+    fig_params.set_tight_layout(True)
+    fig_params_unc.set_tight_layout(True)
     plt.show()
 else:
     fig_ref.savefig(os.path.join(results_directory, "input.png"), bbox_inches="tight")
