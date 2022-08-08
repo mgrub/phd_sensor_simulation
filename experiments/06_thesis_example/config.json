@@ -21,9 +21,10 @@
         "blockwise": true,
         "split_indices" : [5, 20, 234, 400, 543, 800, 850, 900, 950, 1000, 1200, 1600, 1610],
         "methods": {
-            "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
-            "gruber_gibbs_base": "method_args/gruber_gibbs_base.json",
-            "gruber_joint_posterior": "method_args/gruber_joint_posterior.json"
+            "joint_posterior": "method_args/gruber_joint_posterior.json",
+            "gibbs_base": "method_args/gruber_gibbs_base.json",
+            "gibbs_known_sigma_y": "method_args/gruber_gibbs_known_sigma_y.json",
+            "gibbs_no_EIV": "method_args/gruber_gibbs_no_EIV.json"
         }
     }
 }
