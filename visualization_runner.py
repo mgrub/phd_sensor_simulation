@@ -58,7 +58,7 @@ for method_result_path in method_results_paths:
 # colors to cycle through
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-fig_ref, ax_ref = plt.subplots(nrows=2, sharex=True, sharey=True)
+fig_ref, ax_ref = plt.subplots(nrows=2, sharex=True, sharey=False)
 fig_ref.set_size_inches(18.5, 10.5)
 
 # true measurand
@@ -120,14 +120,17 @@ ax_ref[1].legend()
 # visualize method results ############
 #######################################
 
-fig_params, ax_params = plt.subplots(nrows=6)
+fig_params, ax_params = plt.subplots(nrows=3)
+fig_params_unc, ax_params_unc = plt.subplots(nrows=3)
 fig_params.set_size_inches(18.5, 15.5)
+fig_params_unc.set_size_inches(18.5, 15.5)
 ax_params[0].set_title("parameter a estimates")
-ax_params[1].set_title("parameter a uncertainties")
-ax_params[2].set_title("parameter b estimates")
-ax_params[3].set_title("parameter b uncertainties")
-ax_params[4].set_title("parameter sigma_y estimates")
-ax_params[5].set_title("parameter sigma_y uncertainties")
+ax_params[1].set_title("parameter b estimates")
+ax_params[2].set_title("parameter sigma_y estimates")
+
+ax_params_unc[0].set_title("parameter a uncertainties")
+ax_params_unc[1].set_title("parameter b uncertainties")
+ax_params_unc[2].set_title("parameter sigma_y uncertainties")
 
 true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
 
@@ -143,8 +146,8 @@ sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
 
 # plot true values
 ax_params[0].hlines(a_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k", label="true")
-ax_params[2].hlines(b_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k", label="true")
-ax_params[4].plot(sigma_y_true_time, sigma_y_true, color="k")
+ax_params[1].hlines(b_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k", label="true")
+ax_params[2].plot(sigma_y_true_time, sigma_y_true, color="k")
 
 
 # for every method
@@ -166,27 +169,28 @@ for i, (method_name, method_result) in enumerate(results.items()):# choose color
     ax_params[0].plot(t, a, color=color, marker="o", label=method_name)
     ax_params[0].fill_between(t, a-ua, a+ua, alpha=0.3, color=color)
     
-    ax_params[2].plot(t, b, color=color, marker="o", label=method_name)
-    ax_params[2].fill_between(t, b-ub, b+ub, alpha=0.3, color=color)
+    ax_params[1].plot(t, b, color=color, marker="o", label=method_name)
+    ax_params[1].fill_between(t, b-ub, b+ub, alpha=0.3, color=color)
     
     if sigma_y_was_estimated:
-        ax_params[4].plot(t, sigma, color=color, marker="o", label=method_name)
-        ax_params[4].fill_between(t, sigma-usigma, sigma+usigma, alpha=0.3, color=color)
+        ax_params[2].plot(t, sigma, color=color, marker="o", label=method_name)
+        ax_params[2].fill_between(t, sigma-usigma, sigma+usigma, alpha=0.3, color=color)
         #ax_params[4].set_yscale("log")
 
     # unc separate
-    ax_params[1].semilogy(t, ua, color=color, label=method_name)
-    ax_params[3].semilogy(t, ub, color=color, label=method_name)
+    ax_params_unc[0].semilogy(t, ua, color=color, label=method_name)
+    ax_params_unc[1].semilogy(t, ub, color=color, label=method_name)
     if sigma_y_was_estimated:
-        ax_params[5].semilogy(t, usigma, color=color, label=method_name)
+        ax_params_unc[2].semilogy(t, usigma, color=color, label=method_name)
 
     # sigma_y ???
 
 ax_params[0].legend()
-ax_params[2].legend()
+ax_params_unc[0].legend()
 
 if args.show:
     plt.show()
 else:
     fig_ref.savefig(os.path.join(results_directory, "input.png"), bbox_inches="tight")
     fig_params.savefig(os.path.join(results_directory, "params.png"), bbox_inches="tight")
+    fig_params_unc.savefig(os.path.join(results_directory, "params_unc.png"), bbox_inches="tight")
