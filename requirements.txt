@@ -1,5 +1,8 @@
 numpy
 scipy
+pandas
 sympy
 matplotlib
 time-series-buffer
+black
+jinja2
