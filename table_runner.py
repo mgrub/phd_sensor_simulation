@@ -90,7 +90,7 @@ col_index = pd.Index(["a", "b", "sigma\\_y"], name="parameter")
 
 # create+fill data frame
 df = pd.DataFrame(index=row_index, columns=col_index)
-format = ".2f"
+format = ".2e"
 np.set_printoptions(precision=2)
 
 for method_name in results.keys():
