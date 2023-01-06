@@ -21,11 +21,10 @@
     },
     "device_under_test": "experiments/sensor_under_test.json",
     "measurand": {
-        "type": "SinusoidalMeasurand",
+        "type": "JumpingMeasurand",
         "args": {
             "sigma_x": 0.1,
-            "amplitude": 0.0,
-            "value_offset": 0.0
+            "random_jumps": true
         },
         "time_args": {
             "time_start": 0,
@@ -37,7 +36,6 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
-        "split_indices" : [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800],
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
             "stankovic_base_unc": "method_args/stankovic_base_unc.json",

@@ -14,8 +14,8 @@
                 }
             },
             "misc" : {
-                "outlier_rate" : 0.1,
-                "dropout_rate" : 0.1
+                "outlier_rate" : 0.0,
+                "dropout_rate" : 0.0
             }
         }
     },
@@ -24,8 +24,8 @@
         "type": "SinusoidalMeasurand",
         "args": {
             "sigma_x": 0.1,
-            "amplitude": 2.0,
-            "value_offset": 1.0
+            "amplitude": 0.0,
+            "value_offset": 0.0
         },
         "time_args": {
             "time_start": 0,
@@ -37,10 +37,15 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
+        "split_indices" : [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800],
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
-            "gruber_gibbs_minimal": "method_args/gruber_gibbs_minimal.json",
-            "gruber_joint_posterior": "method_args/gruber_joint_posterior.json"
+            "stankovic_base_unc": "method_args/stankovic_base_unc.json",
+            "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
+            "gibbs_base": "method_args/gibbs_base.json",
+            "gibbs_known_sigma_y": "method_args/gibbs_known_sigma_y.json",
+            "gibbs_no_EIV": "method_args/gibbs_no_EIV.json",
+            "joint_posterior": "method_args/joint_posterior.json"
         }
     }
 }
