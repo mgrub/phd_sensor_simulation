@@ -588,7 +588,7 @@ class AnalyticalDiscretePosterior(Gruber):
         if not np.all(np.isnan(fused_reference)):
             # update posterior
             Uxx = np.diag(np.square(fused_reference_unc))
-            self.update_discrete_log_posterior(fused_reference, Uxx, np.squeeze(dut_indications))
+            self.update_discrete_log_posterior(fused_reference, Uxx, np.atleast_1d(np.squeeze(dut_indications)))
             posterior = self.laplace_approximation_posterior()
             if self.use_adaptive_grid:
                 self.update_grid()
