@@ -37,6 +37,7 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
+        "split_indices" : [5, 20, 234, 235, 400, 543, 545, 800, 850, 900, 950, 1000, 1200, 1600, 1610],
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
             "stankovic_base_unc": "method_args/stankovic_base_unc.json",
