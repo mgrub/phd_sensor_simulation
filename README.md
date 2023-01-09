@@ -13,7 +13,7 @@ python evaluation_runner.py experiments/scenario_A/
 Once run, the results can be visualized:
 
 ```bash
-python evaluation_runner.py experiments/scenario_A/
+python visualization_runner.py experiments/scenario_A/
 ```
 ## Define a scenario
 
