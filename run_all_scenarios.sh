@@ -2,10 +2,12 @@
 
 # setup environment
 . /home/gruber04/python_venv/cocalibration/bin/activate
-. restrict_cpus.sh 4
+. restrict_cpus.sh 16
 
 # test python
-python -c 'print("abc")'; python --version; which python
+python -c 'print("")'
+python --version
+which python
 
 
 # run scenarios
