@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.signal as scs
+import scipy.interpolate as sci
 
 
 class SinusoidalMeasurand:
@@ -32,28 +33,31 @@ class JumpingMeasurand:
         self.sigma_x = sigma_x
         self.random_jumps = random_jumps
 
-        # build the base chirp signal
-        times = np.linspace(0, 5, 200)
-        chirp = scs.chirp(times, f0=1, t1=5, f1=3)
-
-        self.base_signal = 1 * np.concatenate((chirp, chirp[::-1]))
-        self.counter = 0
         self.p_new_offset = 0.02
-        self.offset = 10
+        self.previous_offset = 10
 
     def value(self, time):
-        value = self.base_signal[self.counter] + self.offset
+        # chirp signal
+        t1 = 5
+        t_adj = np.abs(t1 * scs.sawtooth(2*np.pi*time))
+        value = scs.chirp(t_adj, f0=1, t1=t1, f1=3)
 
         # change offset sometimes
-        if self.random_jumps and np.random.random() < self.p_new_offset:
+        if self.random_jumps:
             self.offset = np.random.randn()
-
-        # increase cyclic counter
-        self.counter += 1
-        if self.counter >= self.base_signal.size:
-            self.counter = 0
+            jumps = np.random.random(size=len(time)) < self.p_new_offset
+            time_jumps_at = time[jumps]
+            height_after_jumps = self.previous_offset + np.random.randn(jumps.sum())
+            
+            f = sci.interp1d(np.r_[time[0]-1, time_jumps_at], np.r_[self.previous_offset, height_after_jumps], kind="previous", fill_value="extrapolate")
+            offset = f(time)
+            self.previous_offset = offset[-1]
+            value += offset
+        else:
+            value += self.previous_offset       
 
         result = {"time": time, "quantity": value + self.sigma_x * np.random.randn()}
+
         return result
 
 
