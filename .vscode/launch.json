@@ -18,6 +18,14 @@
             "program": "${workspaceFolder}/evaluation_runner.py",
             "args": ["${workspaceFolder}/experiments/01c_jumping_input/"],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Metrics of given scenario",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/visualization_runner.py",
+            "args": ["${workspaceFolder}/experiments/01c_jumping_input/", "--novis"],
+            "console": "integratedTerminal"
         }
     ]
 }
