@@ -1,24 +1,6 @@
 {
-    "random_state": null,
-    "reference_sensors": {
-        "number": 4,
-        "draw": true,
-        "sensor_args": {
-            "model" : {
-                "type" : "LinearAffineModel",
-                "params" : {
-                    "a": 1,
-                    "b": 0,
-                    "ua": 0.3,
-                    "ub": 0.3
-                }
-            },
-            "misc" : {
-                "outlier_rate" : 0.0,
-                "dropout_rate" : 0.0
-            }
-        }
-    },
+    "random_state": "experiments/01b_sinusoidal_input/random_state.json",
+    "reference_sensors": "experiments/01b_sinusoidal_input/reference_sensors.json",
     "device_under_test": "experiments/sensor_under_test.json",
     "measurand": {
         "type": "SinusoidalMeasurand",
