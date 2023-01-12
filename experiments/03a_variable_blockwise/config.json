@@ -1,7 +1,7 @@
 {
-    "random_state": null,
+    "random_state": "experiments/01c_jumping_input/random_state.json",
     "reference_sensors": {
-        "number": 10,
+        "number": 3,
         "draw": true,
         "sensor_args": {
             "model" : {
@@ -13,16 +13,18 @@
                     "ub": 0.3
                 }
             },
-            "misc" : {}
+            "misc" : {
+                "outlier_rate" : 0.0,
+                "dropout_rate" : 0.0
+            }
         }
     },
     "device_under_test": "experiments/sensor_under_test.json",
     "measurand": {
-        "type": "SinusoidalMeasurand",
+        "type": "JumpingMeasurand",
         "args": {
             "sigma_x": 0.1,
-            "amplitude": 2.0,
-            "value_offset": 1.0
+            "random_jumps": false
         },
         "time_args": {
             "time_start": 0,
@@ -36,7 +38,7 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
-        "split_indices" : [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800],
+        "split_indices" : [5, 20, 234, 235, 400, 543, 545, 800, 850, 900, 950, 1000, 1200, 1600, 1610],
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
             "stankovic_base_unc": "method_args/stankovic_base_unc.json",

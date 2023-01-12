@@ -1,7 +1,7 @@
 {
     "random_state": "experiments/01c_jumping_input/random_state.json",
     "reference_sensors": {
-        "number": 1,
+        "number": 3,
         "draw": true,
         "sensor_args": {
             "model" : {
@@ -38,7 +38,7 @@
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
-        "split_indices" : [5, 20, 234, 235, 400, 543, 545, 800, 850, 900, 950, 1000, 1200, 1600, 1610],
+        "split_indices" : [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800],
         "methods": {
             "stankovic_base": "method_args/stankovic_base.json",
             "stankovic_base_unc": "method_args/stankovic_base_unc.json",
