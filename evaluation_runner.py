@@ -140,7 +140,8 @@ else:
         indications, indication_uncertainties = sensor.indicated_value(
             measurand["quantity"]
         )
-        indications += indication_uncertainties * np.random.randn(len(indications))
+        if path_or_config["add_noise_based_on_unc"]:
+            indications += indication_uncertainties * np.random.randn(len(indications))
 
         sensor_readings[sensor_name] = {
             "time": measurand["time"],

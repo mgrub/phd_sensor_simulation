@@ -1,7 +1,25 @@
 {
     "random_state": null,
-    "reference_sensors": "experiments/01a_static_input/reference_sensors_without_sim_unc.json",
-    "device_under_test": "experiments/01a_static_input/sensor_under_test_without_sim_unc.json",
+    "reference_sensors": {
+        "number": 4,
+        "draw": true,
+        "sensor_args": {
+            "model" : {
+                "type" : "LinearAffineModel",
+                "params" : {
+                    "a": 1,
+                    "b": 0,
+                    "ua": 0.3,
+                    "ub": 0.3
+                }
+            },
+            "misc" : {
+                "outlier_rate" : 0.0,
+                "dropout_rate" : 0.0
+            }
+        }
+    },
+    "device_under_test": "experiments/sensor_under_test.json",
     "measurand": {
         "type": "JumpingMeasurand",
         "args": {
@@ -14,7 +32,9 @@
             "dt": 0.01
         }
     },
-    "sensor_readings": null,
+    "sensor_readings": {
+        "add_noise_based_on_unc": false
+    },
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,

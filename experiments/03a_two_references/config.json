@@ -30,7 +30,9 @@
             "dt": 0.01
         }
     },
-    "sensor_readings": null,
+    "sensor_readings": {
+        "add_noise_based_on_unc": true
+    },
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
