@@ -1,5 +1,5 @@
 {
-    "random_state": "experiments/06a_variable_blockwise/random_state.json",
+    "random_state": "experiments/01c_jumping_input/random_state.json",
     "reference_sensors": {
         "number": 1,
         "draw": true,
@@ -24,7 +24,7 @@
         "type": "JumpingMeasurand",
         "args": {
             "sigma_x": 0.1,
-            "random_jumps": true
+            "random_jumps": false
         },
         "time_args": {
             "time_start": 0,
