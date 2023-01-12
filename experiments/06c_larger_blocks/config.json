@@ -1,5 +1,5 @@
 {
-    "random_state": null,
+    "random_state": "experiments/06a_variable_blockwise/random_state.json",
     "reference_sensors": {
         "number": 1,
         "draw": true,
