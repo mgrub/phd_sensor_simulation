@@ -1,0 +1,35 @@
+{
+    "example_sensor": {
+        "hasSimulationModel" : {
+            "type" : "LinearAffineModel",
+            "params" : {
+                "a": 2,
+                "b": 1,
+                "ua": 0.0,
+                "ub": 0.0,
+                "uab": 0.0
+            }
+        },
+        "hasCalibrationModel" : {
+            "type" : "LinearAffineModel",
+            "params" : {
+                "a": 1,
+                "b": 0,
+                "ua": 1,
+                "ub": 1,
+                "uab": 0.0
+            }
+        },
+        "hasCompensationModel" : {
+            "type" : "LinearAffineModel",
+            "params" : {
+                "a": 1,
+                "b": 0,
+                "ua": 1,
+                "ub": 1,
+                "uab": 0.0
+            }
+        },
+        "misc" : {}
+    }
+}
