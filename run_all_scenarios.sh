@@ -11,15 +11,15 @@ which python
 
 
 # run scenarios
-
 python evaluation_runner.py experiments/01a_static_input/
 python evaluation_runner.py experiments/01b_sinusoidal_input/
 python evaluation_runner.py experiments/01c_jumping_input/
 python evaluation_runner.py experiments/02a_static_input_noisy/
 python evaluation_runner.py experiments/02b_sinusoidal_input_noisy/
 python evaluation_runner.py experiments/02c_jumping_input_noisy/
-python evaluation_runner.py experiments/03a_two_references/
-python evaluation_runner.py experiments/03b_ten_references/
+python evaluation_runner.py experiments/03a_variable_blockwise/
+python evaluation_runner.py experiments/03b_smaller_blocks/
+python evaluation_runner.py experiments/03c_larger_blocks/
 python evaluation_runner.py experiments/04a_dropouts/
 python evaluation_runner.py experiments/04b_outliers/
 python evaluation_runner.py experiments/05a_better_references/
@@ -33,8 +33,9 @@ python evaluation_runner.py experiments/05c_worse_references/
 # . clean_up_experiment.sh experiments/02a_static_input_noisy/
 # . clean_up_experiment.sh experiments/02b_sinusoidal_input_noisy/
 # . clean_up_experiment.sh experiments/02c_jumping_input_noisy/
-# . clean_up_experiment.sh experiments/03a_two_references/
-# . clean_up_experiment.sh experiments/03b_ten_references/
+# . clean_up_experiment.sh experiments/03a_variable_blockwise/
+# . clean_up_experiment.sh experiments/03b_smaller_blocks/
+# . clean_up_experiment.sh experiments/03c_larger_blocks/
 # . clean_up_experiment.sh experiments/04a_dropouts/
 # . clean_up_experiment.sh experiments/04b_outliers/
 # . clean_up_experiment.sh experiments/05a_better_references/
