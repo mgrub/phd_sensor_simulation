@@ -135,9 +135,9 @@ if not args.novis:
     ax_params_unc[1].set_title("parameter b uncertainties")
     ax_params_unc[2].set_title("parameter sigma_y uncertainties")
 
-    true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
 
     # true values
+    true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
     a_true = true_dut_model["params"]["a"]
     ua_true = true_dut_model["params"]["ua"]
 
@@ -206,6 +206,9 @@ if not args.novis:
 # metrics extraction results ##########
 #######################################
 
+metrics = {}
+
+# runtime metric
 start_re = re.compile("INFO:root:Starting (\w*) at ([0-9+-:\.T]*)\.")
 finish_re = re.compile("INFO:root:Finished (\w*) at ([0-9+-:\.T]*)\.")
 
@@ -231,5 +234,80 @@ for line in logfile:
         log_times[method][kind] = time
 
 for method, method_vals in log_times.items():
-    duration = method_vals["end"] - method_vals["start"]
-    print(method, duration)
+    if "start" in method_vals.keys() and "end" in method_vals.keys():
+        duration = method_vals["end"] - method_vals["start"]
+    else:
+        duration = datetime.timedelta(seconds=0.0)
+
+    print(method, duration.total_seconds())
+
+    if method not in metrics.keys():
+        metrics[method] = {}
+    
+    metrics[method]["computation_duration"] = duration.total_seconds()
+
+
+# convergence metric
+
+t_measurand = measurand["time"]
+v_measurand = measurand["quantity"]
+
+true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
+a_true = true_dut_model["params"]["a"]
+ua_true = true_dut_model["params"]["ua"]
+
+b_true = true_dut_model["params"]["b"]
+ub_true = true_dut_model["params"]["ub"]
+
+sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
+sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
+
+for i, (method_name, method_result) in enumerate(results.items()):
+
+    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
+
+    t = np.array([item[-1]["time"] for item in method_result])
+    a =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])
+    ua = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])
+    b =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])
+    ub = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])
+    if sigma_y_was_estimated:
+        sigma =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])
+        usigma = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])
+    
+    # convergence
+    def below_threshold_after(values, tol=0.01, normalize=False):
+        if normalize:
+            values = values / np.max(np.abs(values))
+        index = np.r_[-2, np.flatnonzero(np.abs(values) > tol)][-1] + 2
+        return index
+
+
+    threshold = 0.1
+
+    a_change_rate = np.diff(a) / np.diff(t)
+    i_conv_a = below_threshold_after(a_change_rate, threshold, normalize=True)
+    if i_conv_a < len(t):
+        print(f"a converged below {threshold} starting from t={t[i_conv_a]}")
+    else:
+        print(f"a not converged below {threshold}")
+
+    b_change_rate = np.diff(b) / np.diff(t)
+    i_conv_b = below_threshold_after(b_change_rate, threshold, normalize=True)
+    if i_conv_b < len(t):
+        print(f"b converged below {threshold} starting from t={t[i_conv_b]}")
+    else:
+        print(f"b not converged below {threshold}")
+    
+    if sigma_y_was_estimated:
+        sigma_y_change_rate = np.diff(a) / np.diff(t)
+        i_conv_sigma_y = below_threshold_after(sigma_y_change_rate, threshold, normalize=True)
+        if i_conv_sigma_y < len(t):
+            print(f"sigma_y converged below {threshold} starting from t={t[i_conv_sigma_y]}")
+        else:
+            print(f"sigma_y not converged below {threshold}")
+    
+s = sensor_readings["example_sensor"]
+
+plt.plot(t_measurand, v_measurand)
+plt.plot(s["time"], s["val"])
