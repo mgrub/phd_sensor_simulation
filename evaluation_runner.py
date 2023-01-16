@@ -132,10 +132,7 @@ if isinstance(path_or_config, str):
         logging.info(f"Read sensor readings from {path_or_config}.")
 else:
     sensor_readings = {}
-    for sensor_name, sensor in {
-        **device_under_test,
-        **reference_sensors,
-    }.items():
+    for sensor_name, sensor in device_under_test.items():
 
         indications, indication_uncertainties = sensor.indicated_value(
             measurand["quantity"]
@@ -147,6 +144,25 @@ else:
             "time": measurand["time"],
             "val": indications,
             "val_unc": indication_uncertainties,
+        }
+
+    for sensor_name, sensor in reference_sensors.items():
+
+        indications, indication_uncertainties = sensor.indicated_value(
+            measurand["quantity"]
+        )
+
+        if path_or_config["add_noise_based_on_unc"]:
+            indications += indication_uncertainties * np.random.randn(len(indications))
+        
+        compensated_val, compensated_uncertainties = sensor.estimated_value(
+            indications, indication_uncertainties
+        )
+
+        sensor_readings[sensor_name] = {
+            "time": measurand["time"],
+            "val": compensated_val,
+            "val_unc": compensated_uncertainties,
         }
 
 sensor_readings_path = os.path.join(working_directory, "sensor_readings.json")
