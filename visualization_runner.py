@@ -263,7 +263,11 @@ sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
 sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
 
 for i, (method_name, method_result) in enumerate(results.items()):
+    print("\n" + method_name)
 
+    if method not in metrics.keys():
+        metrics[method] = {}
+    
     sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
 
     t = np.array([item[-1]["time"] for item in method_result])
@@ -282,32 +286,84 @@ for i, (method_name, method_result) in enumerate(results.items()):
         index = np.r_[-2, np.flatnonzero(np.abs(values) > tol)][-1] + 2
         return index
 
-
-    threshold = 0.1
-
-    a_change_rate = np.diff(a) / np.diff(t)
-    i_conv_a = below_threshold_after(a_change_rate, threshold, normalize=True)
+    a_change_rate = np.diff(b)
+    a_threshold = 0.1 * ua_true
+    i_conv_a = below_threshold_after(a_change_rate, a_threshold)
     if i_conv_a < len(t):
-        print(f"a converged below {threshold} starting from t={t[i_conv_a]}")
+        print(f"a_diff converged below {a_threshold} starting from t={t[i_conv_a]}")
+        metrics[method]["a_diff_converged_after"] = t[i_conv_a]
+        metrics[method]["a_diff_converged_threshold"] = a_threshold
     else:
-        print(f"a not converged below {threshold}")
+        print(f"a_diff not converged below {a_threshold}")
+        metrics[method]["a_diff_converged_after"] = None
+        metrics[method]["a_diff_converged_threshold"] = a_threshold
 
-    b_change_rate = np.diff(b) / np.diff(t)
-    i_conv_b = below_threshold_after(b_change_rate, threshold, normalize=True)
+    b_change_rate = np.diff(b)
+    b_threshold = 0.1 * ub_true
+    i_conv_b = below_threshold_after(b_change_rate, tol=b_threshold)
     if i_conv_b < len(t):
-        print(f"b converged below {threshold} starting from t={t[i_conv_b]}")
+        print(f"b converged below {b_threshold} starting from t={t[i_conv_b]}")
+        metrics[method]["b_diff_converged_after"] = t[i_conv_b]
+        metrics[method]["b_diff_converged_threshold"] = b_threshold
     else:
-        print(f"b not converged below {threshold}")
+        print(f"b not converged below {b_threshold}")
+        metrics[method]["b_diff_converged_after"] = None
+        metrics[method]["b_diff_converged_threshold"] = b_threshold
     
     if sigma_y_was_estimated:
-        sigma_y_change_rate = np.diff(a) / np.diff(t)
-        i_conv_sigma_y = below_threshold_after(sigma_y_change_rate, threshold, normalize=True)
+        sigma_y_change_rate = np.diff(sigma)
+        sigma_y_threshold = 0.01
+        i_conv_sigma_y = below_threshold_after(sigma_y_change_rate, tol=sigma_y_threshold)
         if i_conv_sigma_y < len(t):
-            print(f"sigma_y converged below {threshold} starting from t={t[i_conv_sigma_y]}")
+            print(f"sigma_y converged below {sigma_y_threshold} starting from t={t[i_conv_sigma_y]}")
+            metrics[method]["signa_y_diff_converged_after"] = t[i_conv_sigma_y]
+            metrics[method]["signa_y_diff_converged_threshold"] = sigma_y_threshold
         else:
-            print(f"sigma_y not converged below {threshold}")
+            print(f"sigma_y not converged below {sigma_y_threshold}")
+            metrics[method]["signa_y_diff_converged_after"] = None
+            metrics[method]["signa_y_diff_converged_threshold"] = sigma_y_threshold
     
 s = sensor_readings["example_sensor"]
 
 plt.plot(t_measurand, v_measurand)
 plt.plot(s["time"], s["val"])
+
+
+# consistency metric
+
+for i, (method_name, method_result) in enumerate(results.items()):
+    print("\n" + method_name)
+
+    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
+
+    t = np.array([item[-1]["time"] for item in method_result])
+    a =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])
+    ua = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])
+    b =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])
+    ub = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])
+    if sigma_y_was_estimated:
+        sigma =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])
+        usigma = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])
+    
+    a_error = np.abs(a[-1] - a_true)
+    ua_error = np.abs(ua[-1] - ua_true)
+    b_error = np.abs(b[-1] - b_true)
+    ub_error = np.abs(ub[-1] - ub_true)
+    if sigma_y_was_estimated:
+        sigma_y_error = np.abs(sigma[-1] - sigma_y_true[-1])
+        #usigma_y_error = np.abs(usigma[-1] - usigma_true???)
+
+    print(a_error)
+    print(ua_error)
+    print(b_error)
+    print(ub_error)
+    if sigma_y_was_estimated:
+        print(sigma_y_error)
+        #print(usigma_y_error)
+
+
+
+### TESTING
+
+# check consistency in terms of output???
+
