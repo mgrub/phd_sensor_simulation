@@ -248,25 +248,21 @@ for method, method_vals in log_times.items():
 
 
 # convergence metric
+def convergence_band_after(t0, times, vals, vals_unc = None):
+    i = np.argmin(np.abs(times-t0))
+    i_max = np.argmax(vals[i:])
+    i_min = np.argmin(vals[i:])
 
-t_measurand = measurand["time"]
-v_measurand = measurand["quantity"]
+    band = vals[i:][i_max] - vals[i:][i_min]
+    band_unc = np.sqrt(np.square(vals_unc[i:][i_max]) + np.square(vals_unc[i:][i_min]))
 
-true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
-a_true = true_dut_model["params"]["a"]
-ua_true = true_dut_model["params"]["ua"]
-
-b_true = true_dut_model["params"]["b"]
-ub_true = true_dut_model["params"]["ub"]
-
-sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
-sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
-
+    return band, band_unc
+    
 for i, (method_name, method_result) in enumerate(results.items()):
     print("\n" + method_name)
 
-    if method not in metrics.keys():
-        metrics[method] = {}
+    if method_name not in metrics.keys():
+        metrics[method_name] = {}
     
     sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
 
@@ -280,56 +276,41 @@ for i, (method_name, method_result) in enumerate(results.items()):
         usigma = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])
     
     # convergence
-    def below_threshold_after(values, tol=0.01, normalize=False):
-        if normalize:
-            values = values / np.max(np.abs(values))
-        index = np.r_[-2, np.flatnonzero(np.abs(values) > tol)][-1] + 2
-        return index
+    metrics[method_name]["convergence"] = {}
+    mc = metrics[method_name]["convergence"]
 
-    a_change_rate = np.diff(b)
-    a_threshold = 0.1 * ua_true
-    i_conv_a = below_threshold_after(a_change_rate, a_threshold)
-    if i_conv_a < len(t):
-        print(f"a_diff converged below {a_threshold} starting from t={t[i_conv_a]}")
-        metrics[method]["a_diff_converged_after"] = t[i_conv_a]
-        metrics[method]["a_diff_converged_threshold"] = a_threshold
-    else:
-        print(f"a_diff not converged below {a_threshold}")
-        metrics[method]["a_diff_converged_after"] = None
-        metrics[method]["a_diff_converged_threshold"] = a_threshold
+    mc["a"] = {}
+    mc["a"]["band_04s"], mc["a"]["a_band_unc_04s"] = convergence_band_after(4, t, a, ua)
+    mc["a"]["band_10s"], mc["a"]["a_band_unc_10s"] = convergence_band_after(10, t, a, ua)
+    mc["a"]["band_16s"], mc["a"]["a_band_unc_16s"] = convergence_band_after(16, t, a, ua)
 
-    b_change_rate = np.diff(b)
-    b_threshold = 0.1 * ub_true
-    i_conv_b = below_threshold_after(b_change_rate, tol=b_threshold)
-    if i_conv_b < len(t):
-        print(f"b converged below {b_threshold} starting from t={t[i_conv_b]}")
-        metrics[method]["b_diff_converged_after"] = t[i_conv_b]
-        metrics[method]["b_diff_converged_threshold"] = b_threshold
-    else:
-        print(f"b not converged below {b_threshold}")
-        metrics[method]["b_diff_converged_after"] = None
-        metrics[method]["b_diff_converged_threshold"] = b_threshold
-    
+    mc["b"] = {}
+    mc["b"]["band_04s"], mc["b"]["band_unc_04"] = convergence_band_after(4, t, b, ub)
+    mc["b"]["band_10s"], mc["b"]["band_unc_10"] = convergence_band_after(10, t, b, ub)
+    mc["b"]["band_16s"], mc["b"]["band_unc_16"] = convergence_band_after(16, t, b, ub)
+
     if sigma_y_was_estimated:
-        sigma_y_change_rate = np.diff(sigma)
-        sigma_y_threshold = 0.01
-        i_conv_sigma_y = below_threshold_after(sigma_y_change_rate, tol=sigma_y_threshold)
-        if i_conv_sigma_y < len(t):
-            print(f"sigma_y converged below {sigma_y_threshold} starting from t={t[i_conv_sigma_y]}")
-            metrics[method]["signa_y_diff_converged_after"] = t[i_conv_sigma_y]
-            metrics[method]["signa_y_diff_converged_threshold"] = sigma_y_threshold
-        else:
-            print(f"sigma_y not converged below {sigma_y_threshold}")
-            metrics[method]["signa_y_diff_converged_after"] = None
-            metrics[method]["signa_y_diff_converged_threshold"] = sigma_y_threshold
-    
+        mc["sigma_y"] = {}
+        mc["sigma_y"]["band_04s"], mc["sigma_y"]["band_unc_04s"] = convergence_band_after(4, t, sigma, usigma)
+        mc["sigma_y"]["band_10s"], mc["sigma_y"]["band_unc_10s"] = convergence_band_after(10, t, sigma, usigma)
+        mc["sigma_y"]["band_16s"], mc["sigma_y"]["band_unc_16s"] = convergence_band_after(16, t, sigma, usigma)
+        
 s = sensor_readings["example_sensor"]
-
-plt.plot(t_measurand, v_measurand)
-plt.plot(s["time"], s["val"])
 
 
 # consistency metric
+t_measurand = measurand["time"]
+v_measurand = measurand["quantity"]
+
+true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
+a_true = true_dut_model["params"]["a"]
+ua_true = true_dut_model["params"]["ua"]
+
+b_true = true_dut_model["params"]["b"]
+ub_true = true_dut_model["params"]["ub"]
+
+sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
+sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
 
 for i, (method_name, method_result) in enumerate(results.items()):
     print("\n" + method_name)
