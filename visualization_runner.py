@@ -340,21 +340,8 @@ s = sensor_readings["example_sensor"]
 
 
 # consistency metric
-t_measurand = measurand["time"]
-v_measurand = measurand["quantity"]
-
-true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
-a_true = true_dut_model["params"]["a"]
-ua_true = true_dut_model["params"]["ua"]
-
-b_true = true_dut_model["params"]["b"]
-ub_true = true_dut_model["params"]["ub"]
-
-sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
-sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
 
 for i, (method_name, method_result) in enumerate(results.items()):
-    print("\n" + method_name)
 
     sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
 
@@ -367,25 +354,34 @@ for i, (method_name, method_result) in enumerate(results.items()):
         sigma =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])
         usigma = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])
     
-    a_error = np.abs(a[-1] - a_true)
-    ua_error = np.abs(ua[-1] - ua_true)
-    b_error = np.abs(b[-1] - b_true)
-    ub_error = np.abs(ub[-1] - ub_true)
+
+    metrics[method_name]["consistency"] = {}
+    mc = metrics[method_name]["consistency"]
+
+    # parameter consistency
+    mc["a_normalized_error"] = np.abs(a[-1] - a_true) / ua[-1]
+    mc["b_normalized_error"] = np.abs(b[-1] - b_true) / ub[-1]
+
     if sigma_y_was_estimated:
-        sigma_y_error = np.abs(sigma[-1] - sigma_y_true[-1])
-        #usigma_y_error = np.abs(usigma[-1] - usigma_true???)
+        # check consistency in terms of output
+        mr = method_result[-1][-1]["params"]
+        kwargs = {
+            "a" : mr["a"]["val"], 
+            "ua" : mr["a"]["val_unc"], 
+            "b" : mr["b"]["val"], 
+            "ub" : mr["b"]["val_unc"], 
+        }
+        m = LinearAffineModel(**kwargs)
+        true_time = sensor_readings[device_under_test_name]["time"]
+        true_readings = sensor_readings[device_under_test_name]["val"]
 
-    print(a_error)
-    print(ua_error)
-    print(b_error)
-    print(ub_error)
-    if sigma_y_was_estimated:
-        print(sigma_y_error)
-        #print(usigma_y_error)
-
-
-
-### TESTING
-
-# check consistency in terms of output???
-
+        # readings based on calibrated params
+        v, uv = m.apply(np.array(measurand["quantity"]), np.zeros_like(measurand["quantity"]))
+        uv += mr["sigma_y"]["val"]
+        
+        mc["sigma_y_model_error_ratio"] = sigma[-1] / np.std(v - true_readings)
+        
+# write extracted metrics to file
+metrics_results_path = os.path.join(working_directory, "metrics.json")
+with open(metrics_results_path, "w") as f:
+    json.dump(metrics, f, indent=4)
