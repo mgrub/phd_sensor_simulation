@@ -52,8 +52,8 @@ def posterior_sigma_y_implicit(sigma_y, a, b, Xa, Y, shape_sigma_y, scale_sigma_
 ### posteriors explicit (from calculations shown in docs)
 def posterior_Xa_explicit(Xa, a, b, sigma_y, Y, Xo, UXo_inv, normalizer=1.0):
     # sample from posterior of Xa
-    F1 = np.diag(np.full_like(Xo, a**2 / sigma_y**2))
-    F2 = a / sigma_y**2 * (Y - b)
+    F1 = np.diag(np.full_like(Xo, a**2 / np.square(sigma_y)))
+    F2 = a / np.square(sigma_y) * (Y - b)
     V_inv = F1 + UXo_inv
     V = np.linalg.inv(V_inv)
     M = V@(UXo_inv@Xo + F2)
@@ -64,8 +64,8 @@ def posterior_Xa_explicit(Xa, a, b, sigma_y, Y, Xo, UXo_inv, normalizer=1.0):
         return multivariate_gaussian(Xa, M, V)
 
 def posterior_a_explicit(a, b, Xa, sigma_y, Y, mu_a, sigma_a, normalizer=1.0):
-    A_a = - np.sum(np.square(Xa) / (2*sigma_y**2)) - 1.0/(2*sigma_a**2) 
-    B_a = np.sum((b-Y)*Xa / (2*sigma_y**2)) - mu_a/(2*sigma_a**2)
+    A_a = - np.sum(np.square(Xa) / (2*np.square(sigma_y))) - 1.0/(2*sigma_a**2) 
+    B_a = np.sum((b-Y)*Xa / (2*np.square(sigma_y))) - mu_a/(2*sigma_a**2)
 
     if a == None:  # return a sample
         return np.random.normal(B_a/A_a, np.sqrt(-1/(2*A_a)))
@@ -73,8 +73,8 @@ def posterior_a_explicit(a, b, Xa, sigma_y, Y, mu_a, sigma_a, normalizer=1.0):
         return gaussian(a, B_a/A_a, np.sqrt(-1/(2*A_a)))
 
 def posterior_b_explicit(b, a, Xa, sigma_y, Y, mu_b, sigma_b, normalizer=1.0):
-    A_b = - Xa.size / (2*sigma_y**2) - 1.0/(2*sigma_b**2)
-    B_b = np.sum((a * Xa - Y) / (2*sigma_y**2)) - mu_b/(2*sigma_b**2) 
+    A_b = - Xa.size / np.size(sigma_y) * np.sum( 1.0 / (2*np.square(sigma_y))) - 1.0/(2*sigma_b**2)  # a bit cryptic to match sigma_y 1D or ND
+    B_b = np.sum((a * Xa - Y) / (2*np.square(sigma_y))) - mu_b/(2*sigma_b**2) 
 
     if b == None:  # return a sample
         return np.random.normal(B_b/A_b, np.sqrt(-1/(2*A_b)))
