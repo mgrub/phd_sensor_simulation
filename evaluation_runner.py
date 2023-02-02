@@ -137,13 +137,14 @@ else:
         indications, indication_uncertainties = sensor.indicated_value(
             measurand["quantity"]
         )
-        if path_or_config["add_noise_based_on_unc"]:
-            indications += indication_uncertainties * np.random.randn(len(indications))
+        if path_or_config["dut_noise"] == "based_on_sigma_y_true":
+            sigma_y_true = path_or_config["sigma_y_true"]
+            indications += sigma_y_true * np.random.randn(len(indications))
 
         sensor_readings[sensor_name] = {
             "time": measurand["time"],
             "val": indications,
-            "val_unc": indication_uncertainties,
+            "val_unc": np.full_like(indications, fill_value=path_or_config["sigma_y_true"]),
         }
 
     for sensor_name, sensor in reference_sensors.items():
@@ -152,17 +153,14 @@ else:
             measurand["quantity"]
         )
 
-        if path_or_config["add_noise_based_on_unc"]:
+        if path_or_config["ref_noise"] == "based_on_unc":
             indications += indication_uncertainties * np.random.randn(len(indications))
         
-        compensated_val, compensated_uncertainties = sensor.estimated_value(
-            indications, indication_uncertainties
-        )
 
         sensor_readings[sensor_name] = {
             "time": measurand["time"],
-            "val": compensated_val,
-            "val_unc": compensated_uncertainties,
+            "val": indications,
+            "val_unc": indication_uncertainties,
         }
 
 sensor_readings_path = os.path.join(working_directory, "sensor_readings.json")
