@@ -1,12 +1,14 @@
 import argparse
+import datetime
 import glob
 import json
 import os
 import re
-import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from models import LinearAffineModel
 
 # provide CLI that accepts a configuration file
 parser = argparse.ArgumentParser("Visualize the results of an evaluated cocalibration scenario.")
@@ -144,13 +146,13 @@ if not args.novis:
     b_true = true_dut_model["params"]["b"]
     ub_true = true_dut_model["params"]["ub"]
 
-    sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
-    sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
+    params_time = np.array(sensor_readings[device_under_test_name]["time"])
+    sigma_y_true = sensor_readings[device_under_test_name]["val_unc"][0]
 
     # plot true values
-    ax_params[0].hlines(a_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k", label="true")
-    ax_params[1].hlines(b_true, sigma_y_true_time.min(), sigma_y_true_time.max(), colors="k", label="true")
-    ax_params[2].plot(sigma_y_true_time, sigma_y_true, color="k")
+    ax_params[0].hlines(a_true, params_time.min(), params_time.max(), colors="k", label="true")
+    ax_params[1].hlines(b_true, params_time.min(), params_time.max(), colors="k", label="true")
+    ax_params[2].hlines(sigma_y_true, params_time.min(), params_time.max(), color="k", label="true")
 
 
     # for every method
@@ -300,7 +302,6 @@ def convergence_band_after(t0, times, vals, vals_unc = None):
     return band, band_unc
     
 for i, (method_name, method_result) in enumerate(results.items()):
-    print("\n" + method_name)
 
     if method_name not in metrics.keys():
         metrics[method_name] = {}
