@@ -208,6 +208,47 @@ if not args.novis:
 
 metrics = {}
 
+t_measurand = measurand["time"]
+v_measurand = measurand["quantity"]
+
+true_dut_model =  device_under_test[device_under_test_name]["hasSimulationModel"]
+a_true = true_dut_model["params"]["a"]
+ua_true = true_dut_model["params"]["ua"]
+
+b_true = true_dut_model["params"]["b"]
+ub_true = true_dut_model["params"]["ub"]
+
+sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
+sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
+
+# summarize results for easier access
+for i, (method_name, method_result) in enumerate(results.items()):
+    print("\n" + method_name)
+
+    if method_name not in metrics.keys():
+        metrics[method_name] = {}
+    
+    metrics[method_name]["summary"] = {}
+    ms = metrics[method_name]["summary"]
+
+    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
+
+    ms["timestamp"] = np.array([item[-1]["time"] for item in method_result])[-1]
+    ms["a"] =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])[-1]
+    ms["ua"] = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])[-1]
+    ms["b"] =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])[-1]
+    ms["ub"] = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])[-1]
+    if sigma_y_was_estimated:
+        ms["sigma"] =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])[-1]
+        ms["usigma"] = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])[-1]
+    
+    ms["a_true"] = a_true
+    ms["ua_true"] = ua_true
+    ms["b_true"] = b_true
+    ms["ub_true"] = ub_true
+    ms["sigma_y_true"] = sigma_y_true[-1]
+        
+
 # runtime metric
 start_re = re.compile("INFO:root:Starting (\w*) at ([0-9+-:\.T]*)\.")
 finish_re = re.compile("INFO:root:Finished (\w*) at ([0-9+-:\.T]*)\.")
