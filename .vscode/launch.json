@@ -16,7 +16,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/evaluation_runner.py",
-            "args": ["${workspaceFolder}/experiments/01c_jumping_input/"],
+            "args": ["${workspaceFolder}/experiments/08_testing/"],
             "console": "integratedTerminal"
         },
         {
@@ -24,7 +24,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/visualization_runner.py",
-            "args": ["${workspaceFolder}/experiments/01c_jumping_input/", "--novis"],
+            "args": ["${workspaceFolder}/experiments/08b_testing_noise/", "--novis"],
             "console": "integratedTerminal"
         }
     ]

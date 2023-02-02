@@ -7,8 +7,8 @@
             "model" : {
                 "type" : "LinearAffineModel",
                 "params" : {
-                    "a": 5,
-                    "b": 2,
+                    "a": 1,
+                    "b": 0,
                     "ua": 0.05,
                     "ub": 0.05
                 }
@@ -33,20 +33,17 @@
         }
     },
     "sensor_readings": {
-        "add_noise_based_on_unc": false
+        "dut_noise": "based_on_sigma_y_true",
+        "ref_noise": "based_on_unc",
+        "sigma_y_true": 0.5
     },
     "cocalibration": {
         "interpolate": false,
         "blockwise": true,
         "split_indices" : [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800],
         "methods": {
-            "stankovic_base": "method_args/stankovic_base.json",
-            "stankovic_base_unc": "method_args/stankovic_base_unc.json",
-            "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
-            "gibbs_base": "method_args/gibbs_base.json",
-            "gibbs_known_sigma_y": "method_args/gibbs_known_sigma_y.json",
-            "gibbs_no_EIV": "method_args/gibbs_no_EIV.json",
-            "joint_posterior": "method_args/joint_posterior.json"
+            "joint_posterior": "method_args/joint_posterior.json",
+            "stankovic_base": "method_args/stankovic_base.json"
         }
     }
 }
