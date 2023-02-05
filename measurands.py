@@ -34,7 +34,7 @@ class JumpingMeasurand:
         self.random_jumps = random_jumps
 
         self.p_new_offset = 0.02
-        self.previous_offset = 10
+        self.previous_offset = 1
 
     def value(self, time):
         # chirp signal
