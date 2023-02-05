@@ -559,7 +559,7 @@ class AnalyticalDiscretePosterior(Gruber):
         self.b_range = np.linspace(b_low, b_high, num=grid_resolution)
         self.sigma_y_range = np.logspace(np.log10(sigma_y_low), np.log10(sigma_y_high), num=grid_resolution)
 
-        self.a_grid, self.b_grid, self.sigma_y_grid = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
+        self.a_grid, self.b_grid, self.sigma_y_grid = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range, indexing="ij")
         self.discrete_log_posterior = self.init_informative_prior(prior)
 
         self.use_adaptive_grid = use_adaptive_grid
@@ -769,7 +769,7 @@ class AnalyticalDiscretePosterior(Gruber):
         logging.info(b_range_new)
         logging.info(sigma_y_range_new)
 
-        a_grid_new, b_grid_new, sigma_y_grid_new = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range)
+        a_grid_new, b_grid_new, sigma_y_grid_new = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range, indexing="ij")
 
         # interpolate old distrubtion onto new grid
         # (need to turn grid into list of points first)
