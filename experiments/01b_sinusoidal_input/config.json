@@ -34,7 +34,8 @@
         }
     },
     "sensor_readings": {
-        "add_noise_based_on_unc": false
+        "dut_noise": "none",
+        "ref_noise": "none"
     },
     "cocalibration": {
         "interpolate": false,
