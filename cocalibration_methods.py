@@ -3,7 +3,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import CubicSpline, LinearNDInterpolator
-from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize_scalar, basinhopping
 from scipy.stats import chi2, invgamma, iqr, norm
 from time_series_buffer import TimeSeriesBuffer
 
@@ -317,7 +317,8 @@ class Gruber(CocalibrationMethod):
             y_interp_second_order_derivate = y_interp.derivative(2)
             
             ## find minimum and second order derivative at minimum
-            result = minimize_scalar(y_interp, method="Bounded", bounds=[x_finite.min(), x_finite.max()])
+            result = minimize_scalar(y_interp, method="Bounded", bounds=[x_finite.min(), x_finite.max()])  # can fall into local minimum
+            #result = basinhopping(y_interp, x0=x_finite[np.argmax(log_y[finite_entries])])
             laplace_mean = result.x
             laplace_hess = y_interp_second_order_derivate(laplace_mean)
             laplace_std = 1 / np.sqrt(laplace_hess)
@@ -327,6 +328,12 @@ class Gruber(CocalibrationMethod):
             laplace_mean = x[i_max]
             laplace_std = (x[i_max+1] - x[i_max-1]) / 2
         
+        ## DEBUG CODE to check quality of laplace approx fit
+        # xx = np.linspace(x_finite.min(), x_finite.max())
+        # plt.plot(x, log_y)
+        # plt.plot(xx, -y_interp(xx))
+        # plt.plot(xx, np.log(norm(laplace_mean, laplace_std).pdf(xx)))
+
         return laplace_mean, laplace_std
 
 

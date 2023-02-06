@@ -27,10 +27,10 @@
                 "params": {
                     "a": 2.0,
                     "loc": 0.0,
-                    "scale": 1.0
+                    "scale": 2.0
                 }
             }
         },
-        "sigma_y_true": 0.2
+        "sigma_y_true": 0.1
     }
 }
