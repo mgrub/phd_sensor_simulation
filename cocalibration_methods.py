@@ -729,6 +729,18 @@ class AnalyticalDiscretePosterior(Gruber):
         return laplace_approximation
 
 
+    def update_grid_2(self, log_threshold=-np.inf, fill_value=-10000, zoom_out=0.2):
+
+        # find bounding box of region that is above threshold (zoom in into relevant parts)
+        relevant_part_of_dist = self.discrete_log_posterior > log_threshold
+        a_above_limit = np.any(relevant_part_of_dist, axis=(1,2))
+        b_above_limit = np.any(relevant_part_of_dist, axis=(0,2))
+        sigma_y_above_limit = np.any(relevant_part_of_dist, axis=(0,1))
+
+        a_min_index, a_max_index = np.where(a_above_limit)[0][[0, -1]]
+        b_min_index, b_max_index = np.where(b_above_limit)[0][[0, -1]]
+        sigma_y_min_index, sigma_y_max_index = np.where(sigma_y_above_limit)[0][[0, -1]]
+
     def update_grid(self, log_threshold=-600, zoom_out=0.2):
 
         # find bounding box of region that is above threshold (zoom in into relevant parts)
