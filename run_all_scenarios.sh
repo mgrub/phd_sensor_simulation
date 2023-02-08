@@ -9,35 +9,52 @@ python -c 'print("")'
 python --version
 which python
 
+declare -a scenarios=(
+"experiments/01a_static_input/"
+"experiments/01b_sinusoidal_input/"
+"experiments/01c_jumping_input/"
+"experiments/02a_static_input_noisy/"
+"experiments/02b_sinusoidal_input_noisy/"
+"experiments/02c_jumping_input_noisy/"
+"experiments/03a_variable_blockwise/"
+"experiments/03b_smaller_blocks/"
+"experiments/03c_larger_blocks/"
+"experiments/04a_dropouts/"
+"experiments/04b_outliers/"
+"experiments/05a_better_references/"
+"experiments/05b_equal_references/"
+"experiments/05c_worse_references/"
+)
 
-# run scenarios
-python evaluation_runner.py experiments/01a_static_input/
-python evaluation_runner.py experiments/01b_sinusoidal_input/
-python evaluation_runner.py experiments/01c_jumping_input/
-python evaluation_runner.py experiments/02a_static_input_noisy/
-python evaluation_runner.py experiments/02b_sinusoidal_input_noisy/
-python evaluation_runner.py experiments/02c_jumping_input_noisy/
-python evaluation_runner.py experiments/03a_variable_blockwise/
-python evaluation_runner.py experiments/03b_smaller_blocks/
-python evaluation_runner.py experiments/03c_larger_blocks/
-python evaluation_runner.py experiments/04a_dropouts/
-python evaluation_runner.py experiments/04b_outliers/
-python evaluation_runner.py experiments/05a_better_references/
-python evaluation_runner.py experiments/05b_equal_references/
-python evaluation_runner.py experiments/05c_worse_references/
 
-# clean up scenarios
-# . clean_up_experiment.sh experiments/01a_static_input/
-# . clean_up_experiment.sh experiments/01b_sinusoidal_input/
-# . clean_up_experiment.sh experiments/01c_jumping_input/
-# . clean_up_experiment.sh experiments/02a_static_input_noisy/
-# . clean_up_experiment.sh experiments/02b_sinusoidal_input_noisy/
-# . clean_up_experiment.sh experiments/02c_jumping_input_noisy/
-# . clean_up_experiment.sh experiments/03a_variable_blockwise/
-# . clean_up_experiment.sh experiments/03b_smaller_blocks/
-# . clean_up_experiment.sh experiments/03c_larger_blocks/
-# . clean_up_experiment.sh experiments/04a_dropouts/
-# . clean_up_experiment.sh experiments/04b_outliers/
-# . clean_up_experiment.sh experiments/05a_better_references/
-# . clean_up_experiment.sh experiments/05b_equal_references/
-# . clean_up_experiment.sh experiments/05c_worse_references/
+while getopts ":rcv" flag
+do
+    case $flag in
+
+    r) 
+       for s in ${scenarios[*]}; do
+         echo "running $s"
+         python evaluation_runner.py $s
+       done
+       ;;
+
+    c) 
+       for s in ${scenarios[*]}; do
+         echo "cleaning $s"
+         . clean_up_experiment.sh $s
+       done
+       ;;
+
+    v) 
+       for s in ${scenarios[*]}; do
+         echo "visualizing $s"
+         python visualization_runner.py $s
+       done
+       ;;
+
+    *) 
+       echo "invalid argument"
+       ;;
+    esac
+done
+
