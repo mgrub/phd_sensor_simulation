@@ -347,7 +347,7 @@ class GibbsPosterior(Gruber):
         no_error_in_variables_model=False,
         use_robust_statistics=False,
         prior=None,
-        sigma_y_true=0.2,
+        sigma_y_true=0.1,
     ):
         self.gibbs_runs = gibbs_runs
         self.burn_in = burn_in

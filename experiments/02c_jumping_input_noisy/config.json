@@ -5,7 +5,7 @@
     "measurand": {
         "type": "JumpingMeasurand",
         "args": {
-            "sigma_x": 0.1,
+            "sigma_x": 0.01,
             "random_jumps": true
         },
         "time_args": {

@@ -9,8 +9,8 @@
                 "params" : {
                     "a": 1,
                     "b": 0,
-                    "ua": 0.3,
-                    "ub": 0.3
+                    "ua": 0.01,
+                    "ub": 0.01
                 }
             },
             "misc" : {
@@ -22,7 +22,7 @@
     "measurand": {
         "type": "SinusoidalMeasurand",
         "args": {
-            "sigma_x": 0.1,
+            "sigma_x": 0.01,
             "amplitude": 2.0,
             "value_offset": 1.0
         },

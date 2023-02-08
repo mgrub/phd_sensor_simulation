@@ -2,7 +2,7 @@
     "random_state": null,
     "reference_sensors": {
         "number": 1,
-        "draw": true,
+        "draw": false,
         "sensor_args": {
             "model" : {
                 "type" : "LinearAffineModel",
@@ -20,7 +20,7 @@
     "measurand": {
         "type": "SinusoidalMeasurand",
         "args": {
-            "sigma_x": 0.1,
+            "sigma_x": 0.01,
             "amplitude": 2.0,
             "value_offset": 1.0
         },
@@ -33,7 +33,7 @@
     "sensor_readings": {
         "dut_noise": "based_on_sigma_y_true",
         "ref_noise": "based_on_unc",
-        "sigma_y_true": 0.01
+        "sigma_y_true": 0.1
     },
     "cocalibration": {
         "interpolate": false,

@@ -5,7 +5,7 @@
     "measurand": {
         "type": "SinusoidalMeasurand",
         "args": {
-            "sigma_x": 0.1,
+            "sigma_x": 0.01,
             "amplitude": 0.0,
             "value_offset": 0.0
         },
