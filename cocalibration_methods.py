@@ -508,38 +508,18 @@ class GibbsPosterior(Gruber):
             }
 
         # laplace approximation for result / output
-        a_dist, a_hist_range = np.histogram(AA, density=True, bins="auto")
-        a_laplace_approx, a_laplace_approx_std = self.laplace_approximation_1d(
-            (a_hist_range[:-1] + a_hist_range[1:])/2, 
-            np.log(a_dist),
-            )
+        posterior_laplace_approximation = {}
 
-        b_dist, b_hist_range = np.histogram(BB, density=True, bins="auto")
-        b_laplace_approx, b_laplace_approx_std = self.laplace_approximation_1d(
-            (b_hist_range[:-1] + b_hist_range[1:])/2, 
-            np.log(b_dist),
-            )
+        for parameter_name, PP in zip(["a", "b", "sigma_y"], [AA, BB, SY]):
+            bins = np.histogram_bin_edges(PP, bins="auto")
+            if bins.size <= 2:
+                bins = np.histogram_bin_edges(PP, bins=2)
 
-        sigma_y_dist, sigma_y_hist_range = np.histogram(SY, density=True, bins="auto")
-        sigma_y_laplace_approx, sigma_y_laplace_approx_std = self.laplace_approximation_1d(
-            (sigma_y_hist_range[:-1] + sigma_y_hist_range[1:])/2, 
-            np.log(sigma_y_dist),
-            )
+            dist, hist_range = np.histogram(PP, density=True, bins=bins)
+            center_points = (hist_range[:-1] + hist_range[1:])/2
+            laplace_approx, laplace_approx_std = self.laplace_approximation_1d(center_points, np.log(dist))
 
-        posterior_laplace_approximation = {
-            "a" : {
-                "val" : a_laplace_approx,
-                "val_unc" : a_laplace_approx_std,
-            },
-            "b" : {
-                "val" : b_laplace_approx,
-                "val_unc" : b_laplace_approx_std,
-            },
-            "sigma_y" : {
-                "val" : sigma_y_laplace_approx,
-                "val_unc" : sigma_y_laplace_approx_std,
-            }
-        }
+            posterior_laplace_approximation[parameter_name] = {"val" : laplace_approx, "val_unc" : laplace_approx_std}
 
         # visualize for DEBUGGING
         # fix, ax = plt.subplots(3,1)
