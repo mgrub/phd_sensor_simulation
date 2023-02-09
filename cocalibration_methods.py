@@ -502,15 +502,24 @@ class GibbsPosterior(Gruber):
                 },
             }
 
-        # laplace approximatino for result / output
-        a_dist, a_hist_range = np.histogram(AA, density=True)
-        a_laplace_approx, a_laplace_approx_std = self.laplace_approximation_1d(a_hist_range[:-1], np.log(a_dist))
+        # laplace approximation for result / output
+        a_dist, a_hist_range = np.histogram(AA, density=True, bins="auto")
+        a_laplace_approx, a_laplace_approx_std = self.laplace_approximation_1d(
+            (a_hist_range[:-1] + a_hist_range[1:])/2, 
+            np.log(a_dist),
+            )
 
-        b_dist, b_hist_range = np.histogram(BB, density=True)
-        b_laplace_approx, b_laplace_approx_std = self.laplace_approximation_1d(b_hist_range[:-1], np.log(b_dist))
+        b_dist, b_hist_range = np.histogram(BB, density=True, bins="auto")
+        b_laplace_approx, b_laplace_approx_std = self.laplace_approximation_1d(
+            (b_hist_range[:-1] + b_hist_range[1:])/2, 
+            np.log(b_dist),
+            )
 
-        sigma_y_dist, sigma_y_hist_range = np.histogram(SY, density=True)
-        sigma_y_laplace_approx, sigma_y_laplace_approx_std = self.laplace_approximation_1d(sigma_y_hist_range[:-1], np.log(sigma_y_dist))
+        sigma_y_dist, sigma_y_hist_range = np.histogram(SY, density=True, bins="auto")
+        sigma_y_laplace_approx, sigma_y_laplace_approx_std = self.laplace_approximation_1d(
+            (sigma_y_hist_range[:-1] + sigma_y_hist_range[1:])/2, 
+            np.log(sigma_y_dist),
+            )
 
         posterior_laplace_approximation = {
             "a" : {
