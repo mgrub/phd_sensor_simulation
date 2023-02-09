@@ -1,5 +1,5 @@
 {
-    "random_state": null,
+    "random_state": "experiments/08_testing/random_state.json",
     "reference_sensors": {
         "number": 3,
         "draw": true,
@@ -14,17 +14,17 @@
                 }
             },
             "misc" : {
-                "outlier_rate" : 0.0,
-                "dropout_rate" : 0.0
+                "outlier_rate" : 0.01
             }
         }
     },
     "device_under_test": "experiments/sensor_under_test.json",
     "measurand": {
-        "type": "JumpingMeasurand",
+        "type": "SinusoidalMeasurand",
         "args": {
-            "sigma_x": 0.0,
-            "random_jumps": true
+            "sigma_x": 0.01,
+            "amplitude": 2.0,
+            "value_offset": 1.0
         },
         "time_args": {
             "time_start": 0,
@@ -42,8 +42,8 @@
         "blockwise": true,
         "split_indices" : [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800],
         "methods": {
-            "gibbs_base": "method_args/gibbs_base.json",
             "joint_posterior": "method_args/joint_posterior.json",
+            "gibbs_minimal": "method_args/gibbs_minimal.json",
             "stankovic_base": "method_args/stankovic_base.json"
         }
     }

@@ -1,7 +1,7 @@
 {
     "random_state": null,
     "reference_sensors": {
-        "number": 2,
+        "number": 3,
         "draw": true,
         "sensor_args": {
             "model" : {
@@ -14,7 +14,7 @@
                 }
             },
             "misc" : {
-                "outlier_rate" : 0.1
+                "outlier_rate" : 0.01
             }
         }
     },
@@ -45,7 +45,7 @@
             "stankovic_base": "method_args/stankovic_base.json",
             "stankovic_base_unc": "method_args/stankovic_base_unc.json",
             "stankovic_enhanced_unc": "method_args/stankovic_enhanced_unc.json",
-            "gibbs_base": "method_args/gibbs_base.json",
+            "gibbs_minimal": "method_args/gibbs_minimal.json",
             "gibbs_known_sigma_y": "method_args/gibbs_known_sigma_y.json",
             "gibbs_no_EIV": "method_args/gibbs_no_EIV.json",
             "joint_posterior": "method_args/joint_posterior.json"

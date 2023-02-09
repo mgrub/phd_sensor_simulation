@@ -131,7 +131,12 @@ class Stankovic(CocalibrationMethod):
         # estimated based on most recent parameter estimate
         x_hat, ux_hat = dut.estimated_value(y, uy)
 
-        if len(self.buffer_indication) == self.delay:
+        # ignore potential nans (from dropouts)
+        no_nans = np.logical_not(np.isnan(neighbor_values))
+        neighbor_values = neighbor_values[no_nans]
+        neighbor_uncertainties = neighbor_uncertainties[no_nans]
+
+        if (len(self.buffer_indication) == self.delay) and neighbor_values.size > 0:
             model = dut.estimated_compensation_model
             param = model.parameters
 
@@ -325,8 +330,14 @@ class Gruber(CocalibrationMethod):
 
         else: # if no interpolation possible, fall back to grid specs
             i_max = np.argmax(log_y)
-            laplace_mean = x[i_max]
-            laplace_std = (x[i_max+1] - x[i_max-1]) / 2
+            laplace_mean = x[i_max]  # position of the maximum posterior
+
+            if i_max == 0:  # maximum is at lower boundary
+                laplace_std = x[i_max+1] - x[i_max]
+            elif i_max == x.size-1:  # maximum is at upper boundary
+                laplace_std = x[i_max] - x[i_max-1]
+            else:  # maximum not at boundary
+                laplace_std = (x[i_max+1] - x[i_max-1]) / 2
         
         ## DEBUG CODE to check quality of laplace approx fit
         # xx = np.linspace(x_finite.min(), x_finite.max())
@@ -496,30 +507,19 @@ class GibbsPosterior(Gruber):
                 },
             }
 
-        # laplace approximatino for result / output
-        a_dist, a_hist_range = np.histogram(AA, density=True)
-        a_laplace_approx, a_laplace_approx_std = self.laplace_approximation_1d(a_hist_range[:-1], np.log(a_dist))
+        # laplace approximation for result / output
+        posterior_laplace_approximation = {}
 
-        b_dist, b_hist_range = np.histogram(BB, density=True)
-        b_laplace_approx, b_laplace_approx_std = self.laplace_approximation_1d(b_hist_range[:-1], np.log(b_dist))
+        for parameter_name, PP in zip(["a", "b", "sigma_y"], [AA, BB, SY]):
+            bins = np.histogram_bin_edges(PP, bins="auto")
+            if bins.size <= 2:
+                bins = np.histogram_bin_edges(PP, bins=2)
 
-        sigma_y_dist, sigma_y_hist_range = np.histogram(SY, density=True)
-        sigma_y_laplace_approx, sigma_y_laplace_approx_std = self.laplace_approximation_1d(sigma_y_hist_range[:-1], np.log(sigma_y_dist))
+            dist, hist_range = np.histogram(PP, density=True, bins=bins)
+            center_points = (hist_range[:-1] + hist_range[1:])/2
+            laplace_approx, laplace_approx_std = self.laplace_approximation_1d(center_points, np.log(dist))
 
-        posterior_laplace_approximation = {
-            "a" : {
-                "val" : a_laplace_approx,
-                "val_unc" : a_laplace_approx_std,
-            },
-            "b" : {
-                "val" : b_laplace_approx,
-                "val_unc" : b_laplace_approx_std,
-            },
-            "sigma_y" : {
-                "val" : sigma_y_laplace_approx,
-                "val_unc" : sigma_y_laplace_approx_std,
-            }
-        }
+            posterior_laplace_approximation[parameter_name] = {"val" : laplace_approx, "val_unc" : laplace_approx_std}
 
         # visualize for DEBUGGING
         # fix, ax = plt.subplots(3,1)
