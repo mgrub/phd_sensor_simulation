@@ -329,7 +329,7 @@ class Gruber(CocalibrationMethod):
 
             if i_max == 0:  # maximum is at lower boundary
                 laplace_std = x[i_max+1] - x[i_max]
-            elif i_max < x.size:  # maximum is at upper boundary
+            elif i_max == x.size-1:  # maximum is at upper boundary
                 laplace_std = x[i_max] - x[i_max-1]
             else:  # maximum not at boundary
                 laplace_std = (x[i_max+1] - x[i_max-1]) / 2
