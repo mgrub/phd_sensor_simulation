@@ -131,7 +131,12 @@ class Stankovic(CocalibrationMethod):
         # estimated based on most recent parameter estimate
         x_hat, ux_hat = dut.estimated_value(y, uy)
 
-        if len(self.buffer_indication) == self.delay:
+        # ignore potential nans (from dropouts)
+        no_nans = np.logical_not(np.isnan(neighbor_values))
+        neighbor_values = neighbor_values[no_nans]
+        neighbor_uncertainties = neighbor_uncertainties[no_nans]
+
+        if (len(self.buffer_indication) == self.delay) and neighbor_values.size > 0:
             model = dut.estimated_compensation_model
             param = model.parameters
 
