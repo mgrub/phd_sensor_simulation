@@ -1,7 +1,7 @@
 {
     "random_state": null,
     "reference_sensors": {
-        "number": 2,
+        "number": 3,
         "draw": true,
         "sensor_args": {
             "model" : {
@@ -14,7 +14,7 @@
                 }
             },
             "misc" : {
-                "outlier_rate" : 0.1
+                "outlier_rate" : 0.01
             }
         }
     },
