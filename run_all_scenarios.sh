@@ -24,6 +24,7 @@ declare -a scenarios=(
 "experiments/05a_better_references/"
 "experiments/05b_equal_references/"
 "experiments/05c_worse_references/"
+"experiments/07_thesis_example/"
 )
 
 
