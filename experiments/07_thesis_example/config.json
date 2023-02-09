@@ -27,6 +27,7 @@
         "methods": {
             "joint_posterior": "method_args/gruber_joint_posterior.json",
             "gibbs_base": "method_args/gruber_gibbs_base.json",
+            "gibbs_minimal": "method_args/gibbs_minimal.json",
             "gibbs_known_sigma_y": "method_args/gruber_gibbs_known_sigma_y.json",
             "gibbs_no_EIV": "method_args/gruber_gibbs_no_EIV.json"
         }
