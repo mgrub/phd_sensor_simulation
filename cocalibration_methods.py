@@ -325,8 +325,14 @@ class Gruber(CocalibrationMethod):
 
         else: # if no interpolation possible, fall back to grid specs
             i_max = np.argmax(log_y)
-            laplace_mean = x[i_max]
-            laplace_std = (x[i_max+1] - x[i_max-1]) / 2
+            laplace_mean = x[i_max]  # position of the maximum posterior
+
+            if i_max == 0:  # maximum is at lower boundary
+                laplace_std = x[i_max+1] - x[i_max]
+            elif i_max < x.size:  # maximum is at upper boundary
+                laplace_std = x[i_max] - x[i_max-1]
+            else:  # maximum not at boundary
+                laplace_std = (x[i_max+1] - x[i_max-1]) / 2
         
         ## DEBUG CODE to check quality of laplace approx fit
         # xx = np.linspace(x_finite.min(), x_finite.max())
