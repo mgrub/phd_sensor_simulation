@@ -34,7 +34,8 @@
     },
     "sensor_readings": {
         "dut_noise": "none",
-        "ref_noise": "none"
+        "ref_noise": "none",
+        "sigma_y_true": 0.0
     },
     "cocalibration": {
         "interpolate": false,
