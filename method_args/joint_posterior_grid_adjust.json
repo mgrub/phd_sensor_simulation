@@ -1,0 +1,31 @@
+{
+    "class_name": "AnalyticalDiscretePosterior",
+    "arguments": {
+        "prior": {
+            "a": {
+                "type": "norm",
+                "params": {
+                    "loc": 1.0,
+                    "scale": 1.0
+                }
+            },
+            "b": {
+                "type": "norm",
+                "params": {
+                    "loc": 0.0,
+                    "scale": 1.0
+                }
+            },
+            "sigma_y": {
+                "type": "invgamma",
+                "params": {
+                    "a": 2.0,
+                    "loc": 0.0,
+                    "scale": 2.0
+                }
+            }
+        },
+        "use_adaptive_grid": true,
+        "grid_resolution": 10
+    }
+}

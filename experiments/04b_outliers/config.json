@@ -48,7 +48,8 @@
             "gibbs_minimal": "method_args/gibbs_minimal.json",
             "gibbs_known_sigma_y": "method_args/gibbs_known_sigma_y.json",
             "gibbs_no_EIV": "method_args/gibbs_no_EIV.json",
-            "joint_posterior": "method_args/joint_posterior.json"
+            "joint_posterior": "method_args/joint_posterior.json",
+            "joint_posterior_agrid": "method_args/joint_posterior_grid_adjust.json"
         }
     }
 }
