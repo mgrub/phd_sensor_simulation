@@ -1,7 +1,7 @@
 {
     "random_state": null,
     "reference_sensors": {
-        "number": 3,
+        "number": 5,
         "draw": true,
         "sensor_args": {
             "model" : {
