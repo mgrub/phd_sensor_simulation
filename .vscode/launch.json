@@ -20,11 +20,19 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Evaluate current config.json",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/evaluation_runner.py",
+            "args": ["${fileDirname}"],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Metrics of given scenario",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/visualization_runner.py",
-            "args": ["${workspaceFolder}/experiments/08b_testing_noise/", "--novis"],
+            "args": ["${workspaceFolder}/experiments/08b_testing/", "--novis"],
             "console": "integratedTerminal"
         }
     ]
