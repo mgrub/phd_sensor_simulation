@@ -89,6 +89,8 @@ def posterior_sigma_y_explicit(sigma_y, a, b, Xa, Y, shape_sigma_y, scale_sigma_
 
     if sigma_y == None:  # return a sample
         normalizer = quad(posterior_sigma_y_explicit_faster, loc_sigma_y, np.inf, args=tuple(args))[0]
+        if normalizer == np.inf:
+            normalizer = np.nextafter(np.inf,0)  # biggest representable float
         args[-1] = normalizer
         target_quantile = np.random.random()
 
