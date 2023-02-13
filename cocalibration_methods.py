@@ -527,6 +527,11 @@ class GibbsPosterior(Gruber):
 
             posterior_laplace_approximation[parameter_name] = {"val" : laplace_approx, "val_unc" : laplace_approx_std}
 
+        # overwrite sigma results if it is given
+        if self.sigma_y_is_given:
+            posterior_laplace_approximation["sigma_y"]["val"] = self.sigma_y_true
+            posterior_laplace_approximation["sigma_y"]["val_unc"] = 0.0
+
         # visualize for DEBUGGING
         # fix, ax = plt.subplots(3,1)
         # a_range = np.linspace(min(AA), max(AA))
