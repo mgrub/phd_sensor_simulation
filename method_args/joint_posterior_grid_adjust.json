@@ -26,6 +26,6 @@
             }
         },
         "use_adaptive_grid": true,
-        "grid_resolution": 10
+        "grid_resolution": 9
     }
 }
