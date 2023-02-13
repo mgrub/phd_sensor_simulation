@@ -27,15 +27,15 @@ class CocalibrationMethod:
         references = np.array(
             [
                 sensor_readings[sn]["val"]
-                for sn in sensor_readings
-                if sn is not device_under_test_name
+                for sn in sensor_readings.keys()
+                if sn != device_under_test_name
             ]
         ).T
         references_unc = np.array(
             [
                 sensor_readings[sn]["val_unc"]
-                for sn in sensor_readings
-                if sn is not device_under_test_name
+                for sn in sensor_readings.keys()
+                if sn != device_under_test_name
             ]
         ).T
 
