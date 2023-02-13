@@ -313,7 +313,7 @@ class Gruber(CocalibrationMethod):
         
         ## interpolate
         logging.info(log_y)
-        finite_entries = np.logical_not(np.isneginf(log_y))
+        finite_entries = np.logical_not(np.isinf(log_y))  # isneginf or isinf?
         
         # only interpolate, if enough finite datapoints
         if finite_entries.sum() > 2:
