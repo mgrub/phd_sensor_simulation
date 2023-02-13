@@ -1,9 +1,9 @@
 {
     "class_name": "GibbsPosterior",
     "arguments": {
-        "gibbs_runs": 1000,
-        "burn_in": 100,
-        "use_every": 20,
+        "gibbs_runs": 100,
+        "burn_in": 10,
+        "use_every": 5,
         "sigma_y_is_given": true,
         "no_error_in_variables_model": false,
         "use_robust_statistics": false,
