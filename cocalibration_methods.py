@@ -514,8 +514,12 @@ class GibbsPosterior(Gruber):
 
         for parameter_name, PP in zip(["a", "b", "sigma_y"], [AA, BB, SY]):
             bins = np.histogram_bin_edges(PP, bins="auto")
-            if bins.size <= 2:
-                bins = np.histogram_bin_edges(PP, bins=2)
+
+            # sanity checks for histogram bins (at least 3, at most half of len(samples)
+            if bins.size <= 3: 
+                bins = np.histogram_bin_edges(PP, bins=3)
+            elif bins.size > len(PP)//2:
+                bins = np.histogram_bin_edges(PP, bins=len(PP)//2)
 
             dist, hist_range = np.histogram(PP, density=True, bins=bins)
             center_points = (hist_range[:-1] + hist_range[1:])/2
