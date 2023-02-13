@@ -3,7 +3,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import CubicSpline, LinearNDInterpolator
-from scipy.optimize import minimize_scalar, basinhopping
+from scipy.optimize import minimize_scalar, basinhopping, least_squares
 from scipy.stats import chi2, invgamma, iqr, norm
 from time_series_buffer import TimeSeriesBuffer
 
@@ -323,7 +323,9 @@ class Gruber(CocalibrationMethod):
             
             ## find minimum and second order derivative at minimum
             result = minimize_scalar(y_interp, method="Bounded", bounds=[x_finite.min(), x_finite.max()])  # can fall into local minimum
-            #result = basinhopping(y_interp, x0=x_finite[np.argmax(log_y[finite_entries])])
+            # if not result.success:
+            #    result = least_squares(y_interp, x0=x[np.argmax(log_y)], bounds=[x_finite.min(), x_finite.max()])
+            #    result = basinhopping(y_interp, x0=x_finite[np.argmax(log_y[finite_entries])])
             laplace_mean = result.x
             laplace_hess = y_interp_second_order_derivate(laplace_mean)
             laplace_std = 1 / np.sqrt(laplace_hess)
