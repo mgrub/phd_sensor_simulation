@@ -740,19 +740,7 @@ class AnalyticalDiscretePosterior(Gruber):
         return laplace_approximation
 
 
-    def update_grid_2(self, log_threshold=-np.inf, fill_value=-10000, zoom_out=0.2):
-
-        # find bounding box of region that is above threshold (zoom in into relevant parts)
-        relevant_part_of_dist = self.discrete_log_posterior > log_threshold
-        a_above_limit = np.any(relevant_part_of_dist, axis=(1,2))
-        b_above_limit = np.any(relevant_part_of_dist, axis=(0,2))
-        sigma_y_above_limit = np.any(relevant_part_of_dist, axis=(0,1))
-
-        a_min_index, a_max_index = np.where(a_above_limit)[0][[0, -1]]
-        b_min_index, b_max_index = np.where(b_above_limit)[0][[0, -1]]
-        sigma_y_min_index, sigma_y_max_index = np.where(sigma_y_above_limit)[0][[0, -1]]
-
-    def update_grid(self, log_threshold=-600, zoom_out=0.2):
+    def update_grid(self, log_threshold=-1000, zoom_out=0.2):
 
         # find bounding box of region that is above threshold (zoom in into relevant parts)
         relevant_part_of_dist = self.discrete_log_posterior > log_threshold
@@ -784,7 +772,6 @@ class AnalyticalDiscretePosterior(Gruber):
         da = min(0.5, a_max_box - a_min_box)
         db = min(0.5, b_max_box - b_min_box)
         log_dsigma_y = min(0.5, log_sigma_y_max_box - log_sigma_y_min_box)
-        zoom_out = 1.0
 
         a_min_new, a_max_new = a_min_box - da * zoom_out, a_max_box + da * zoom_out
         b_min_new, b_max_new = b_min_box - db * zoom_out, b_max_box + db * zoom_out
@@ -799,7 +786,7 @@ class AnalyticalDiscretePosterior(Gruber):
         logging.info(b_range_new)
         logging.info(sigma_y_range_new)
 
-        a_grid_new, b_grid_new, sigma_y_grid_new = np.meshgrid(self.a_range, self.b_range, self.sigma_y_range, indexing="ij")
+        a_grid_new, b_grid_new, sigma_y_grid_new = np.meshgrid(a_range_new, b_range_new, sigma_y_range_new, indexing="ij")
 
         # interpolate old distrubtion onto new grid
         # (need to turn grid into list of points first)
