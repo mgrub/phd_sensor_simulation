@@ -16,7 +16,7 @@ parser.add_argument(
     "scenario",
     nargs="?",
     type=str,
-    default="experiments/06_thesis_example/",  # "experiments/scenario_A/"
+    default="experiments/07_thesis_example/",  # "experiments/scenario_A/"
     help="Path to a scenario",
 )
 parser.add_argument(
