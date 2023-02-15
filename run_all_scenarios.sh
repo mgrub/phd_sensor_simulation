@@ -49,7 +49,7 @@ do
     v) 
        for s in ${scenarios[*]}; do
          echo "visualizing $s"
-         python visualization_runner.py $s
+         python visualization_runner.py --novis $s
        done
        ;;
 
