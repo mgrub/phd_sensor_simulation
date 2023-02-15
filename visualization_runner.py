@@ -220,12 +220,11 @@ ua_true = true_dut_model["params"]["ua"]
 b_true = true_dut_model["params"]["b"]
 ub_true = true_dut_model["params"]["ub"]
 
-sigma_y_true_time = np.array(sensor_readings[device_under_test_name]["time"])
-sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])
+sigma_y_true = np.array(sensor_readings[device_under_test_name]["val_unc"])[-1]
 
 # summarize results for easier access
 for i, (method_name, method_result) in enumerate(results.items()):
-    print("\n" + method_name)
+    print(method_name)
 
     if method_name not in metrics.keys():
         metrics[method_name] = {}
@@ -245,10 +244,8 @@ for i, (method_name, method_result) in enumerate(results.items()):
         ms["usigma"] = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])[-1]
     
     ms["a_true"] = a_true
-    ms["ua_true"] = ua_true
     ms["b_true"] = b_true
-    ms["ub_true"] = ub_true
-    ms["sigma_y_true"] = sigma_y_true[-1]
+    ms["sigma_y_true"] = sigma_y_true
         
 
 # runtime metric
@@ -282,65 +279,13 @@ for method, method_vals in log_times.items():
     else:
         duration = datetime.timedelta(seconds=0.0)
 
-    print(method, duration.total_seconds())
-
     if method not in metrics.keys():
         metrics[method] = {}
     
     metrics[method]["computation_duration"] = duration.total_seconds()
 
 
-# convergence metric
-def convergence_band_after(t0, times, vals, vals_unc = None):
-    i = np.argmin(np.abs(times-t0))
-    i_max = np.argmax(vals[i:])
-    i_min = np.argmin(vals[i:])
-
-    band = vals[i:][i_max] - vals[i:][i_min]
-    band_unc = np.sqrt(np.square(vals_unc[i:][i_max]) + np.square(vals_unc[i:][i_min]))
-
-    return band, band_unc
-    
-for i, (method_name, method_result) in enumerate(results.items()):
-
-    if method_name not in metrics.keys():
-        metrics[method_name] = {}
-    
-    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
-
-    t = np.array([item[-1]["time"] for item in method_result])
-    a =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])
-    ua = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])
-    b =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])
-    ub = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])
-    if sigma_y_was_estimated:
-        sigma =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])
-        usigma = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])
-    
-    # convergence
-    metrics[method_name]["convergence"] = {}
-    mc = metrics[method_name]["convergence"]
-
-    mc["a"] = {}
-    mc["a"]["band_04s"], mc["a"]["a_band_unc_04s"] = convergence_band_after(4, t, a, ua)
-    mc["a"]["band_10s"], mc["a"]["a_band_unc_10s"] = convergence_band_after(10, t, a, ua)
-    mc["a"]["band_16s"], mc["a"]["a_band_unc_16s"] = convergence_band_after(16, t, a, ua)
-
-    mc["b"] = {}
-    mc["b"]["band_04s"], mc["b"]["band_unc_04"] = convergence_band_after(4, t, b, ub)
-    mc["b"]["band_10s"], mc["b"]["band_unc_10"] = convergence_band_after(10, t, b, ub)
-    mc["b"]["band_16s"], mc["b"]["band_unc_16"] = convergence_band_after(16, t, b, ub)
-
-    if sigma_y_was_estimated:
-        mc["sigma_y"] = {}
-        mc["sigma_y"]["band_04s"], mc["sigma_y"]["band_unc_04s"] = convergence_band_after(4, t, sigma, usigma)
-        mc["sigma_y"]["band_10s"], mc["sigma_y"]["band_unc_10s"] = convergence_band_after(10, t, sigma, usigma)
-        mc["sigma_y"]["band_16s"], mc["sigma_y"]["band_unc_16s"] = convergence_band_after(16, t, sigma, usigma)
-        
-s = sensor_readings["example_sensor"]
-
-
-# consistency metric
+# consistency metrics
 
 for i, (method_name, method_result) in enumerate(results.items()):
 
@@ -359,30 +304,118 @@ for i, (method_name, method_result) in enumerate(results.items()):
     metrics[method_name]["consistency"] = {}
     mc = metrics[method_name]["consistency"]
 
-    # parameter consistency
-    mc["a_normalized_error"] = np.abs(a[-1] - a_true) / ua[-1]
-    mc["b_normalized_error"] = np.abs(b[-1] - b_true) / ub[-1]
+    # parameter estimate consistency metric
+    mc["a_normalized_error"] = (a[-1] - a_true) / ua[-1]
+    mc["b_normalized_error"] = (b[-1] - b_true) / ub[-1]
+    if sigma_y_was_estimated:
+        mc["sigma_y_normalized_error"] = (sigma[-1] - sigma_y_true) / usigma[-1]
+
+    # check consistency in terms of output
+    mr = method_result[-1][-1]["params"]
+    kwargs = {
+        "a" : mr["a"]["val"], 
+        "ua" : mr["a"]["val_unc"], 
+        "b" : mr["b"]["val"], 
+        "ub" : mr["b"]["val_unc"], 
+    }
+    m = LinearAffineModel(**kwargs)
+    m_inv = LinearAffineModel(**m.inverse_model_parameters())
+
+    dut_readings = np.array(sensor_readings[device_under_test_name]["val"])
+    if sigma_y_was_estimated:
+        dut_readings_unc = np.full_like(dut_readings, fill_value=sigma[-1])
+    else:
+        dut_readings_unc = np.zeros_like(dut_readings)
+    
+    # readings based on calibrated params
+    Xa = np.array(measurand["quantity"])
+    Xa_hat, Xa_hat_unc = m_inv.apply(dut_readings, dut_readings_unc)
+    normalized_model_error = (Xa_hat - Xa) / Xa_hat_unc
+    mc["normalized_model_error_mean"] = np.mean(normalized_model_error)
+    mc["normalized_model_error_std"] = np.std(normalized_model_error)
+    
+
+# convergence metrics
+def convergence_band_after(t0, times, vals, vals_unc = None):
+    i = np.argmin(np.abs(times-t0))
+    i_max = np.argmax(vals[i:])
+    i_min = np.argmin(vals[i:])
+
+    band = vals[i:][i_max] - vals[i:][i_min]
+    band_unc = np.sqrt(np.square(vals_unc[i:][i_max]) + np.square(vals_unc[i:][i_min]))
+
+    return band, band_unc
+
+def first_below_threshold(t, u, threshold=0.1):
+    indices_below = np.where(u < threshold)[0]
+        
+    if indices_below.size:
+        first_index_below = indices_below[0]
+        return t[first_index_below]
+    else:
+        return np.nan
+
+
+def stays_below_threshold(t, u, threshold=0.1):
+
+    result = np.nan
+    for i in range(u.size):
+        if np.all(u[i:] < threshold):
+            result = t[i]
+            break
+    
+    return result
+
+for i, (method_name, method_result) in enumerate(results.items()):
+
+    if method_name not in metrics.keys():
+        metrics[method_name] = {}
+    
+    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
+
+    t = np.array([item[-1]["time"] for item in method_result])
+    a =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])
+    ua = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])
+    b =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])
+    ub = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])
+    if sigma_y_was_estimated:
+        sigma =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])
+        usigma = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])
+    
+    # convergence span
+    metrics[method_name]["convergence"] = {}
+    mc = metrics[method_name]["convergence"]
+
+    mc["a"] = {}
+    mc["a"]["band_04s"], mc["a"]["a_band_unc_04s"] = convergence_band_after(4, t, a, ua)
+    mc["a"]["band_10s"], mc["a"]["a_band_unc_10s"] = convergence_band_after(10, t, a, ua)
+    mc["a"]["band_16s"], mc["a"]["a_band_unc_16s"] = convergence_band_after(16, t, a, ua)
+
+    mc["b"] = {}
+    mc["b"]["band_04s"], mc["b"]["band_unc_04"] = convergence_band_after(4, t, b, ub)
+    mc["b"]["band_10s"], mc["b"]["band_unc_10"] = convergence_band_after(10, t, b, ub)
+    mc["b"]["band_16s"], mc["b"]["band_unc_16"] = convergence_band_after(16, t, b, ub)
 
     if sigma_y_was_estimated:
-        # check consistency in terms of output
-        mr = method_result[-1][-1]["params"]
-        kwargs = {
-            "a" : mr["a"]["val"], 
-            "ua" : mr["a"]["val_unc"], 
-            "b" : mr["b"]["val"], 
-            "ub" : mr["b"]["val_unc"], 
-        }
-        m = LinearAffineModel(**kwargs)
-        true_time = sensor_readings[device_under_test_name]["time"]
-        true_readings = sensor_readings[device_under_test_name]["val"]
+        mc["sigma_y"] = {}
+        mc["sigma_y"]["band_04s"], mc["sigma_y"]["band_unc_04s"] = convergence_band_after(4, t, sigma, usigma)
+        mc["sigma_y"]["band_10s"], mc["sigma_y"]["band_unc_10s"] = convergence_band_after(10, t, sigma, usigma)
+        mc["sigma_y"]["band_16s"], mc["sigma_y"]["band_unc_16s"] = convergence_band_after(16, t, sigma, usigma)
+    
+    # convergence in uncertainty
+    mc["a"]["unc_first_below_0.1"] = first_below_threshold(t, ua, 0.1)
+    mc["a"]["unc_stays_below_0.1"] = stays_below_threshold(t, ua, 0.1)
+    mc["b"]["unc_first_below_0.1"] = first_below_threshold(t, ub, 0.1)
+    mc["b"]["unc_stays_below_0.1"] = stays_below_threshold(t, ub, 0.1)
+    if sigma_y_was_estimated:
+        mc["sigma_y"]["unc_first_below_0.1"] = first_below_threshold(t, usigma, 0.1)
+        mc["sigma_y"]["unc_stays_below_0.1"] = stays_below_threshold(t, usigma, 0.1)
 
-        # readings based on calibrated params
-        v, uv = m.apply(np.array(measurand["quantity"]), np.zeros_like(measurand["quantity"]))
-        uv += mr["sigma_y"]["val"]
-        
-        mc["sigma_y_model_error_ratio"] = sigma[-1] / np.std(v - true_readings)
-        
+
+
 # write extracted metrics to file
 metrics_results_path = os.path.join(working_directory, "metrics.json")
 with open(metrics_results_path, "w") as f:
     json.dump(metrics, f, indent=4)
+
+print("\n")
