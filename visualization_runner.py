@@ -232,7 +232,7 @@ for i, (method_name, method_result) in enumerate(results.items()):
     metrics[method_name]["summary"] = {}
     ms = metrics[method_name]["summary"]
 
-    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
+    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys() and method_name != "gibbs_known_sigma_y"
 
     ms["timestamp"] = np.array([item[-1]["time"] for item in method_result])[-1]
     ms["a"] =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])[-1]
@@ -289,7 +289,7 @@ for method, method_vals in log_times.items():
 
 for i, (method_name, method_result) in enumerate(results.items()):
 
-    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
+    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys() and method_name != "gibbs_known_sigma_y"
 
     t = np.array([item[-1]["time"] for item in method_result])
     a =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])
@@ -305,10 +305,10 @@ for i, (method_name, method_result) in enumerate(results.items()):
     mc = metrics[method_name]["consistency"]
 
     # parameter estimate consistency metric
-    mc["a_normalized_error"] = (a[-1] - a_true) / ua[-1]
-    mc["b_normalized_error"] = (b[-1] - b_true) / ub[-1]
+    mc["a_normalized_error"] = np.abs(a[-1] - a_true) / ua[-1]
+    mc["b_normalized_error"] = np.abs(b[-1] - b_true) / ub[-1]
     if sigma_y_was_estimated:
-        mc["sigma_y_normalized_error"] = (sigma[-1] - sigma_y_true) / usigma[-1]
+        mc["sigma_y_normalized_error"] = np.abs(sigma[-1] - sigma_y_true) / usigma[-1]
 
     # check consistency in terms of output
     mr = method_result[-1][-1]["params"]
@@ -353,12 +353,12 @@ def first_below_threshold(t, u, threshold=0.1):
         first_index_below = indices_below[0]
         return t[first_index_below]
     else:
-        return np.nan
+        return "never"
 
 
 def stays_below_threshold(t, u, threshold=0.1):
 
-    result = np.nan
+    result = "never"
     for i in range(u.size):
         if np.all(u[i:] < threshold):
             result = t[i]
@@ -371,7 +371,7 @@ for i, (method_name, method_result) in enumerate(results.items()):
     if method_name not in metrics.keys():
         metrics[method_name] = {}
     
-    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys()
+    sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys() and method_name != "gibbs_known_sigma_y"
 
     t = np.array([item[-1]["time"] for item in method_result])
     a =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])
@@ -390,17 +390,20 @@ for i, (method_name, method_result) in enumerate(results.items()):
     mc["a"]["band_04s"], mc["a"]["a_band_unc_04s"] = convergence_band_after(4, t, a, ua)
     mc["a"]["band_10s"], mc["a"]["a_band_unc_10s"] = convergence_band_after(10, t, a, ua)
     mc["a"]["band_16s"], mc["a"]["a_band_unc_16s"] = convergence_band_after(16, t, a, ua)
+    mc["a"]["band_shrinks"] = "yes" if mc["a"]["band_16s"] < mc["a"]["band_04s"] else "No"
 
     mc["b"] = {}
     mc["b"]["band_04s"], mc["b"]["band_unc_04"] = convergence_band_after(4, t, b, ub)
     mc["b"]["band_10s"], mc["b"]["band_unc_10"] = convergence_band_after(10, t, b, ub)
     mc["b"]["band_16s"], mc["b"]["band_unc_16"] = convergence_band_after(16, t, b, ub)
+    mc["b"]["band_shrinks"] = "yes" if mc["b"]["band_16s"] < mc["b"]["band_04s"] else "No"
 
     if sigma_y_was_estimated:
         mc["sigma_y"] = {}
         mc["sigma_y"]["band_04s"], mc["sigma_y"]["band_unc_04s"] = convergence_band_after(4, t, sigma, usigma)
         mc["sigma_y"]["band_10s"], mc["sigma_y"]["band_unc_10s"] = convergence_band_after(10, t, sigma, usigma)
         mc["sigma_y"]["band_16s"], mc["sigma_y"]["band_unc_16s"] = convergence_band_after(16, t, sigma, usigma)
+        mc["sigma_y"]["band_shrinks"] = "yes" if mc["sigma_y"]["band_16s"] < mc["sigma_y"]["band_04s"] else "No"
     
     # convergence in uncertainty
     mc["a"]["unc_first_below_0.1"] = first_below_threshold(t, ua, 0.1)
