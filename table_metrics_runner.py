@@ -3,6 +3,7 @@ import json
 import os
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 scenarios = [
@@ -22,17 +23,17 @@ scenarios = [
     "05c_worse_references",
 ]
 
-methods_to_include = [
-    "gibbs_base",
-    "gibbs_minimal",
-    "gibbs_no_EIV",
-    "gibbs_known_sigma_y",
-    "joint_posterior",
-    "joint_posterior_agrid",
-    "stankovic_base",
-    "stankovic_enhanced_unc",
-    "stankovic_base_unc",
-]
+methods_to_include = {
+    "gibbs_base" : {"style" : "*"},
+    "gibbs_minimal" : {"style" : "^"},
+    "gibbs_no_EIV" : {"style" : "v"},
+    "gibbs_known_sigma_y" : {"style" : "<"},
+    "joint_posterior" : {"style" : ">"},
+    "joint_posterior_agrid" : {"style" : "o"},
+    "stankovic_base" : {"style" : "s"},
+    "stankovic_enhanced_unc" : {"style" : "P"},
+    "stankovic_base_unc" : {"style" : "D"},
+}
 
 metrics_to_include_summary = [
     {"path": ["summary", "a_true"], "tex": r"$a$"},
@@ -79,18 +80,13 @@ metrics_to_include_in_tables = (
     + metrics_to_include_consistency
     + metrics_to_include_convergence
 )
-metrics_to_include_in_graphics = (
-    metrics_to_include_summary[0:1]
-    + metrics_to_include_consistency
-    + metrics_to_include_convergence[:4]
-)
+metrics_to_include_in_graphics = metrics_to_include_consistency # + metrics_to_include_convergence[3:]
 
 # relevant columns
 columns_all = [item["tex"] for item in metrics_to_include_in_tables]
 columns_summary = [item["tex"] for item in metrics_to_include_summary]
 columns_consistency = [item["tex"] for item in metrics_to_include_consistency]
 columns_convergence = [item["tex"] for item in metrics_to_include_convergence]
-columns_graphics = [item["tex"] for item in metrics_to_include_in_graphics]
 
 table_template = """
 \\begin{{table}}[H]
@@ -108,13 +104,13 @@ working_directory = os.path.join(os.getcwd())
 # some functions that are needed later
 formatter = lambda s: s if isinstance(s, str) else f"{s:.2e}"
 
-def address_dict(d, dict_path):
+def address_dict(d, dict_path, key_error_fill="-"):
     tmp = d
     try:
         for key in dict_path:
             tmp = tmp[key]
     except KeyError:
-        tmp = "-"
+        tmp = key_error_fill
     return tmp
 
 
@@ -122,7 +118,7 @@ tables = []
 refs = []
 for scenario in scenarios:
     print(scenario)
-    df_scenario = pd.DataFrame(index=methods_to_include, columns=columns_all)
+    df_scenario = pd.DataFrame(index=methods_to_include.keys(), columns=columns_all)
 
     metrics_path = os.path.join(
         working_directory, "experiments", scenario, "metrics.json"
@@ -132,7 +128,7 @@ for scenario in scenarios:
         continue
     metrics_log = json.load(open(metrics_path, "r"))
 
-    for method in methods_to_include:
+    for method in methods_to_include.keys():
         fill_value = None
         if method not in metrics_log.keys():
             fill_value = "/"
@@ -211,4 +207,90 @@ f.write("\\chapter{Evaluation Results per Scenario}\n")
 f.write(ref_strings)
 f.write("\n\n\n\n")
 f.write(table_strings)
+f.close()
+
+
+
+# figure LaTeX
+figure_template = """
+\\begin{{figure}}[tbph]
+    \\centering
+    \\includegraphics[width=\\textwidth]{{{FILEPATH}}}
+    \\caption{{{CAPTION}}}
+    \\label{{{LABEL}}}
+\\end{{figure}}
+"""
+
+figures = []
+refs = []
+if not os.path.exists("evaluation_metrics"): os.mkdir("evaluation_metrics")
+
+for metric in metrics_to_include_in_graphics:
+    metric_name = "_".join(metric["path"])
+    print(metric_name)
+
+    df_metric = pd.DataFrame(index=scenarios, columns=methods_to_include.keys())
+
+    for scenario in scenarios:
+
+        metrics_path = os.path.join(
+            working_directory, "experiments", scenario, "metrics.json"
+        )
+        if not os.path.exists(metrics_path):
+            print("")
+            continue
+        metrics_log = json.load(open(metrics_path, "r"))
+
+        for method in methods_to_include.keys():
+            fill_value = None
+            if method not in metrics_log.keys():
+                fill_value = np.nan
+                print("    ", method, "not found")
+
+            # extract relevant metric
+            metric_tex = metric["tex"]
+            if fill_value == None:
+                metric_value = address_dict(metrics_log[method], metric["path"], np.nan)
+            else:
+                metric_value = fill_value
+            df_metric.loc[scenario, method] = metric_value
+        
+    # generate plot
+    img_path = f"evaluation_metrics/{metric_name}.pdf"
+
+    fig, ax = plt.subplots(1,1, figsize=(10,6))
+    pos = np.arange(len(df_metric.index))
+    width = 1 / (len(df_metric.index) + 2)
+    labels = [s.split("_")[0] for s in df_metric.index]
+    for i, (method_name, scenario_values) in enumerate(df_metric.items()):
+        style = methods_to_include[method_name]["style"]
+        offset = width * np.random.randn()
+        ax.plot(pos + offset, scenario_values, marker=style, markersize=10, linewidth=0, alpha=0.5, label=method_name)
+    
+    ax.grid(visible=True, which="both", axis="both", alpha=0.4, zorder=10000)
+    ax.set_xticks(ticks=pos)
+    ax.set_xticklabels(labels, rotation=0)
+    ax.set_yscale("log")
+    ax.legend(loc='center right', bbox_to_anchor=(1.4, 0.5), ncol=1, fancybox=True,)
+    fig.tight_layout()
+    fig.savefig(img_path, bbox_inches="tight")
+
+    # provide tex code
+    metric_name = "_".join(metric["path"])
+    tex_label = f"fig:{metric_name}"
+    tex_caption = f"Overview of {metric['tex']} for multiple methods in different scenarios."
+    ref = f"\cref{{{tex_label}}}"
+    figure = figure_template.format(FILEPATH=img_path, CAPTION=tex_caption, LABEL=tex_label)
+
+    figures.append(figure)
+    refs.append(ref)
+
+figure_strings = "\n".join(figures)
+ref_strings = "\n".join(refs)
+
+# write to file
+f = open("evaluation_metrics_figures.tex", "w")
+f.write(ref_strings)
+f.write("\n\n")
+f.write(figure_strings)
 f.close()
