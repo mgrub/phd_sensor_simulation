@@ -109,7 +109,8 @@ def address_dict(d, dict_path):
         tmp = "-"
     return tmp
 
-
+tables = []
+refs = []
 for scenario in scenarios:
     print(scenario)
     df_scenario = pd.DataFrame(
@@ -139,9 +140,13 @@ for scenario in scenarios:
                 metric_value = fill_value
             df_scenario.loc[method, metric_tex] = metric_value
 
-    caption = f"Calculated metrics for scenario \\texttt{{{scenario}}}. True values are $a=2$, $b=1$. (\\texttt{{--}}: method not run / not successful, \\texttt{{-}}: not applicable)"
+    caption = f"Calculated metrics for scenario \\texttt{{{scenario}}}. True values are $a=2$, $b=1$. (\\texttt{{--}}: method not run / not successful, \\texttt{{-}}: not applicable)".replace('_', '\\_')
     label = f"tab:evaluation_metrics_{scenario}"
 
+    # make index prettier
+    df_scenario.index = [f"\\texttt{{{val}}}".replace('_', '\\_') for val in df_scenario.index]
+    
+    # generate LaTeX string from table
     table = df_scenario.style.format(precision=2).to_latex(
         caption=caption,
         label=label,
@@ -149,10 +154,18 @@ for scenario in scenarios:
         environment="sidewaystable",
         position="p",
     )
+    ref = f"\\cref{{{label}}}"
 
+    tables.append(f"\\section{{Scenario \\texttt{{{scenario}}}}}\n\n".replace('_', '\\_') + table)
+    refs.append(ref)
 
+table_strings = "\n\n\n".join(tables)
+ref_strings = "\n".join(refs)
 
-    # make table caption
-    # method not run / not successful (--), not applicable (-)
-    # true values
-    # link to scenario table
+# write to file
+f = open("evaluation_metrics_tables.tex", "w")
+f.write("\\chapter{Evaluation Results per Scenario}\n")
+f.write(ref_strings)
+f.write("\n\n\n\n")
+f.write(table_strings)
+f.close()
