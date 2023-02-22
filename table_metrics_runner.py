@@ -143,9 +143,9 @@ for scenario in scenarios:
             df_scenario.loc[method, metric_tex] = metric_value
 
     scenario_escaped = scenario.replace("_", "\\_")
-    caption_summary = f"Result summary of scenario \\texttt{{{scenario_escaped}}}. (\\texttt{{/}}: method not (successfully) run, \\texttt{{-}}: not applicable)"
-    caption_consistency = f"Runtime and consistency metrics of scenario \\texttt{{{scenario_escaped}}}. (\\texttt{{/}}: method not (successfully) run, \\texttt{{-}}: not applicable)"
-    caption_convergence = f"Convergence metrics of scenario \\texttt{{{scenario_escaped}}}. (\\texttt{{/}}: method not (successfully) run, \\texttt{{-}}: not applicable)"
+    caption_summary = f"Result summary of scenario \\texttt{{{scenario_escaped}}}."
+    caption_consistency = f"Runtime and consistency metrics of scenario \\texttt{{{scenario_escaped}}}."
+    caption_convergence = f"Convergence metrics of scenario \\texttt{{{scenario_escaped}}}."
     label_summary = f"tab:evaluation_summary_{scenario}"
     label_consistency = f"tab:evaluation_consistency_metrics_{scenario}"
     label_convergence = f"tab:evaluation_convergence_metrics_{scenario}"
@@ -186,7 +186,7 @@ for scenario in scenarios:
         TABULAR=tabular_convergence,
     )
 
-    ref = f"\\cref{{{label_summary},{label_consistency},{label_convergence}}}"
+    ref = f"{label_summary},{label_consistency},{label_convergence}"
 
     ## merge tables into section
     tables.append(
@@ -199,16 +199,14 @@ for scenario in scenarios:
     refs.append(ref)
 
 table_strings = "\n\n\n".join(tables)
-ref_strings = "\n".join(refs)
+ref_strings = ",".join(refs)
 
 # write to file
 f = open("evaluation_metrics_tables.tex", "w")
-f.write("\\chapter{Evaluation Results per Scenario}\n")
-f.write(ref_strings)
-f.write("\n\n\n\n")
+f.write(f"\\chapter{{Evaluation Results per Scenario}}\n\label{{chap:evaluation_result_tables}}\n\nIn tables \\cref{{{ref_strings}}} values coming from a method that did not run or did not run successfully are denoted by \\texttt{{/}}, while values that are not applicable are denoted by \\texttt{{-}}.\n\n")
 f.write(table_strings)
 f.close()
-
+exit()
 
 
 # figure LaTeX
