@@ -24,15 +24,15 @@ scenarios = [
 ]
 
 methods_to_include = {
-    "gibbs_base" : {"style" : "*"},
-    "gibbs_minimal" : {"style" : "^"},
-    "gibbs_no_EIV" : {"style" : "v"},
-    "gibbs_known_sigma_y" : {"style" : "<"},
-    "joint_posterior" : {"style" : ">"},
-    "joint_posterior_agrid" : {"style" : "o"},
-    "stankovic_base" : {"style" : "s"},
-    "stankovic_enhanced_unc" : {"style" : "P"},
-    "stankovic_base_unc" : {"style" : "D"},
+    "gibbs_base": {"marker": "*", "color": "b"},
+    "gibbs_minimal": {"marker": "^", "color": "b"},
+    "gibbs_no_EIV": {"marker": "v", "color": "b"},
+    "gibbs_known_sigma_y": {"marker": "<", "color": "b"},
+    "joint_posterior": {"marker": ">", "color": "c"},
+    "joint_posterior_agrid": {"marker": "o", "color": "c"},
+    "stankovic_base": {"marker": "s", "color": "k"},
+    "stankovic_enhanced_unc": {"marker": "P", "color": "k"},
+    "stankovic_base_unc": {"marker": "D", "color": "k"},
 }
 
 metrics_to_include_summary = [
@@ -41,6 +41,7 @@ metrics_to_include_summary = [
     {"path": ["summary", "sigma_y_true"], "tex": r"$\sigma_y$"},
     {"path": ["summary", "a"], "tex": r"$\hat{a}$"},
     {"path": ["summary", "b"], "tex": r"$\hat{b}$"},
+    {"path": ["summary", "sigma"], "tex": r"$\hat{\sigma}_y$"},
     {"path": ["summary", "ua"], "tex": r"$u_{\hat{a}}$"},
     {"path": ["summary", "ub"], "tex": r"$u_{\hat{b}}$"},
 ]
@@ -55,8 +56,14 @@ metrics_to_include_consistency = [
 ]
 
 metrics_to_include_convergence = [
-    {"path": ["convergence", "a", "band_shrinks"], "tex": r"\rotatebox{90}{$s_a(4s) > s_a(16s)$}"},
-    {"path": ["convergence", "b", "band_shrinks"], "tex": r"\rotatebox{90}{$s_b(4s) > s_b(16s)$}"},
+    {
+        "path": ["convergence", "a", "band_shrinks"],
+        "tex": r"\rotatebox{90}{$s_a(4s) > s_a(16s)$}",
+    },
+    {
+        "path": ["convergence", "b", "band_shrinks"],
+        "tex": r"\rotatebox{90}{$s_b(4s) > s_b(16s)$}",
+    },
     {
         "path": ["convergence", "sigma_y", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_\sigma(4s) > s_\sigma(16s)$}",
@@ -80,7 +87,9 @@ metrics_to_include_in_tables = (
     + metrics_to_include_consistency
     + metrics_to_include_convergence
 )
-metrics_to_include_in_graphics = metrics_to_include_consistency # + metrics_to_include_convergence[3:]
+metrics_to_include_in_graphics = (
+    metrics_to_include_summary[3:] + metrics_to_include_consistency
+)  # + metrics_to_include_convergence[3:]
 
 # relevant columns
 columns_all = [item["tex"] for item in metrics_to_include_in_tables]
@@ -103,6 +112,7 @@ working_directory = os.path.join(os.getcwd())
 
 # some functions that are needed later
 formatter = lambda s: s if isinstance(s, str) else f"{s:.2e}"
+
 
 def address_dict(d, dict_path, key_error_fill="-"):
     tmp = d
@@ -144,13 +154,15 @@ for scenario in scenarios:
 
     scenario_escaped = scenario.replace("_", "\\_")
     caption_summary = f"Result summary of scenario \\texttt{{{scenario_escaped}}}."
-    caption_consistency = f"Runtime and consistency metrics of scenario \\texttt{{{scenario_escaped}}}."
-    caption_convergence = f"Convergence metrics of scenario \\texttt{{{scenario_escaped}}}."
+    caption_consistency = (
+        f"Runtime and consistency metrics of scenario \\texttt{{{scenario_escaped}}}."
+    )
+    caption_convergence = (
+        f"Convergence metrics of scenario \\texttt{{{scenario_escaped}}}."
+    )
     label_summary = f"tab:evaluation_summary_{scenario}"
     label_consistency = f"tab:evaluation_consistency_metrics_{scenario}"
     label_convergence = f"tab:evaluation_convergence_metrics_{scenario}"
-
-
 
     # generate LaTeX string from table
     # make index prettier
@@ -190,7 +202,9 @@ for scenario in scenarios:
 
     ## merge tables into section
     tables.append(
-        f"\\newpage\n\n\\section{{Scenario \\texttt{{{scenario}}}}}\n\n".replace("_", "\\_")
+        f"\\newpage\n\n\\section{{Scenario \\texttt{{{scenario}}}}}\n\n".replace(
+            "_", "\\_"
+        )
         + table_summary
         + table_consistency
         + table_convergence
@@ -203,10 +217,11 @@ ref_strings = ",".join(refs)
 
 # write to file
 f = open("evaluation_metrics_tables.tex", "w")
-f.write(f"\\chapter{{Evaluation Results per Scenario}}\n\label{{chap:evaluation_result_tables}}\n\nIn tables \\cref{{{ref_strings}}} values coming from a method that did not run or did not run successfully are denoted by \\texttt{{/}}, while values that are not applicable are denoted by \\texttt{{-}}.\n\n")
+f.write(
+    f"\\chapter{{Evaluation Results per Scenario}}\n\label{{chap:evaluation_result_tables}}\n\nIn tables \\cref{{{ref_strings}}} values coming from a method that did not run or did not run successfully are denoted by \\texttt{{/}}, while values that are not applicable are denoted by \\texttt{{-}}.\n\n"
+)
 f.write(table_strings)
 f.close()
-exit()
 
 
 # figure LaTeX
@@ -221,7 +236,8 @@ figure_template = """
 
 figures = []
 refs = []
-if not os.path.exists("evaluation_metrics"): os.mkdir("evaluation_metrics")
+if not os.path.exists("evaluation_metrics"):
+    os.mkdir("evaluation_metrics")
 
 for metric in metrics_to_include_in_graphics:
     metric_name = "_".join(metric["path"])
@@ -230,7 +246,6 @@ for metric in metrics_to_include_in_graphics:
     df_metric = pd.DataFrame(index=scenarios, columns=methods_to_include.keys())
 
     for scenario in scenarios:
-
         metrics_path = os.path.join(
             working_directory, "experiments", scenario, "metrics.json"
         )
@@ -252,33 +267,55 @@ for metric in metrics_to_include_in_graphics:
             else:
                 metric_value = fill_value
             df_metric.loc[scenario, method] = metric_value
-        
+
     # generate plot
     img_path = f"evaluation_metrics/{metric_name}.pdf"
 
-    fig, ax = plt.subplots(1,1, figsize=(10,6))
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
     pos = np.arange(len(df_metric.index))
     width = 1 / (len(df_metric.index) + 2)
     labels = [s.split("_")[0] for s in df_metric.index]
+    any_negative_values = False
     for i, (method_name, scenario_values) in enumerate(df_metric.items()):
-        style = methods_to_include[method_name]["style"]
+        marker = methods_to_include[method_name]["marker"]
+        color = methods_to_include[method_name]["color"]
         offset = width * np.random.randn()
-        ax.plot(pos + offset, scenario_values, marker=style, markersize=10, linewidth=0, alpha=0.5, label=method_name)
-    
+        any_negative_values = any_negative_values or np.any(scenario_values < 0)
+        ax.plot(
+            pos + offset,
+            scenario_values,
+            marker=marker,
+            markersize=10,
+            color=color,
+            linewidth=0,
+            alpha=0.5,
+            label=method_name,
+        )
+
     ax.grid(visible=True, which="both", axis="both", alpha=0.4, zorder=10000)
     ax.set_xticks(ticks=pos)
     ax.set_xticklabels(labels, rotation=0)
-    ax.set_yscale("log")
-    ax.legend(loc='center right', bbox_to_anchor=(1.4, 0.5), ncol=1, fancybox=True,)
+    if not any_negative_values:
+        ax.set_yscale("log")
+    ax.legend(
+        loc="center right",
+        bbox_to_anchor=(1.4, 0.5),
+        ncol=1,
+        fancybox=True,
+    )
     fig.tight_layout()
     fig.savefig(img_path, bbox_inches="tight")
 
     # provide tex code
     metric_name = "_".join(metric["path"])
     tex_label = f"fig:{metric_name}"
-    tex_caption = f"Overview of {metric['tex']} for multiple methods in different scenarios."
+    tex_caption = (
+        f"Overview of {metric['tex']} for multiple methods in different scenarios."
+    )
     ref = f"\cref{{{tex_label}}}"
-    figure = figure_template.format(FILEPATH=img_path, CAPTION=tex_caption, LABEL=tex_label)
+    figure = figure_template.format(
+        FILEPATH=img_path, CAPTION=tex_caption, LABEL=tex_label
+    )
 
     figures.append(figure)
     refs.append(ref)
