@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy.stats.mstats as scm
 
 
 scenarios = [
@@ -275,15 +276,43 @@ for metric in metrics_to_include_in_graphics:
     pos = np.arange(len(df_metric.index))
     width = 1 / (len(df_metric.index) + 2)
     labels = [s.split("_")[0] for s in df_metric.index]
-    any_negative_values = False
+    use_log_scale = True
+    if np.any(df_metric<0):
+        use_log_scale = False
+
+    # define outlier limits (in lin or log scale)
+    flattened_values = df_metric.to_numpy(dtype=np.float64).flatten()
+    flattened_values = flattened_values[np.logical_not(np.isnan(flattened_values))]
+    if use_log_scale:
+        q1, q2 = scm.mquantiles(np.log(flattened_values), [0.1, 0.9])
+        dq = q2 - q1
+    else:
+        q1, q2 = scm.mquantiles(flattened_values, [0.1, 0.9])
+    dq = q2 - q1
+    outlier_limit_low = q1 - 2 * dq
+    outlier_limit_high = q2 + 2 * dq
+
+
     for i, (method_name, scenario_values) in enumerate(df_metric.items()):
         marker = methods_to_include[method_name]["marker"]
         color = methods_to_include[method_name]["color"]
         offset = width * np.random.randn()
-        any_negative_values = any_negative_values or np.any(scenario_values < 0)
+
+        # remove outliers from plot, but still plot
+        if use_log_scale:
+            log_scenario_values = np.log(scenario_values.to_numpy(dtype=np.float64))
+            outliers_above = log_scenario_values > outlier_limit_high
+            outliers_below = log_scenario_values < outlier_limit_low
+        else:
+            outliers_above = scenario_values > outlier_limit_high
+            outliers_below = scenario_values < outlier_limit_low
+
+        outliers = np.logical_or(outliers_above, outliers_below)
+        include = np.logical_not(outliers)
+
         ax.plot(
-            pos + offset,
-            scenario_values,
+            pos[include] + offset,
+            scenario_values[include],
             marker=marker,
             markersize=10,
             color=color,
@@ -292,10 +321,69 @@ for metric in metrics_to_include_in_graphics:
             label=method_name,
         )
 
+        k1 = 2.1
+        k2 = 2.25
+        # marker outliers in the plot
+        if np.any(outliers_above):
+            #axis2data = ax.transAxes + ax.transData.inverted()
+            if use_log_scale:
+                above_outside_1 = np.exp(q2 + k1 * dq)
+                above_outside_2 = np.exp(q2 + k2 * dq)
+            else:
+                above_outside_1 = q2 + k1 * dq
+                above_outside_2 = q2 + k2 * dq
+
+            ax.plot(
+                pos[outliers_above],
+                np.full(outliers_above.sum(), above_outside_1), 
+                marker="$\\uparrow !$",
+                markersize=20,
+                color="k",
+                linewidth=0,
+                alpha=0.7,
+            )
+            ax.plot(
+                pos[outliers_above] + offset,
+                np.full(outliers_above.sum(), above_outside_2), 
+                marker=marker,
+                markersize=10,
+                color=color,
+                linewidth=0,
+                alpha=0.3,
+            )
+
+        if np.any(outliers_below):
+            #axis2data = ax.transAxes + ax.transData.inverted()
+            if use_log_scale:
+                below_outside_1 = np.exp(q1 - k1 * dq)
+                below_outside_2 = np.exp(q1 - k2 * dq)
+            else:
+                below_outside_1 = q1 - k1 * dq
+                below_outside_2 = q1 - k2 * dq
+
+            ax.plot(
+                pos[outliers_below],
+                np.full(outliers_below.sum(), below_outside_1), 
+                marker="$\\downarrow !$",
+                markersize=20,
+                color="k",
+                linewidth=0,
+                alpha=0.7,
+            )
+            ax.plot(
+                pos[outliers_below] + offset,
+                np.full(outliers_below.sum(), below_outside_2), 
+                marker=marker,
+                markersize=10,
+                color=color,
+                linewidth=0,
+                alpha=0.3,
+            )
+
     ax.grid(visible=True, which="both", axis="both", alpha=0.4, zorder=10000)
     ax.set_xticks(ticks=pos)
     ax.set_xticklabels(labels, rotation=0)
-    if not any_negative_values:
+    if use_log_scale:
         ax.set_yscale("log")
     ax.legend(
         loc="center right",
