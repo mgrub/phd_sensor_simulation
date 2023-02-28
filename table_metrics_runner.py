@@ -277,7 +277,7 @@ for metric in metrics_to_include_in_graphics:
     width = 1 / (len(df_metric.index) + 2)
     labels = [s.split("_")[0] for s in df_metric.index]
     use_log_scale = True
-    if np.any(df_metric<0):
+    if np.any(df_metric < 0):
         use_log_scale = False
 
     # define outlier limits (in lin or log scale)
@@ -291,7 +291,6 @@ for metric in metrics_to_include_in_graphics:
     dq = q2 - q1
     outlier_limit_low = q1 - 2 * dq
     outlier_limit_high = q2 + 2 * dq
-
 
     for i, (method_name, scenario_values) in enumerate(df_metric.items()):
         marker = methods_to_include[method_name]["marker"]
@@ -321,63 +320,55 @@ for metric in metrics_to_include_in_graphics:
             label=method_name,
         )
 
-        k1 = 2.1
-        k2 = 2.25
         # marker outliers in the plot
         if np.any(outliers_above):
-            #axis2data = ax.transAxes + ax.transData.inverted()
-            if use_log_scale:
-                above_outside_1 = np.exp(q2 + k1 * dq)
-                above_outside_2 = np.exp(q2 + k2 * dq)
-            else:
-                above_outside_1 = q2 + k1 * dq
-                above_outside_2 = q2 + k2 * dq
+            # axis2data = ax.transAxes + ax.transData.inverted()
 
             ax.plot(
                 pos[outliers_above],
-                np.full(outliers_above.sum(), above_outside_1), 
+                np.full(outliers_above.sum(), 1.00),
                 marker="$\\uparrow !$",
                 markersize=20,
                 color="k",
                 linewidth=0,
-                alpha=0.7,
+                #alpha=0.7,
+                transform=ax.get_xaxis_transform(),
+                clip_on=False,
             )
             ax.plot(
                 pos[outliers_above] + offset,
-                np.full(outliers_above.sum(), above_outside_2), 
+                np.full(outliers_above.sum(), 1.05),
                 marker=marker,
                 markersize=10,
                 color=color,
                 linewidth=0,
                 alpha=0.3,
+                transform=ax.get_xaxis_transform(),
+                clip_on=False,
             )
 
         if np.any(outliers_below):
-            #axis2data = ax.transAxes + ax.transData.inverted()
-            if use_log_scale:
-                below_outside_1 = np.exp(q1 - k1 * dq)
-                below_outside_2 = np.exp(q1 - k2 * dq)
-            else:
-                below_outside_1 = q1 - k1 * dq
-                below_outside_2 = q1 - k2 * dq
-
             ax.plot(
                 pos[outliers_below],
-                np.full(outliers_below.sum(), below_outside_1), 
+                np.full(outliers_below.sum(), -0.1),
                 marker="$\\downarrow !$",
                 markersize=20,
                 color="k",
                 linewidth=0,
-                alpha=0.7,
+                #alpha=0.7,
+                transform=ax.get_xaxis_transform(),
+                clip_on=False,
             )
             ax.plot(
                 pos[outliers_below] + offset,
-                np.full(outliers_below.sum(), below_outside_2), 
+                np.full(outliers_below.sum(), -0.15),
                 marker=marker,
                 markersize=10,
                 color=color,
                 linewidth=0,
                 alpha=0.3,
+                transform=ax.get_xaxis_transform(),
+                clip_on=False,
             )
 
     ax.grid(visible=True, which="both", axis="both", alpha=0.4, zorder=10000)
@@ -391,7 +382,7 @@ for metric in metrics_to_include_in_graphics:
         ncol=1,
         fancybox=True,
     )
-    fig.tight_layout()
+    #fig.tight_layout()
     fig.savefig(img_path, bbox_inches="tight")
 
     # provide tex code
