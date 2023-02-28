@@ -272,7 +272,7 @@ for metric in metrics_to_include_in_graphics:
     # generate plot
     img_path = f"evaluation_metrics/{metric_name}.pdf"
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
     pos = np.arange(len(df_metric.index))
     width = 1 / (len(df_metric.index) + 2)
     labels = [s.split("_")[0] for s in df_metric.index]
@@ -326,7 +326,7 @@ for metric in metrics_to_include_in_graphics:
 
             ax.plot(
                 pos[outliers_above],
-                np.full(outliers_above.sum(), 1.00),
+                np.full(outliers_above.sum(), 1.05),
                 marker="$\\uparrow !$",
                 markersize=20,
                 color="k",
@@ -337,7 +337,7 @@ for metric in metrics_to_include_in_graphics:
             )
             ax.plot(
                 pos[outliers_above] + offset,
-                np.full(outliers_above.sum(), 1.05),
+                np.full(outliers_above.sum(), 1.1),
                 marker=marker,
                 markersize=10,
                 color=color,
