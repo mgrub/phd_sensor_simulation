@@ -533,20 +533,24 @@ class GibbsPosterior(Gruber):
             posterior_laplace_approximation["sigma_y"]["val_unc"] = 0.0
 
         # visualize for DEBUGGING
-        # fix, ax = plt.subplots(3,1)
+        # fig, ax = plt.subplots(3,1)
         # a_range = np.linspace(min(AA), max(AA))
-        # ax[0].hist(AA, 20, density=True);
-        # ax[0].plot(a_range, norm.pdf(a_range, a_laplace_approx, a_laplace_approx_std));
-        # ax[0].plot(a_range, norm.pdf(a_range, a_norm_fit, a_norm_fit_std));
+        # a_lap = posterior_laplace_approximation["a"]
+        # ax[0].hist(AA, 20, density=True, label="hist")
+        # ax[0].plot(a_range, norm.pdf(a_range, a_lap["val"], a_lap["val_unc"]), label="laplace approx")
+        # ax[0].plot(a_range, norm.pdf(a_range, a_norm_fit, a_norm_fit_std), label="internal")
+        # ax[0].legend()
 
         # b_range = np.linspace(min(BB), max(BB))
+        # b_lap = posterior_laplace_approximation["b"]
         # ax[1].hist(BB, 20, density=True);
-        # ax[1].plot(b_range, norm.pdf(b_range, b_laplace_approx, b_laplace_approx_std));
+        # ax[1].plot(b_range, norm.pdf(b_range, b_lap["val"], b_lap["val_unc"]));
         # ax[1].plot(b_range, norm.pdf(b_range, b_norm_fit, b_norm_fit_std));
 
         # sigma_y_range = np.linspace(min(SY), max(SY))
+        # sigmay_lap = posterior_laplace_approximation["sigma_y"]
         # ax[2].hist(SY, 20, density=True);
-        # ax[2].plot(sigma_y_range, norm.pdf(sigma_y_range, sigma_y_laplace_approx, sigma_y_laplace_approx_std));
+        # ax[2].plot(sigma_y_range, norm.pdf(sigma_y_range, sigmay_lap["val"], sigmay_lap["val_unc"]));
         # ax[2].plot(sigma_y_range, invgamma.pdf(sigma_y_range, sigma_invgamma_a, sigma_invgamma_loc, sigma_invgamma_scale));
         
         # plt.show()
