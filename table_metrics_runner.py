@@ -289,8 +289,8 @@ for metric in metrics_to_include_in_graphics:
     else:
         q1, q2 = scm.mquantiles(flattened_values, [0.1, 0.9])
     dq = q2 - q1
-    outlier_limit_low = q1 - 2 * dq
-    outlier_limit_high = q2 + 2 * dq
+    outlier_limit_low = q1 - 1.5 * dq
+    outlier_limit_high = q2 + 1.5 * dq
 
     for i, (method_name, scenario_values) in enumerate(df_metric.items()):
         marker = methods_to_include[method_name]["marker"]
@@ -371,11 +371,11 @@ for metric in metrics_to_include_in_graphics:
                 clip_on=False,
             )
 
-    ax.grid(visible=True, which="both", axis="both", alpha=0.4, zorder=10000)
     ax.set_xticks(ticks=pos)
     ax.set_xticklabels(labels, rotation=0)
     if use_log_scale:
         ax.set_yscale("log")
+    ax.grid(visible=True, which="both", axis="both", alpha=0.4, zorder=10000)
     ax.legend(
         loc="center right",
         bbox_to_anchor=(1.4, 0.5),
