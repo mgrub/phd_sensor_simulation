@@ -18,7 +18,7 @@
     "sensor_readings": {
         "dut_noise": "based_on_sigma_y_true",
         "ref_noise": "based_on_unc",
-        "sigma_y_true": 0.1
+        "sigma_y_true": 0.5
     },
     "cocalibration": {
         "interpolate": false,
