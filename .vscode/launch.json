@@ -32,7 +32,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/visualization_runner.py",
-            "args": ["${workspaceFolder}/experiments/05a_better_references/", "--novis"],
+            "args": ["${workspaceFolder}/experiments/07_thesis_example/", "--show"],
             "console": "integratedTerminal"
         }
     ]
