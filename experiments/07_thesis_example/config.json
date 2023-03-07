@@ -26,7 +26,7 @@
         "split_indices" : [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800],
         "methods": {
             "gibbs_minimal": "method_args/gibbs_minimal.json",
-            "gibbs_known_sigma_y": "method_args/gibbs_known_sigma_y.json",
+            "gibbs_known_sigma_y": "method_args/gibbs_known_sigma_y_0.5.json",
             "gibbs_no_EIV": "method_args/gibbs_no_EIV.json",
             "joint_posterior": "method_args/joint_posterior.json",
             "joint_posterior_agrid": "method_args/joint_posterior_grid_adjust.json"

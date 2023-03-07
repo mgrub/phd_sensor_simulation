@@ -1,0 +1,36 @@
+{
+    "class_name": "GibbsPosterior",
+    "arguments": {
+        "gibbs_runs": 100,
+        "burn_in": 10,
+        "use_every": 5,
+        "sigma_y_is_given": true,
+        "no_error_in_variables_model": false,
+        "use_robust_statistics": false,
+        "prior": {
+            "a": {
+                "type": "norm",
+                "params": {
+                    "loc": 1.0,
+                    "scale": 1.0
+                }
+            },
+            "b": {
+                "type": "norm",
+                "params": {
+                    "loc": 0.0,
+                    "scale": 1.0
+                }
+            },
+            "sigma_y": {
+                "type": "invgamma",
+                "params": {
+                    "a": 2.0,
+                    "loc": 0.0,
+                    "scale": 1.0
+                }
+            }
+        },
+        "sigma_y_true": 0.5
+    }
+}
