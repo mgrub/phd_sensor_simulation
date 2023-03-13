@@ -37,49 +37,90 @@ methods_to_include = {
 }
 
 metrics_to_include_summary = [
-    {"path": ["summary", "a_true"], "tex": r"$a$", "unit" : "[\one]"},
-    {"path": ["summary", "b_true"], "tex": r"$b$", "unit" : "[\one]"},
-    {"path": ["summary", "sigma_y_true"], "tex": r"$\sigma_y$", "unit" : "[\one]"},
-    {"path": ["summary", "a"], "tex": r"$\hat{a}$", "unit" : "[\one]"},
-    {"path": ["summary", "b"], "tex": r"$\hat{b}$", "unit" : "[\one]"},
-    {"path": ["summary", "sigma"], "tex": r"$\hat{\sigma}_y$", "unit" : "[\one]"},
-    {"path": ["summary", "ua"], "tex": r"$u_{\hat{a}}$", "unit" : "[\one]"},
-    {"path": ["summary", "ub"], "tex": r"$u_{\hat{b}}$", "unit" : "[\one]"},
+    {"path": ["summary", "a_true"], "tex": r"$a$", "unit": "[\one]"},
+    {"path": ["summary", "b_true"], "tex": r"$b$", "unit": "[\one]"},
+    {"path": ["summary", "sigma_y_true"], "tex": r"$\sigma_y$", "unit": "[\one]"},
+    {"path": ["summary", "a"], "tex": r"$\hat{a}$", "unit": "[\one]"},
+    {"path": ["summary", "b"], "tex": r"$\hat{b}$", "unit": "[\one]"},
+    {"path": ["summary", "sigma"], "tex": r"$\hat{\sigma}_y$", "unit": "[\one]"},
+    {"path": ["summary", "ua"], "tex": r"$u_{\hat{a}}$", "unit": "[\one]"},
+    {"path": ["summary", "ub"], "tex": r"$u_{\hat{b}}$", "unit": "[\one]"},
 ]
 
 metrics_to_include_consistency = [
-    {"path": ["computation_duration"], "tex": "$\Delta t_{run}$", "unit" : "[\second]"},
-    {"path": ["consistency", "a_normalized_error"], "tex": "$\Delta_a$", "unit" : "[\one]"},
-    {"path": ["consistency", "b_normalized_error"], "tex": "$\Delta_b$", "unit" : "[\one]"},
-    {"path": ["consistency", "sigma_y_normalized_error"], "tex": "$\Delta_\sigma$", "unit" : "[\one]"},
-    {"path": ["consistency", "normalized_model_error_mean"], "tex": "$m_{mean}$", "unit" : "[\one]"},
-    {"path": ["consistency", "normalized_model_error_std"], "tex": "$m_{std}$", "unit" : "[\one]"},
+    {"path": ["computation_duration"], "tex": "$\Delta t_{run}$", "unit": "[\second]"},
+    {
+        "path": ["consistency", "a_normalized_error"],
+        "tex": "$\Delta_a$",
+        "unit": "[\one]",
+    },
+    {
+        "path": ["consistency", "b_normalized_error"],
+        "tex": "$\Delta_b$",
+        "unit": "[\one]",
+    },
+    {
+        "path": ["consistency", "sigma_y_normalized_error"],
+        "tex": "$\Delta_\sigma$",
+        "unit": "[\one]",
+    },
+    {
+        "path": ["consistency", "normalized_model_error_mean"],
+        "tex": "$m_{mean}$",
+        "unit": "[\one]",
+    },
+    {
+        "path": ["consistency", "normalized_model_error_std"],
+        "tex": "$m_{std}$",
+        "unit": "[\one]",
+    },
 ]
 
 metrics_to_include_convergence = [
     {
         "path": ["convergence", "a", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_a(4s) > s_a(16s)$}",
+        "unit": "[has no unit]",
     },
     {
         "path": ["convergence", "b", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_b(4s) > s_b(16s)$}",
+        "unit": "[has no unit]",
     },
     {
         "path": ["convergence", "sigma_y", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_\sigma(4s) > s_\sigma(16s)$}",
+        "unit": "[has no unit]",
     },
-    {"path": ["convergence", "a", "unc_first_below_0.1"], "tex": r"$t_a(0.1)$"},
-    {"path": ["convergence", "a", "unc_stays_below_0.1"], "tex": r"$t^*_a(0.1)$"},
-    {"path": ["convergence", "b", "unc_first_below_0.1"], "tex": r"$t_b(0.1)$"},
-    {"path": ["convergence", "b", "unc_stays_below_0.1"], "tex": r"$t^*_b(0.1)$"},
+    {
+        "path": ["convergence", "a", "unc_first_below_0.1"],
+        "tex": r"$t_a(0.1)$",
+        "unit": "[\second]",
+    },
+    {
+        "path": ["convergence", "a", "unc_stays_below_0.1"],
+        "tex": r"$t^*_a(0.1)$",
+        "unit": "[\second]",
+    },
+    {
+        "path": ["convergence", "b", "unc_first_below_0.1"],
+        "tex": r"$t_b(0.1)$",
+        "unit": "[\second]",
+    },
+    {
+        "path": ["convergence", "b", "unc_stays_below_0.1"],
+        "tex": r"$t^*_b(0.1)$",
+        "unit": "[\second]",
+    },
     {
         "path": ["convergence", "sigma_y", "unc_first_below_0.1"],
         "tex": r"$t_\sigma(0.1)$",
+        "unit": "[\second]",
     },
     {
         "path": ["convergence", "sigma_y", "unc_stays_below_0.1"],
         "tex": r"$t^*_\sigma(0.1)$",
+        "unit": "[\second]",
     },
 ]
 
@@ -331,7 +372,7 @@ for metric in metrics_to_include_in_graphics:
                 markersize=20,
                 color="k",
                 linewidth=0,
-                #alpha=0.7,
+                # alpha=0.7,
                 transform=ax.get_xaxis_transform(),
                 clip_on=False,
             )
@@ -355,7 +396,7 @@ for metric in metrics_to_include_in_graphics:
                 markersize=20,
                 color="k",
                 linewidth=0,
-                #alpha=0.7,
+                # alpha=0.7,
                 transform=ax.get_xaxis_transform(),
                 clip_on=False,
             )
@@ -385,7 +426,7 @@ for metric in metrics_to_include_in_graphics:
     metric_name = "_".join(metric["path"])
     ax.set_xlabel("scenario")
     ax.set_ylabel(f"value of {metric_name} in {metric['unit']}")
-    #fig.tight_layout()
+    # fig.tight_layout()
     fig.savefig(img_path, bbox_inches="tight")
 
     # provide tex code
@@ -393,10 +434,16 @@ for metric in metrics_to_include_in_graphics:
     tex_shortcaption = (
         f"Overview of {metric['tex']} for multiple methods in different scenarios. "
     )
-    tex_caption = tex_shortcaption + "Outliers are drawn outside above or below the plot area to maintain a good display of the majority of data points."
+    tex_caption = (
+        tex_shortcaption
+        + "Outliers are drawn outside above or below the plot area to maintain a good display of the majority of data points."
+    )
     ref = f"\cref{{{tex_label}}}"
     figure = figure_template.format(
-        FILEPATH=img_path, CAPTION=tex_caption, SHORT_CAPTION=tex_shortcaption, LABEL=tex_label
+        FILEPATH=img_path,
+        CAPTION=tex_caption,
+        SHORT_CAPTION=tex_shortcaption,
+        LABEL=tex_label,
     )
 
     figures.append(figure)
