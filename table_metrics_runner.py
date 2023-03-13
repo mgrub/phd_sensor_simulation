@@ -272,7 +272,7 @@ for metric in metrics_to_include_in_graphics:
     # generate plot
     img_path = f"evaluation_metrics/{metric_name}.pdf"
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    fig, ax = plt.subplots(1, 1, figsize=(10, 7))
     pos = np.arange(len(df_metric.index))
     width = 1 / (len(df_metric.index) + 2)
     labels = [s.split("_")[0] for s in df_metric.index]
