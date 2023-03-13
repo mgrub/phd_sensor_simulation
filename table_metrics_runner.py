@@ -37,23 +37,23 @@ methods_to_include = {
 }
 
 metrics_to_include_summary = [
-    {"path": ["summary", "a_true"], "tex": r"$a$"},
-    {"path": ["summary", "b_true"], "tex": r"$b$"},
-    {"path": ["summary", "sigma_y_true"], "tex": r"$\sigma_y$"},
-    {"path": ["summary", "a"], "tex": r"$\hat{a}$"},
-    {"path": ["summary", "b"], "tex": r"$\hat{b}$"},
-    {"path": ["summary", "sigma"], "tex": r"$\hat{\sigma}_y$"},
-    {"path": ["summary", "ua"], "tex": r"$u_{\hat{a}}$"},
-    {"path": ["summary", "ub"], "tex": r"$u_{\hat{b}}$"},
+    {"path": ["summary", "a_true"], "tex": r"$a$", "unit" : "[\one]"},
+    {"path": ["summary", "b_true"], "tex": r"$b$", "unit" : "[\one]"},
+    {"path": ["summary", "sigma_y_true"], "tex": r"$\sigma_y$", "unit" : "[\one]"},
+    {"path": ["summary", "a"], "tex": r"$\hat{a}$", "unit" : "[\one]"},
+    {"path": ["summary", "b"], "tex": r"$\hat{b}$", "unit" : "[\one]"},
+    {"path": ["summary", "sigma"], "tex": r"$\hat{\sigma}_y$", "unit" : "[\one]"},
+    {"path": ["summary", "ua"], "tex": r"$u_{\hat{a}}$", "unit" : "[\one]"},
+    {"path": ["summary", "ub"], "tex": r"$u_{\hat{b}}$", "unit" : "[\one]"},
 ]
 
 metrics_to_include_consistency = [
-    {"path": ["computation_duration"], "tex": "$\Delta t_{run}$"},
-    {"path": ["consistency", "a_normalized_error"], "tex": "$\Delta_a$"},
-    {"path": ["consistency", "b_normalized_error"], "tex": "$\Delta_b$"},
-    {"path": ["consistency", "sigma_y_normalized_error"], "tex": "$\Delta_\sigma$"},
-    {"path": ["consistency", "normalized_model_error_mean"], "tex": "$m_{mean}$"},
-    {"path": ["consistency", "normalized_model_error_std"], "tex": "$m_{std}$"},
+    {"path": ["computation_duration"], "tex": "$\Delta t_{run}$", "unit" : "[\second]"},
+    {"path": ["consistency", "a_normalized_error"], "tex": "$\Delta_a$", "unit" : "[\one]"},
+    {"path": ["consistency", "b_normalized_error"], "tex": "$\Delta_b$", "unit" : "[\one]"},
+    {"path": ["consistency", "sigma_y_normalized_error"], "tex": "$\Delta_\sigma$", "unit" : "[\one]"},
+    {"path": ["consistency", "normalized_model_error_mean"], "tex": "$m_{mean}$", "unit" : "[\one]"},
+    {"path": ["consistency", "normalized_model_error_std"], "tex": "$m_{std}$", "unit" : "[\one]"},
 ]
 
 metrics_to_include_convergence = [
@@ -230,7 +230,7 @@ figure_template = """
 \\begin{{figure}}[tbph]
     \\centering
     \\includegraphics[width=\\textwidth]{{{FILEPATH}}}
-    \\caption{{{CAPTION}}}
+    \\caption[{SHORT_CAPTION}]{{{CAPTION}}}
     \\label{{{LABEL}}}
 \\end{{figure}}
 """
@@ -382,18 +382,21 @@ for metric in metrics_to_include_in_graphics:
         ncol=1,
         fancybox=True,
     )
+    metric_name = "_".join(metric["path"])
+    ax.set_xlabel("scenario")
+    ax.set_ylabel(f"value of {metric_name} in {metric['unit']}")
     #fig.tight_layout()
     fig.savefig(img_path, bbox_inches="tight")
 
     # provide tex code
-    metric_name = "_".join(metric["path"])
     tex_label = f"fig:{metric_name}"
-    tex_caption = (
-        f"Overview of {metric['tex']} for multiple methods in different scenarios."
+    tex_shortcaption = (
+        f"Overview of {metric['tex']} for multiple methods in different scenarios. "
     )
+    tex_caption = tex_shortcaption + "Outliers are drawn outside above or below the plot area to maintain a good display of the majority of data points."
     ref = f"\cref{{{tex_label}}}"
     figure = figure_template.format(
-        FILEPATH=img_path, CAPTION=tex_caption, LABEL=tex_label
+        FILEPATH=img_path, CAPTION=tex_caption, SHORT_CAPTION=tex_shortcaption, LABEL=tex_label
     )
 
     figures.append(figure)
