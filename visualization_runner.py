@@ -305,10 +305,15 @@ for i, (method_name, method_result) in enumerate(results.items()):
     mc = metrics[method_name]["consistency"]
 
     # parameter estimate consistency metric
-    mc["a_normalized_error"] = np.abs(a[-1] - a_true) / ua[-1]
-    mc["b_normalized_error"] = np.abs(b[-1] - b_true) / ub[-1]
+    mc["mean_signed_difference_a"] = a[-1] - a_true
+    mc["mean_signed_difference_b"] = b[-1] - b_true
     if sigma_y_was_estimated:
-        mc["sigma_y_normalized_error"] = np.abs(sigma[-1] - sigma_y_true) / usigma[-1]
+        mc["mean_signed_difference_sigma_y"] = sigma[-1] - sigma_y_true
+
+    mc["normalized_mean_absolute_error_a"] = np.abs(a[-1] - a_true) / ua[-1]
+    mc["normalized_mean_absolute_error_b"] = np.abs(b[-1] - b_true) / ub[-1]
+    if sigma_y_was_estimated:
+        mc["normalized_mean_absolute_error_sigma_y"] = np.abs(sigma[-1] - sigma_y_true) / usigma[-1]
 
     # check consistency in terms of output
     mr = method_result[-1][-1]["params"]
@@ -331,9 +336,9 @@ for i, (method_name, method_result) in enumerate(results.items()):
     Xa = np.array(measurand["quantity"])
     Xa_hat, Xa_hat_unc = m_inv.apply(dut_readings, dut_readings_unc)
     model_error = Xa_hat - Xa
-    mc["model_mean_signed_error"] = np.mean(model_error)
-    mc["model_normalized_mean_squared_error"] = np.mean(np.square(model_error / Xa_hat_unc))
-    mc["model_root_mean_squared_error"] = np.sqrt(np.mean(np.square(model_error)))
+    mc["mean_signed_difference_X"] = np.mean(model_error)
+    mc["mean_squared_error_X"] = np.mean(np.square(model_error))
+    mc["normalized_mean_squared_error_X"] = np.mean(np.square(model_error / Xa_hat_unc))
     
 
 # convergence metrics
