@@ -36,48 +36,117 @@ methods_to_include = {
     "stankovic_base_unc": {"marker": "D", "color": "k"},
 }
 
-metrics_to_include_summary = [
-    {"path": ["result", "a_true"], "tex": r"$a$", "unit": "[\one]"},
-    {"path": ["result", "b_true"], "tex": r"$b$", "unit": "[\one]"},
-    {"path": ["result", "sigma_y_true"], "tex": r"$\sigma_y$", "unit": "[\one]"},
-    {"path": ["result", "a"], "tex": r"$\hat{a}$", "unit": "[\one]"},
-    {"path": ["result", "b"], "tex": r"$\hat{b}$", "unit": "[\one]"},
-    {"path": ["result", "sigma"], "tex": r"$\hat{\sigma}_y$", "unit": "[\one]"},
-    {"path": ["result", "ua"], "tex": r"$u_{\hat{a}}$", "unit": "[\one]"},
-    {"path": ["result", "ub"], "tex": r"$u_{\hat{b}}$", "unit": "[\one]"},
+metrics_to_include_results = [
+    {
+        "path": ["result", "a_true"],
+        "tex": r"$a$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "linear"},
+    },
+    {
+        "path": ["result", "b_true"],
+        "tex": r"$b$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "linear"},
+    },
+    {
+        "path": ["result", "sigma_y_true"],
+        "tex": r"$\sigma_y$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "linear"},
+    },
+    {
+        "path": ["result", "a"],
+        "tex": r"$\hat{a}$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "linear"},
+    },
+    {
+        "path": ["result", "b"],
+        "tex": r"$\hat{b}$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "linear"},
+    },
+    {
+        "path": ["result", "sigma"],
+        "tex": r"$\hat{\sigma}_y$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
+    },
+    {
+        "path": ["result", "ua"],
+        "tex": r"$u_{\hat{a}}$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
+    },
+    {
+        "path": ["result", "ub"],
+        "tex": r"$u_{\hat{b}}$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
+    },
 ]
 
 metrics_to_include_consistency = [
-    {"path": ["computation_duration"], "tex": "$\Delta t_{run}$", "unit": "[\second]"},
     {
-        "path": ["consistency", "a_normalized_error"],
-        "tex": "$\Delta_a$",
-        "unit": "[\one]",
+        "path": ["computation_duration"],
+        "tex": "$\Delta t_{run}$",
+        "unit": "[\second]",
+        "scale_kwargs": {"value": "log"},
     },
     {
-        "path": ["consistency", "b_normalized_error"],
-        "tex": "$\Delta_b$",
+        "path": ["consistency", "mean_signed_difference_a"],
+        "tex": "$MSD_a$",
         "unit": "[\one]",
+        "scale_kwargs": {"value": "symlog", "linthresh": 1e-3},
     },
     {
-        "path": ["consistency", "sigma_y_normalized_error"],
-        "tex": "$\Delta_\sigma$",
+        "path": ["consistency", "normalized_mean_absolute_error_a"],
+        "tex": "$NMAE_a$",
         "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
     },
     {
-        "path": ["consistency", "model_mean_signed_error"],
-        "tex": "$m_{bias}$",
+        "path": ["consistency", "mean_signed_difference_b"],
+        "tex": "$MSD_b$",
         "unit": "[\one]",
+        "scale_kwargs": {"value": "symlog", "linthresh": 1e-3},
     },
     {
-        "path": ["consistency", "model_normalized_mean_squared_error"],
-        "tex": "$m_{nmse}$",
+        "path": ["consistency", "normalized_mean_absolute_error_b"],
+        "tex": "$NMAE_b$",
         "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
     },
     {
-        "path": ["consistency", "model_root_mean_squared_error"],
-        "tex": "$m_{rmse}$",
+        "path": ["consistency", "mean_signed_difference_sigma_y"],
+        "tex": "$MSD_{\sigma_y}$",
         "unit": "[\one]",
+        "scale_kwargs": {"value": "symlog", "linthresh": 1e-2},
+    },
+    {
+        "path": ["consistency", "normalized_mean_absolute_error_sigma_y"],
+        "tex": "$NMAE_{\sigma_y}$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
+    },
+    {
+        "path": ["consistency", "mean_signed_difference_X"],
+        "tex": "$MSD_X$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "symlog", "linthresh": 1e-4},
+    },
+    {
+        "path": ["consistency", "mean_squared_error_X"],
+        "tex": "$MSE_X$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
+    },
+    {
+        "path": ["consistency", "normalized_mean_squared_error_X"],
+        "tex": "$NMSE_X$",
+        "unit": "[\one]",
+        "scale_kwargs": {"value": "log"},
     },
 ]
 
@@ -86,61 +155,72 @@ metrics_to_include_convergence = [
         "path": ["convergence", "a", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_a(4s) > s_a(16s)$}",
         "unit": "[has no unit]",
+        "scale_kwargs": {"value": "[has no scale]"},
     },
     {
         "path": ["convergence", "b", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_b(4s) > s_b(16s)$}",
         "unit": "[has no unit]",
+        "scale_kwargs": {"value": "[has no scale]"},
     },
     {
         "path": ["convergence", "sigma_y", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_\sigma(4s) > s_\sigma(16s)$}",
         "unit": "[has no unit]",
+        "scale_kwargs": {"value": "[has no scale]"},
     },
     {
         "path": ["convergence", "a", "unc_first_below_0.1"],
         "tex": r"$t_a(0.1)$",
         "unit": "[\second]",
+        "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "a", "unc_stays_below_0.1"],
         "tex": r"$t^*_a(0.1)$",
         "unit": "[\second]",
+        "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "b", "unc_first_below_0.1"],
         "tex": r"$t_b(0.1)$",
         "unit": "[\second]",
+        "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "b", "unc_stays_below_0.1"],
         "tex": r"$t^*_b(0.1)$",
         "unit": "[\second]",
+        "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "sigma_y", "unc_first_below_0.1"],
         "tex": r"$t_\sigma(0.1)$",
         "unit": "[\second]",
+        "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "sigma_y", "unc_stays_below_0.1"],
         "tex": r"$t^*_\sigma(0.1)$",
         "unit": "[\second]",
+        "scale_kwargs": {"value": "linear"},
     },
 ]
 
 metrics_to_include_in_tables = (
-    metrics_to_include_summary
+    metrics_to_include_results
     + metrics_to_include_consistency
     + metrics_to_include_convergence
 )
 metrics_to_include_in_graphics = (
-    metrics_to_include_summary[3:] + metrics_to_include_consistency
-)  # + metrics_to_include_convergence[3:]
+    metrics_to_include_consistency
+    # + metrics_to_include_results[3:]
+    # + metrics_to_include_convergence[3:]
+)
 
 # relevant columns
 columns_all = [item["tex"] for item in metrics_to_include_in_tables]
-columns_summary = [item["tex"] for item in metrics_to_include_summary]
+columns_summary = [item["tex"] for item in metrics_to_include_results]
 columns_consistency = [item["tex"] for item in metrics_to_include_consistency]
 columns_convergence = [item["tex"] for item in metrics_to_include_convergence]
 
