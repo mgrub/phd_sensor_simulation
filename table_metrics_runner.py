@@ -37,14 +37,14 @@ methods_to_include = {
 }
 
 metrics_to_include_summary = [
-    {"path": ["summary", "a_true"], "tex": r"$a$", "unit": "[\one]"},
-    {"path": ["summary", "b_true"], "tex": r"$b$", "unit": "[\one]"},
-    {"path": ["summary", "sigma_y_true"], "tex": r"$\sigma_y$", "unit": "[\one]"},
-    {"path": ["summary", "a"], "tex": r"$\hat{a}$", "unit": "[\one]"},
-    {"path": ["summary", "b"], "tex": r"$\hat{b}$", "unit": "[\one]"},
-    {"path": ["summary", "sigma"], "tex": r"$\hat{\sigma}_y$", "unit": "[\one]"},
-    {"path": ["summary", "ua"], "tex": r"$u_{\hat{a}}$", "unit": "[\one]"},
-    {"path": ["summary", "ub"], "tex": r"$u_{\hat{b}}$", "unit": "[\one]"},
+    {"path": ["result", "a_true"], "tex": r"$a$", "unit": "[\one]"},
+    {"path": ["result", "b_true"], "tex": r"$b$", "unit": "[\one]"},
+    {"path": ["result", "sigma_y_true"], "tex": r"$\sigma_y$", "unit": "[\one]"},
+    {"path": ["result", "a"], "tex": r"$\hat{a}$", "unit": "[\one]"},
+    {"path": ["result", "b"], "tex": r"$\hat{b}$", "unit": "[\one]"},
+    {"path": ["result", "sigma"], "tex": r"$\hat{\sigma}_y$", "unit": "[\one]"},
+    {"path": ["result", "ua"], "tex": r"$u_{\hat{a}}$", "unit": "[\one]"},
+    {"path": ["result", "ub"], "tex": r"$u_{\hat{b}}$", "unit": "[\one]"},
 ]
 
 metrics_to_include_consistency = [
@@ -65,13 +65,18 @@ metrics_to_include_consistency = [
         "unit": "[\one]",
     },
     {
-        "path": ["consistency", "normalized_model_error_mean"],
-        "tex": "$m_{mean}$",
+        "path": ["consistency", "model_mean_signed_error"],
+        "tex": "$m_{bias}$",
         "unit": "[\one]",
     },
     {
-        "path": ["consistency", "normalized_model_error_std"],
-        "tex": "$m_{std}$",
+        "path": ["consistency", "model_normalized_mean_squared_error"],
+        "tex": "$m_{nmse}$",
+        "unit": "[\one]",
+    },
+    {
+        "path": ["consistency", "model_root_mean_squared_error"],
+        "tex": "$m_{rmse}$",
         "unit": "[\one]",
     },
 ]

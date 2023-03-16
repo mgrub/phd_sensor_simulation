@@ -229,23 +229,23 @@ for i, (method_name, method_result) in enumerate(results.items()):
     if method_name not in metrics.keys():
         metrics[method_name] = {}
     
-    metrics[method_name]["summary"] = {}
-    ms = metrics[method_name]["summary"]
+    metrics[method_name]["result"] = {}
+    mr = metrics[method_name]["result"]
 
     sigma_y_was_estimated = "sigma_y" in method_result[0][0]["params"].keys() and method_name != "gibbs_known_sigma_y"
 
-    ms["timestamp"] = np.array([item[-1]["time"] for item in method_result])[-1]
-    ms["a"] =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])[-1]
-    ms["ua"] = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])[-1]
-    ms["b"] =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])[-1]
-    ms["ub"] = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])[-1]
+    mr["timestamp"] = np.array([item[-1]["time"] for item in method_result])[-1]
+    mr["a"] =  np.array([item[-1]["params"]["a"]["val"] for item in method_result])[-1]
+    mr["ua"] = np.array([item[-1]["params"]["a"]["val_unc"] for item in method_result])[-1]
+    mr["b"] =  np.array([item[-1]["params"]["b"]["val"] for item in method_result])[-1]
+    mr["ub"] = np.array([item[-1]["params"]["b"]["val_unc"] for item in method_result])[-1]
     if sigma_y_was_estimated:
-        ms["sigma"] =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])[-1]
-        ms["usigma"] = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])[-1]
+        mr["sigma"] =  np.array([item[-1]["params"]["sigma_y"]["val"] for item in method_result])[-1]
+        mr["usigma"] = np.array([item[-1]["params"]["sigma_y"]["val_unc"] for item in method_result])[-1]
     
-    ms["a_true"] = a_true
-    ms["b_true"] = b_true
-    ms["sigma_y_true"] = sigma_y_true
+    mr["a_true"] = a_true
+    mr["b_true"] = b_true
+    mr["sigma_y_true"] = sigma_y_true
         
 
 # runtime metric
@@ -330,9 +330,10 @@ for i, (method_name, method_result) in enumerate(results.items()):
     # readings based on calibrated params
     Xa = np.array(measurand["quantity"])
     Xa_hat, Xa_hat_unc = m_inv.apply(dut_readings, dut_readings_unc)
-    normalized_model_error = (Xa_hat - Xa) / Xa_hat_unc
-    mc["normalized_model_error_mean"] = np.mean(normalized_model_error)
-    mc["normalized_model_error_std"] = np.std(normalized_model_error)
+    model_error = Xa_hat - Xa
+    mc["model_mean_signed_error"] = np.mean(model_error)
+    mc["model_normalized_mean_squared_error"] = np.mean(np.square(model_error / Xa_hat_unc))
+    mc["model_root_mean_squared_error"] = np.sqrt(np.mean(np.square(model_error)))
     
 
 # convergence metrics
