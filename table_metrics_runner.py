@@ -402,19 +402,25 @@ for metric in metrics_to_include_in_graphics:
     pos = np.arange(len(df_metric.index))
     width = 1 / (len(df_metric.index) + 2)
     labels = [s.split("_")[0] for s in df_metric.index]
-    use_log_scale = True
-    if np.any(df_metric < 0):
-        use_log_scale = False
+    use_log_scale = (
+        True if metric["scale_kwargs"]["value"] in ["log", "symlog"] else False
+    )
 
     # define outlier limits (in lin or log scale)
     flattened_values = df_metric.to_numpy(dtype=np.float64).flatten()
     flattened_values = flattened_values[np.logical_not(np.isnan(flattened_values))]
     if use_log_scale:
-        q1, q2 = scm.mquantiles(np.log(flattened_values), [0.1, 0.9])
+        q1, q2 = scm.mquantiles(np.log(np.abs(flattened_values)), [0.1, 0.9])
         dq = q2 - q1
+        if (
+            metric["scale_kwargs"]["value"] == "symlog"
+        ):  # calc dq based on abs, but q1, q2 with sign
+            q1, q2 = scm.mquantiles(
+                np.sign(flattened_values) * np.log(np.abs(flattened_values)), [0.1, 0.9]
+            )
     else:
         q1, q2 = scm.mquantiles(flattened_values, [0.1, 0.9])
-    dq = q2 - q1
+        dq = q2 - q1
     outlier_limit_low = q1 - 1.5 * dq
     outlier_limit_high = q2 + 1.5 * dq
 
@@ -425,7 +431,8 @@ for metric in metrics_to_include_in_graphics:
 
         # remove outliers from plot, but still plot
         if use_log_scale:
-            log_scenario_values = np.log(scenario_values.to_numpy(dtype=np.float64))
+            vv = scenario_values.to_numpy(dtype=np.float64)
+            log_scenario_values = np.sign(vv) * np.log(np.abs(vv))
             outliers_above = log_scenario_values > outlier_limit_high
             outliers_below = log_scenario_values < outlier_limit_low
         else:
@@ -499,8 +506,7 @@ for metric in metrics_to_include_in_graphics:
 
     ax.set_xticks(ticks=pos)
     ax.set_xticklabels(labels, rotation=0)
-    if use_log_scale:
-        ax.set_yscale("log")
+    ax.set_yscale(**metric["scale_kwargs"])
     ax.grid(visible=True, which="both", axis="both", alpha=0.4, zorder=10000)
     ax.legend(
         loc="center right",
@@ -510,7 +516,7 @@ for metric in metrics_to_include_in_graphics:
     )
     metric_name = "_".join(metric["path"])
     ax.set_xlabel("scenario")
-    ax.set_ylabel(f"value of {metric_name} in {metric['unit']}")
+    ax.set_ylabel(f"{metric['tex']} in {metric['unit']}")
     # fig.tight_layout()
     fig.savefig(img_path, bbox_inches="tight")
 
