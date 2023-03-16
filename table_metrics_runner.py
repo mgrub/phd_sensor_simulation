@@ -220,7 +220,7 @@ metrics_to_include_in_graphics = (
 
 # relevant columns
 columns_all = [item["tex"] for item in metrics_to_include_in_tables]
-columns_summary = [item["tex"] for item in metrics_to_include_results]
+columns_result = [item["tex"] for item in metrics_to_include_results]
 columns_consistency = [item["tex"] for item in metrics_to_include_consistency]
 columns_convergence = [item["tex"] for item in metrics_to_include_convergence]
 
@@ -280,14 +280,14 @@ for scenario in scenarios:
             df_scenario.loc[method, metric_tex] = metric_value
 
     scenario_escaped = scenario.replace("_", "\\_")
-    caption_summary = f"Result summary of scenario \\texttt{{{scenario_escaped}}}."
+    caption_result = f"Main results of scenario \\texttt{{{scenario_escaped}}}."
     caption_consistency = (
         f"Runtime and consistency metrics of scenario \\texttt{{{scenario_escaped}}}."
     )
     caption_convergence = (
         f"Convergence metrics of scenario \\texttt{{{scenario_escaped}}}."
     )
-    label_summary = f"tab:evaluation_summary_{scenario}"
+    label_result = f"tab:evaluation_result_{scenario}"
     label_consistency = f"tab:evaluation_consistency_metrics_{scenario}"
     label_convergence = f"tab:evaluation_convergence_metrics_{scenario}"
 
@@ -298,8 +298,8 @@ for scenario in scenarios:
     ]
 
     ## tabulars
-    tabular_summary = (
-        df_scenario[columns_summary].style.format(formatter).to_latex(hrules=True)
+    tabular_result = (
+        df_scenario[columns_result].style.format(formatter).to_latex(hrules=True)
     )
     tabular_consistency = (
         df_scenario[columns_consistency].style.format(formatter).to_latex(hrules=True)
@@ -309,10 +309,10 @@ for scenario in scenarios:
     )
 
     ## tables
-    table_summary = table_template.format(
-        CAPTION=caption_summary,
-        LABEL=label_summary,
-        TABULAR=tabular_summary,
+    table_result = table_template.format(
+        CAPTION=caption_result,
+        LABEL=label_result,
+        TABULAR=tabular_result,
     )
     table_consistency = table_template.format(
         CAPTION=caption_consistency,
@@ -325,14 +325,14 @@ for scenario in scenarios:
         TABULAR=tabular_convergence,
     )
 
-    ref = f"{label_summary},{label_consistency},{label_convergence}"
+    ref = f"{label_result},{label_consistency},{label_convergence}"
 
     ## merge tables into section
     tables.append(
         f"\\newpage\n\n\\section{{Scenario \\texttt{{{scenario}}}}}\n\n".replace(
             "_", "\\_"
         )
-        + table_summary
+        + table_result
         + table_consistency
         + table_convergence
     )
