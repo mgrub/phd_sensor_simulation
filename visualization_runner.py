@@ -64,13 +64,17 @@ if not args.novis:
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
     fig_ref, ax_ref = plt.subplots(nrows=2, sharex=True, sharey=False)
-    fig_ref.set_size_inches(18.5, 10.5)
+    fig_ref.set_size_inches(10.0, 7.5)
+    
+    ax_ref[0].set_ylabel("indicated values [m / s^2]")
+    ax_ref[1].set_ylabel("indicated values [m / s^2]")
+    ax_ref[1].set_xlabel("time [s]")
 
     # true measurand
     t = measurand["time"]
     v = measurand["quantity"]
 
-    ax_ref[0].plot(t, v, linewidth=3, label="measurand (unknown)", marker="o", color="red", zorder=20)
+    ax_ref[0].plot(t, v, linewidth=2, label="measurand (unknown)", marker="o", markersize=2, color="red", zorder=5)
 
     # sensor readings + unc-tube
     for i, (sensor_name, sensor_reading) in enumerate(sensor_readings.items()):
@@ -115,8 +119,8 @@ if not args.novis:
             if sensor_name is not device_under_test_name:
                 ax.fill_between(t, v-uv, v+uv, alpha=0.3, color=color)
 
-    ax_ref[0].legend()
-    ax_ref[1].legend()
+    ax_ref[0].legend(loc="lower left")
+    ax_ref[1].legend(loc="lower left")
 
     # fused value?
 
@@ -127,15 +131,25 @@ if not args.novis:
 
     fig_params, ax_params = plt.subplots(nrows=3)
     fig_params_unc, ax_params_unc = plt.subplots(nrows=3)
-    fig_params.set_size_inches(18.5, 15.5)
-    fig_params_unc.set_size_inches(18.5, 15.5)
+    fig_params.set_size_inches(10.0, 7.5)
+    fig_params_unc.set_size_inches(10.0, 7.5)
     ax_params[0].set_title("parameter a estimates")
     ax_params[1].set_title("parameter b estimates")
     ax_params[2].set_title("parameter sigma_y estimates")
 
+    ax_params[0].set_ylabel("value of a [-]")
+    ax_params[1].set_ylabel("value of b [m / s^2]")
+    ax_params[2].set_ylabel("value of sigma_y [m / s^2]")
+    ax_params[2].set_xlabel("time [s]")
+
     ax_params_unc[0].set_title("parameter a uncertainties")
     ax_params_unc[1].set_title("parameter b uncertainties")
     ax_params_unc[2].set_title("parameter sigma_y uncertainties")
+
+    ax_params_unc[0].set_ylabel("unc. of a [-]")
+    ax_params_unc[1].set_ylabel("unc. of b [m / s^2]")
+    ax_params_unc[2].set_ylabel("unc. of sigma_y [m / s^2]")
+    ax_params_unc[2].set_xlabel("time [s]")
 
 
     # true values
@@ -190,13 +204,14 @@ if not args.novis:
 
         # sigma_y ???
 
-    ax_params[0].legend()
-    ax_params_unc[0].legend()
+    ax_params[0].legend(loc="lower left")
+    ax_params_unc[0].legend(loc="lower left")
+
+    fig_ref.set_tight_layout(True)
+    fig_params.set_tight_layout(True)
+    fig_params_unc.set_tight_layout(True)
 
     if args.show:
-        fig_ref.set_tight_layout(True)
-        fig_params.set_tight_layout(True)
-        fig_params_unc.set_tight_layout(True)
         plt.show()
     else:
         fig_ref.savefig(os.path.join(results_directory, "input.png"), bbox_inches="tight")
