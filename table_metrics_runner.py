@@ -40,49 +40,57 @@ metrics_to_include_results = [
     {
         "path": ["result", "a_true"],
         "tex": r"$a$",
-        "unit": "[\one]",
+        "full_name": r"true value of $a$",
+        "unit": "[-]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["result", "b_true"],
         "tex": r"$b$",
-        "unit": "[\one]",
+        "full_name": r"true value of $b$",
+        "unit": "[m / s^2]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["result", "sigma_y_true"],
         "tex": r"$\sigma_y$",
-        "unit": "[\one]",
+        "full_name": r"true value of $\sigma_y$",
+        "unit": "[m / s^2]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["result", "a"],
         "tex": r"$\hat{a}$",
-        "unit": "[\one]",
+        "full_name": r"estimated value of $a$",
+        "unit": "[-]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["result", "b"],
         "tex": r"$\hat{b}$",
-        "unit": "[\one]",
+        "full_name": r"estimated value of $b$",
+        "unit": "[m / s^2]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["result", "sigma"],
         "tex": r"$\hat{\sigma}_y$",
-        "unit": "[\one]",
+        "full_name": r"estimated value of $\sigma_y$",
+        "unit": "[m / s^2]",
         "scale_kwargs": {"value": "log"},
     },
     {
         "path": ["result", "ua"],
         "tex": r"$u_{\hat{a}}$",
-        "unit": "[\one]",
+        "full_name": r"estimated uncertainty of $a$",
+        "unit": "[-]",
         "scale_kwargs": {"value": "log"},
     },
     {
         "path": ["result", "ub"],
         "tex": r"$u_{\hat{b}}$",
-        "unit": "[\one]",
+        "full_name": r"estimated uncertainty of $b$",
+        "unit": "[m / s^2]",
         "scale_kwargs": {"value": "log"},
     },
 ]
@@ -91,61 +99,71 @@ metrics_to_include_consistency = [
     {
         "path": ["computation_duration"],
         "tex": "$\Delta t_{run}$",
-        "unit": "[\second]",
+        "full_name": r"computation duration",
+        "unit": "[s]",
         "scale_kwargs": {"value": "log"},
     },
     {
         "path": ["consistency", "mean_signed_difference_a"],
         "tex": "$MSD_a$",
-        "unit": "[\one]",
+        "full_name": r"mean signed difference of $a$",
+        "unit": "[same as a]",
         "scale_kwargs": {"value": "symlog", "linthresh": 1e-3},
     },
     {
         "path": ["consistency", "normalized_mean_absolute_error_a"],
         "tex": "$NMAE_a$",
-        "unit": "[\one]",
+        "full_name": r"normalized mean absolute error of $a$",
+        "unit": "[-]",
         "scale_kwargs": {"value": "log"},
     },
     {
         "path": ["consistency", "mean_signed_difference_b"],
         "tex": "$MSD_b$",
-        "unit": "[\one]",
+        "full_name": r"mean signed difference of $b$",
+        "unit": "[same as b]",
         "scale_kwargs": {"value": "symlog", "linthresh": 1e-3},
     },
     {
         "path": ["consistency", "normalized_mean_absolute_error_b"],
         "tex": "$NMAE_b$",
-        "unit": "[\one]",
+        "full_name": r"normalized mean absolute error of $b$",
+        "unit": "[-]",
         "scale_kwargs": {"value": "log"},
     },
     {
         "path": ["consistency", "mean_signed_difference_sigma_y"],
         "tex": "$MSD_{\sigma_y}$",
-        "unit": "[\one]",
+        "full_name": r"mean signed difference of $\sigma_y$",
+        "unit": "[same as sigma_y]",
         "scale_kwargs": {"value": "symlog", "linthresh": 1e-2},
     },
     {
         "path": ["consistency", "normalized_mean_absolute_error_sigma_y"],
         "tex": "$NMAE_{\sigma_y}$",
-        "unit": "[\one]",
+        "full_name": r"normalized mean absolute error of $\sigma_y$",
+        "unit": "[-]",
         "scale_kwargs": {"value": "log"},
     },
     {
         "path": ["consistency", "mean_signed_difference_X"],
         "tex": "$MSD_X$",
-        "unit": "[\one]",
+        "full_name": r"mean signed difference of $X$",
+        "unit": "[same as X]",
         "scale_kwargs": {"value": "symlog", "linthresh": 1e-4},
     },
     {
         "path": ["consistency", "mean_squared_error_X"],
         "tex": "$MSE_X$",
-        "unit": "[\one]",
+        "full_name": r"mean squared error of $X$",
+        "unit": "[same as X^2]",
         "scale_kwargs": {"value": "log"},
     },
     {
         "path": ["consistency", "normalized_mean_squared_error_X"],
         "tex": "$NMSE_X$",
-        "unit": "[\one]",
+        "full_name": r"normalized mean squared error of $X$",
+        "unit": "[-]",
         "scale_kwargs": {"value": "log"},
     },
 ]
@@ -154,55 +172,64 @@ metrics_to_include_convergence = [
     {
         "path": ["convergence", "a", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_a(4s) > s_a(16s)$}",
+        "full_name": r"",
         "unit": "[has no unit]",
         "scale_kwargs": {"value": "[has no scale]"},
     },
     {
         "path": ["convergence", "b", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_b(4s) > s_b(16s)$}",
+        "full_name": r"",
         "unit": "[has no unit]",
         "scale_kwargs": {"value": "[has no scale]"},
     },
     {
         "path": ["convergence", "sigma_y", "band_shrinks"],
         "tex": r"\rotatebox{90}{$s_\sigma(4s) > s_\sigma(16s)$}",
+        "full_name": r"",
         "unit": "[has no unit]",
         "scale_kwargs": {"value": "[has no scale]"},
     },
     {
         "path": ["convergence", "a", "unc_first_below_0.1"],
         "tex": r"$t_a(0.1)$",
-        "unit": "[\second]",
+        "full_name": r"",
+        "unit": "[s]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "a", "unc_stays_below_0.1"],
         "tex": r"$t^*_a(0.1)$",
-        "unit": "[\second]",
+        "full_name": r"",
+        "unit": "[s]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "b", "unc_first_below_0.1"],
         "tex": r"$t_b(0.1)$",
-        "unit": "[\second]",
+        "full_name": r"",
+        "unit": "[s]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "b", "unc_stays_below_0.1"],
         "tex": r"$t^*_b(0.1)$",
-        "unit": "[\second]",
+        "full_name": r"",
+        "unit": "[s]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "sigma_y", "unc_first_below_0.1"],
         "tex": r"$t_\sigma(0.1)$",
-        "unit": "[\second]",
+        "full_name": r"",
+        "unit": "[s]",
         "scale_kwargs": {"value": "linear"},
     },
     {
         "path": ["convergence", "sigma_y", "unc_stays_below_0.1"],
         "tex": r"$t^*_\sigma(0.1)$",
-        "unit": "[\second]",
+        "full_name": r"",
+        "unit": "[s]",
         "scale_kwargs": {"value": "linear"},
     },
 ]
@@ -389,6 +416,8 @@ for metric in metrics_to_include_in_graphics:
 
             # extract relevant metric
             metric_tex = metric["tex"]
+            metric_fullname = metric["full_name"]
+
             if fill_value == None:
                 metric_value = address_dict(metrics_log[method], metric["path"], np.nan)
             else:
@@ -525,10 +554,9 @@ for metric in metrics_to_include_in_graphics:
     tex_shortcaption = (
         f"Overview of {metric['tex']} for multiple methods in different scenarios. "
     )
-    tex_caption = (
-        tex_shortcaption
-        + "Outliers are drawn outside above or below the plot area to maintain a good display of the majority of data points."
-    )
+    tex_caption = f"Overview of {metric['tex']} ({metric['full_name']}) for multiple methods in different scenarios. "
+    tex_caption += "Outliers are drawn outside above or below the plot area to maintain a good display of the majority of data points."
+
     ref = f"\cref{{{tex_label}}}"
     figure = figure_template.format(
         FILEPATH=img_path,
